@@ -14,16 +14,21 @@ import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrajectoryGenerator;
 import edu.wpi.first.wpilibj.XboxController;
-import edu.wpi.first.wpilibj.PS4Controller.Button;
 import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.OIConstants;
 import frc.robot.subsystems.DriveSubsystem;
+import frc.robot.subsystems.IntakeXtakeSubsystem;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
+import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.XboxController.Button;
+
+
 import java.util.List;
 
 /*
@@ -35,6 +40,7 @@ import java.util.List;
 public class RobotContainer {
   // The robot's subsystems
   private final DriveSubsystem m_robotDrive;
+  private final IntakeXtakeSubsystem m_intakeShooter;
 
   // The driver's controller
   XboxController m_driverController;
@@ -43,11 +49,12 @@ public class RobotContainer {
    */
   public RobotContainer(
     XboxController _driverController,
-    DriveSubsystem _drive) {
+    DriveSubsystem _drive, IntakeXtakeSubsystem _intake) {
 
 
     m_driverController = _driverController;
     m_robotDrive = _drive;
+    m_intakeShooter = _intake;
 
     
     // Configure the button bindings
@@ -64,6 +71,16 @@ public class RobotContainer {
                 -MathUtil.applyDeadband(m_driverController.getRightX(), OIConstants.kDriveDeadband),
                 true),
             m_robotDrive));
+
+    Trigger shoot = new Trigger(() -> m_driverController.getRightTriggerAxis() > 0.5);
+    Trigger intake = new Trigger(() -> m_driverController.getLeftTriggerAxis() > 0.5);
+    Trigger aButton = new JoystickButton(m_driverController, Button.kA.value);
+    Trigger bButton = new JoystickButton(m_driverController, Button.kB.value);
+    
+    aButton.onTrue(new InstantCommand(() -> m_intakeShooter.shoot(0.5), m_intakeShooter));
+    aButton.onFalse(new InstantCommand(() -> m_intakeShooter.shoot(0), m_intakeShooter));
+    bButton.onTrue(new InstantCommand(() -> m_intakeShooter.intake(0.5), m_intakeShooter));
+    bButton.onFalse(new InstantCommand(() -> m_intakeShooter.intake(0), m_intakeShooter));
   }
 
   /**
@@ -76,7 +93,7 @@ public class RobotContainer {
    * {@link JoystickButton}.
    */
   private void configureButtonBindings() {
-    new JoystickButton(m_driverController, Button.kR1.value)
+    new JoystickButton(m_driverController, Button.kX.value)
         .whileTrue(new RunCommand(
             () -> m_robotDrive.setX(),
             m_robotDrive));

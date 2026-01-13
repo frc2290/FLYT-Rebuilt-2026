@@ -15,6 +15,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.subsystems.DriveSubsystem;
+import frc.robot.subsystems.IntakeXtakeSubsystem;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -36,6 +37,7 @@ public class Robot extends TimedRobot {
 
   /** Owns all hardware for swerve driving and exposes the drive commands. */
   private final DriveSubsystem m_robotDrive = new DriveSubsystem();
+  private final IntakeXtakeSubsystem m_intakeShooter = new IntakeXtakeSubsystem();
 
   /*Manages motors related to intake */
   // private final IntakeSubsystem m_robotintake = new IntakeSubsystem();
@@ -61,7 +63,8 @@ public class Robot extends TimedRobot {
     // autonomous chooser on the dashboard.
     m_robotContainer = new RobotContainer(
       m_driver,
-      m_robotDrive
+      m_robotDrive,
+      m_intakeShooter
     );
 
 
