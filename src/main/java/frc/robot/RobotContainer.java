@@ -34,15 +34,22 @@ import java.util.List;
  */
 public class RobotContainer {
   // The robot's subsystems
-  private final DriveSubsystem m_robotDrive = new DriveSubsystem();
+  private final DriveSubsystem m_robotDrive;
 
   // The driver's controller
-  XboxController m_driverController = new XboxController(OIConstants.kDriverControllerPort);
-
+  XboxController m_driverController;
   /**
    * The container for the robot. Contains subsystems, OI devices, and commands.
    */
-  public RobotContainer() {
+  public RobotContainer(
+    XboxController _driverController,
+    DriveSubsystem _drive) {
+
+
+    m_driverController = _driverController;
+    m_robotDrive = _drive;
+
+    
     // Configure the button bindings
     configureButtonBindings();
 

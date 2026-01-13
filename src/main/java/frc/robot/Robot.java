@@ -4,9 +4,17 @@
 
 package frc.robot;
 
+import org.littletonrobotics.urcl.URCL;
+
+import edu.wpi.first.wpilibj.DataLogManager;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj.TimedRobot;
+import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.subsystems.DriveSubsystem;
 
 /**
  * The VM is configured to automatically run this class, and to call the functions corresponding to
@@ -20,7 +28,28 @@ public class Robot extends TimedRobot {
 
   /** Container that wires up all subsystems, commands, and driver controls. */
   private RobotContainer m_robotContainer;
-  
+
+    /** Cached reference to the primary driver controller so subsystems can read axes. */
+  private XboxController m_driver = new XboxController(0);
+
+  // The robot's subsystems.
+
+  /** Owns all hardware for swerve driving and exposes the drive commands. */
+  private final DriveSubsystem m_robotDrive = new DriveSubsystem();
+
+  /*Manages motors related to intake */
+  // private final IntakeSubsystem m_robotintake = new IntakeSubsystem();
+
+  /* Manage robot shooter*/
+  // private final ShooterSubsystem m_robotshoot = new ShooterSubsystem():
+ 
+  /** Combines vision and gyro data to maintain the best guess at the robot's pose. */
+  //private final PoseEstimatorSubsystem m_poseEstimator = new PoseEstimatorSubsystem(m_robotDrive);
+
+  //Activate when climb implemented
+    /** Hooking subsystem used during endgame climbs. 
+  private final ClimbSubsystem m_climber = new ClimbSubsystem();*/
+
 
   /**
    * This function is run when the robot is first started up and should be used for any
@@ -30,7 +59,24 @@ public class Robot extends TimedRobot {
   public void robotInit() {
     // Instantiate our RobotContainer.  This will perform all our button bindings, and put our
     // autonomous chooser on the dashboard.
-    m_robotContainer = new RobotContainer();
+    m_robotContainer = new RobotContainer(
+      m_driver,
+      m_robotDrive
+    );
+
+
+
+
+    URCL.start();
+
+    // If logging only to DataLog.
+    URCL.start(DataLogManager.getLog());
+  
+    DataLogManager.start();
+    DriverStation.startDataLog(DataLogManager.getLog());
+    // Start the logging framework so we can view graphs after a match or practice run.
+    // Display the Command Scheduler Status
+    SmartDashboard.putData(CommandScheduler.getInstance());
   }
 
   /**
@@ -51,7 +97,9 @@ public class Robot extends TimedRobot {
 
   /** This function is called once each time the robot enters Disabled mode. */
   @Override
-  public void disabledInit() {}
+  public void disabledInit() {
+    //m_coordinator.robotDisabled(true);
+  }
 
   @Override
   public void disabledPeriodic() {}
@@ -59,6 +107,10 @@ public class Robot extends TimedRobot {
   /** This autonomous runs the autonomous command selected by your {@link RobotContainer} class. */
   @Override
   public void autonomousInit() {
+
+    // m_coordinator.robotAuto(true);
+    // m_coordinator.robotDisabled(false);
+    
     m_autonomousCommand = m_robotContainer.getAutonomousCommand();
 
     /*
@@ -80,6 +132,15 @@ public class Robot extends TimedRobot {
 
   @Override
   public void teleopInit() {
+
+    
+    // m_coordinator.robotAuto(false);
+    // m_coordinator.robotDisabled(false);
+    // // Reset both state machines back to their safe starting configuration for teleop.
+    // m_coordinator.setRobotGoal(RobotState.START_POSITION);
+
+
+
     // This makes sure that the autonomous stops running when
     // teleop starts running. If you want the autonomous to
     // continue until interrupted by another command, remove
@@ -87,6 +148,8 @@ public class Robot extends TimedRobot {
     if (m_autonomousCommand != null) {
       m_autonomousCommand.cancel();
     }
+
+    //CODE AT THE TOP WAS DISABLED LAST SEASON WITH COARDINATOR
   }
 
   /** This function is called periodically during operator control. */
@@ -95,6 +158,7 @@ public class Robot extends TimedRobot {
 
   @Override
   public void testInit() {
+
     // Cancels all running commands at the start of test mode.
     CommandScheduler.getInstance().cancelAll();
   }

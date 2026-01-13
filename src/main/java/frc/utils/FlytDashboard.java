@@ -30,7 +30,7 @@ import java.util.HashMap;
 import java.util.Map;
 
 /** FlytDashboardV2 - Pub/Sub-based NetworkTables wrapper */
-public class FlytDashboardV2 {
+public class FlytDashboard {
 
   private final NetworkTable table;
   private final Map<String, BooleanPublisher> boolPublishers = new HashMap<>();
@@ -43,7 +43,7 @@ public class FlytDashboardV2 {
   private final Map<String, DoubleSubscriber> doubleSubscribers = new HashMap<>();
   private final Map<String, StringSubscriber> stringSubscribers = new HashMap<>();
 
-  public FlytDashboardV2(String tableName) {
+  public FlytDashboard(String tableName) {
     this.table = NetworkTableInstance.getDefault().getTable(tableName);
   }
 
