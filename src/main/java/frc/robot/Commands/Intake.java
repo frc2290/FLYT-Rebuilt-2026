@@ -9,35 +9,37 @@ import frc.robot.subsystems.IntakeXtakeSubsystem;
 
 /* You should consider using the more terse Command factories API instead https://docs.wpilib.org/en/stable/docs/software/commandbased/organizing-command-based.html#defining-commands */
 public class Intake extends Command {
-  private IntakeXtakeSubsystem intake;
-  private double speed;
-  /** Creates a new Intake. */
-  public Intake(IntakeXtakeSubsystem m_intake, double m_speed) {
-    intake = m_intake;
-    speed = m_speed;
-    // Use addRequirements() here to declare subsystem dependencies.
-    addRequirements(intake);
-  }
+    private IntakeXtakeSubsystem intake;
+    private double speed;
 
-  // Called when the command is initially scheduled.
-  @Override
-  public void initialize() {}
+    /** Creates a new Intake. */
+    public Intake(IntakeXtakeSubsystem m_intake, double m_speed) {
+        intake = m_intake;
+        speed = m_speed;
+        // Use addRequirements() here to declare subsystem dependencies.
+        addRequirements(intake);
+    }
 
-  // Called every time the scheduler runs while the command is scheduled.
-  @Override
-  public void execute() {
-    intake.intake(speed);
-  }
+    // Called when the command is initially scheduled.
+    @Override
+    public void initialize() {
+    }
 
-  // Called once the command ends or is interrupted.
-  @Override
-  public void end(boolean interrupted) {
-    intake.intake(0);
-  }
+    // Called every time the scheduler runs while the command is scheduled.
+    @Override
+    public void execute() {
+        intake.intake(speed);
+    }
 
-  // Returns true when the command should end.
-  @Override
-  public boolean isFinished() {
-    return false;
-  }
+    // Called once the command ends or is interrupted.
+    @Override
+    public void end(boolean interrupted) {
+        intake.intake(0);
+    }
+
+    // Returns true when the command should end.
+    @Override
+    public boolean isFinished() {
+        return false;
+    }
 }
