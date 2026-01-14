@@ -14,6 +14,8 @@ import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrajectoryGenerator;
 import edu.wpi.first.wpilibj.XboxController;
+import frc.robot.Commands.Intake;
+import frc.robot.Commands.Shoot;
 import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.OIConstants;
@@ -77,10 +79,12 @@ public class RobotContainer {
     Trigger aButton = new JoystickButton(m_driverController, Button.kA.value);
     Trigger bButton = new JoystickButton(m_driverController, Button.kB.value);
     
-    aButton.onTrue(new InstantCommand(() -> m_intakeShooter.shoot(0.5), m_intakeShooter));
-    aButton.onFalse(new InstantCommand(() -> m_intakeShooter.shoot(0), m_intakeShooter));
-    bButton.onTrue(new InstantCommand(() -> m_intakeShooter.intake(0.5), m_intakeShooter));
-    bButton.onFalse(new InstantCommand(() -> m_intakeShooter.intake(0), m_intakeShooter));
+    //aButton.onTrue(new InstantCommand(() -> m_intakeShooter.shoot(0.5), m_intakeShooter));
+    //aButton.onFalse(new InstantCommand(() -> m_intakeShooter.shoot(0), m_intakeShooter));
+    //bButton.onTrue(new InstantCommand(() -> m_intakeShooter.intake(0.5), m_intakeShooter));
+    //bButton.onFalse(new InstantCommand(() -> m_intakeShooter.intake(0), m_intakeShooter));
+    aButton.whileTrue(new Shoot(_intake, 1));
+    bButton.whileTrue(new Intake(_intake, 1));
   }
 
   /**

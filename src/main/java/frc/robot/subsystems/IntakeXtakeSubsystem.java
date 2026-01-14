@@ -64,4 +64,12 @@ public class IntakeXtakeSubsystem extends SubsystemBase{
         intakeXtakeMotor.set(speed);
         in_intakeMotor.set(speed);
     }
+
+    public void hopperMotor(double speed) {
+        intakeXtakeMotor.set(speed);
+    }
+
+    public void shooterMotor(double speed) {
+        in_intakeMotor.set(speed);
+    }
 }
