@@ -36,8 +36,6 @@ public class DriveStateMachine extends SubsystemBase {
     private PoseEstimatorSubsystem pose;
     private XboxController driverController;
     private final DriveCommandFactory driveCommandFactory;
-    private double bargeHeadingDegrees;
-    private double climbHeadingDegrees;
 
     /** DriveTrain states - drive state machine */
     public enum DriveState {
@@ -53,16 +51,8 @@ public class DriveStateMachine extends SubsystemBase {
      */
     GraphCommandNode manualNode;
     GraphCommandNode followPathNode;
-    GraphCommandNode bargeRelativeNode;
-    GraphCommandNode climbRelativeNode;
-    GraphCommandNode processorRelativeNode;
-    GraphCommandNode coralStationNode;
-    GraphCommandNode reefRelativeNode;
-    GraphCommandNode reefAlignNode;
     GraphCommandNode cancelledNode;
 
-    // State variables
-    private boolean rightScore = false;
 
     /**
      * Constructor for the DriveStateMachine
@@ -114,7 +104,6 @@ public class DriveStateMachine extends SubsystemBase {
         // Define transitions between drive states
         cancelledNode.AddNode(manualNode, 1.0);
         manualNode.AddNode(cancelledNode, 1.0);
-        manualNode.AddNode(processorRelativeNode, 1.0);
         followPathNode.AddNode(cancelledNode, 1.0);
         followPathNode.AddNode(manualNode, 1.0);
 
