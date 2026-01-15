@@ -89,7 +89,16 @@ public class Robot extends TimedRobot {
         // If logging only to DataLog.
         URCL.start(DataLogManager.getLog());
 
+
+        URCL.start();
+
+        // If logging only to DataLog.
+        URCL.start(DataLogManager.getLog());
+
         SmartDashboard.putData(CommandScheduler.getInstance());
+        
+        //Display subystem satatus
+        SmartDashboard.putData(m_robotDrive);
         
         //Display subystem satatus
         SmartDashboard.putData(m_robotDrive);
@@ -158,6 +167,10 @@ public class Robot extends TimedRobot {
     @Override
     public void teleopInit() {
 
+        m_coordinator.robotAuto(false);
+        m_coordinator.robotDisabled(false);
+
+        m_coordinator.setRobotGoal(RobotState.START_POSITION);
         m_coordinator.robotAuto(false);
         m_coordinator.robotDisabled(false);
 
