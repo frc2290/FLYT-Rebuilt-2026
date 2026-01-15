@@ -16,7 +16,7 @@ import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.utils.FlytDashboard;
 
-public class IntakeXtakeSubsystem extends SubsystemBase{
+public class IntakeXtakeSubsystem extends SubsystemBase {
 
 
     private SparkMax intakeXtakeMotor;
@@ -45,11 +45,11 @@ public class IntakeXtakeSubsystem extends SubsystemBase{
         intakeXtakeConfig
             .inverted(true)
             .idleMode(IdleMode.kBrake)
-            .smartCurrentLimit(40);
+            .smartCurrentLimit(60);
         in_intakeConfig
             .inverted(false)
             .idleMode(IdleMode.kCoast)
-            .smartCurrentLimit(40);
+            .smartCurrentLimit(60);
 
         intakeXtakeMotor.configure(intakeXtakeConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);
         in_intakeMotor.configure(in_intakeConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters);

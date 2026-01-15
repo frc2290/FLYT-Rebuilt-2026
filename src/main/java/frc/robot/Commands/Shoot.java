@@ -34,7 +34,7 @@ public class Shoot extends Command {
         if (!shootWait.isRunning()) {
             shootWait.restart();
             intake.shooterMotor(speed);
-        } else if (shootWait.hasElapsed(0.5) && shootWait.isRunning()) {
+        } else if (shootWait.hasElapsed(2.5) && shootWait.isRunning()) {
             intake.hopperMotor(speed);
         }
     }
