@@ -16,7 +16,8 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.subsystems.DriveStateMachine;
 import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.subsystems.IntakeXtakeSubsystem;
-import frc.robot.subsystems.StateMachineCoordinator;
+import frc.robot.subsystems.Coordinator;
+import frc.robot.subsystems.Coordinator.RobotState;
 import frc.utils.PoseEstimatorSubsystem;
 
 /**
@@ -55,8 +56,8 @@ public class Robot extends TimedRobot {
       new DriveStateMachine(m_robotDrive, m_poseEstimator, m_driver);
 
     /** Central coordinator that keeps drive and manipulator state machines in sync. */
-    private final StateMachineCoordinator m_coordinator =
-      new StateMachineCoordinator(m_driveStateMachine);
+    private final Coordinator m_coordinator =
+      new Coordinator(m_driveStateMachine);
 
     /**
      * This function is run when the robot is first started up and should be used
