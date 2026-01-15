@@ -9,6 +9,7 @@ import static edu.wpi.first.math.util.Units.degreesToRadians;
 import java.util.List;
 
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
@@ -135,8 +136,8 @@ public final class Constants {
                 new Translation3d(0.0015, -0.3279, (0.9473 - 0.102)),
                 new Rotation3d(degreesToRadians(180), degreesToRadians(-45), degreesToRadians(-200)));
 
-        public static final double FIELD_LENGTH_METERS = 16.54175;
-        public static final double FIELD_WIDTH_METERS = 8.0137;
+        public static final double FIELD_LENGTH_METERS = 16.541;
+        public static final double FIELD_WIDTH_METERS = 8.069;
 
         // Pose on the opposite side of the field. Use with `relativeTo` to flip a pose
         // to the opposite alliance
@@ -148,19 +149,36 @@ public final class Constants {
 
         /*
          * April Tag IDs:
-         * -Red Coral stations: left 1, right 2
-         * -Red Processor 3
-         * -Red side of barge: blue barge 4, red barge 5
-         * -Red reef: FL 6, F 7, FR 8, BR 9, B 10, BL 11
-         * -Blue Coral Stations: right 12, left 13
-         * -Blue side of barge: blue barge 14, red barge 15
-         * -Blue processor: 16
-         * -Blue reef: FR 17, F 18, FL 19, BL 20, B 21, BR 22
+         * - Red Alliance:
+         *  - Left Trench: 6, 7
+         *  - Tower: 15, 16
+         *  - Outpost: 13, 14
+         *  - Right Trench: 12, 1
+         *  - Hub:
+         *   - Front: 9, 10
+         *   - Back: 3, 4
+         *   - Left: 5, 8
+         *   - Right: 11, 2
+         * - Blue Alliance:
+         *  - Left Trench: 22, 23
+         *  - Tower: 31, 32
+         *  - Outpost: 29, 30
+         *  - Right Trench: 17, 28
+         *  - Hub:
+         *   - Front: 25, 26
+         *   - Back: 19, 20
+         *   - Left: 21, 24
+         *   - Right: 18, 27 
          */
 
         public static final double inToM = 1 / 39.37;
         public final double mToIn = 39.37;
 
+        public static final Pose3d hubCenter = new Pose3d(4.626, 4.035, 1.829, new Rotation3d(0, 0, 0));
+        public static final Pose2d outpost = new Pose2d(0, 0.665988, new Rotation2d(0)); // human player station (change x pos)
+        public static final Pose2d depot = new Pose2d(0.6858, 5.963158, new Rotation2d(0));
+        public static final Pose2d tower = new Pose2d(1.055624, 3.745484, new Rotation2d(0));
+        
         // R2OC Red and Blue average Pose
         public static final List<Pose2d> leftBranches = List.of(
                 new Pose2d(3.182, 4.192, new Rotation2d(Math.toRadians(-1.4))), // 18_LEFT
