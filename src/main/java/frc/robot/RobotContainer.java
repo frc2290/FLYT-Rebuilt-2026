@@ -19,17 +19,24 @@ import frc.robot.Commands.Shoot;
 import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.OIConstants;
+import frc.robot.subsystems.Coordinator;
+import frc.robot.subsystems.Coordinator.ControllerProfile;
+import frc.robot.subsystems.DriveStateMachine;
 import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.subsystems.IntakeXtakeSubsystem;
 import frc.utils.PoseEstimatorSubsystem;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.RunCommand;
 import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
+import edu.wpi.first.wpilibj2.command.button.POVButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.XboxController.Button;
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
 import java.util.List;
 
@@ -44,120 +51,288 @@ public class RobotContainer {
     private final DriveSubsystem m_robotDrive;
     private final IntakeXtakeSubsystem m_intakeShooter;
     private final PoseEstimatorSubsystem m_PoseEstimator;
+    private final DriveStateMachine m_drive_state;
+    private final Coordinator m_coordinator;
 
     // The driver's controller
     XboxController m_driverController;
+
+      SendableChooser<Command> auto_chooser = new SendableChooser<>();
 
     /**
      * The container for the robot. Contains subsystems, OI devices, and commands.
      */
     public RobotContainer(
-            XboxController _driverController,
             DriveSubsystem _drive,
             IntakeXtakeSubsystem _intake,
-            PoseEstimatorSubsystem _PoseEstimator) {
+            PoseEstimatorSubsystem _PoseEstimator,
+            DriveStateMachine _driveStateMachine,
+            Coordinator _coordinator,
+            XboxController _driverController) {
 
-        m_driverController = _driverController;
+
         m_robotDrive = _drive;
         m_intakeShooter = _intake;
         m_PoseEstimator = _PoseEstimator;
+        m_drive_state = _driveStateMachine;
+        m_coordinator = _coordinator;
+        m_driverController = _driverController;
+        
+
 
         // Configure the button bindings
         configureButtonBindings();
 
-        // Configure default commands
-        m_robotDrive.setDefaultCommand(
-                // The left stick controls translation of the robot.
-                // Turning is controlled by the X axis of the right stick.
-                new RunCommand(
-                        () -> m_robotDrive.drive(
-                                -MathUtil.applyDeadband(m_driverController.getLeftY(), OIConstants.kDriveDeadband),
-                                -MathUtil.applyDeadband(m_driverController.getLeftX(), OIConstants.kDriveDeadband),
-                                -MathUtil.applyDeadband(m_driverController.getRightX(), OIConstants.kDriveDeadband),
-                                true),
-                        m_robotDrive));
 
-        Trigger shoot = new Trigger(() -> m_driverController.getRightTriggerAxis() > 0.5);
-        Trigger intake = new Trigger(() -> m_driverController.getLeftTriggerAxis() > 0.5);
-        Trigger aButton = new JoystickButton(m_driverController, Button.kA.value);
-        Trigger bButton = new JoystickButton(m_driverController, Button.kB.value);
+        //Auto poses place here
+        SmartDashboard.putData(auto_chooser);
 
-        // aButton.onTrue(new InstantCommand(() -> m_intakeShooter.shoot(0.5),
-        // m_intakeShooter));
-        // aButton.onFalse(new InstantCommand(() -> m_intakeShooter.shoot(0),
-        // m_intakeShooter));
-        // bButton.onTrue(new InstantCommand(() -> m_intakeShooter.intake(0.5),
-        // m_intakeShooter));
-        // bButton.onFalse(new InstantCommand(() -> m_intakeShooter.intake(0),
-        // m_intakeShooter));
-        aButton.whileTrue(new Shoot(_intake, 1));
-        bButton.whileTrue(new Intake(_intake, 1));
+        // // Configure default commands
+        // m_robotDrive.setDefaultCommand(
+        //         // The left stick controls translation of the robot.
+        //         // Turning is controlled by the X axis of the right stick.
+        //         new RunCommand(
+        //                 () -> m_robotDrive.drive(
+        //                         -MathUtil.applyDeadband(m_driverController.getLeftY(), OIConstants.kDriveDeadband),
+        //                         -MathUtil.applyDeadband(m_driverController.getLeftX(), OIConstants.kDriveDeadband),
+        //                         -MathUtil.applyDeadband(m_driverController.getRightX(), OIConstants.kDriveDeadband),
+        //                         true),
+        //                 m_robotDrive));
+
+        // Trigger shoot = new Trigger(() -> m_driverController.getRightTriggerAxis() > 0.5);
+        // Trigger intake = new Trigger(() -> m_driverController.getLeftTriggerAxis() > 0.5);
+        // Trigger aButton = new JoystickButton(m_driverController, Button.kA.value);
+        // Trigger bButton = new JoystickButton(m_driverController, Button.kB.value);
+
+        // // aButton.onTrue(new InstantCommand(() -> m_intakeShooter.shoot(0.5),
+        // // m_intakeShooter));
+        // // aButton.onFalse(new InstantCommand(() -> m_intakeShooter.shoot(0),
+        // // m_intakeShooter));
+        // // bButton.onTrue(new InstantCommand(() -> m_intakeShooter.intake(0.5),
+        // // m_intakeShooter));
+        // // bButton.onFalse(new InstantCommand(() -> m_intakeShooter.intake(0),
+        // // m_intakeShooter));
+        // aButton.whileTrue(new Shoot(_intake, 1));
+        // bButton.whileTrue(new Intake(_intake, 1));
     }
 
-    /**
-     * Use this method to define your button->command mappings. Buttons can be
-     * created by
-     * instantiating a {@link edu.wpi.first.wpilibj.GenericHID} or one of its
-     * subclasses ({@link
-     * edu.wpi.first.wpilibj.Joystick} or {@link XboxController}), and then calling
-     * passing it to a
-     * {@link JoystickButton}.
-     */
-    private void configureButtonBindings() {
-        new JoystickButton(m_driverController, Button.kX.value)
-                .whileTrue(new RunCommand(
-                        () -> m_robotDrive.setX(),
-                        m_robotDrive));
 
-        new JoystickButton(m_driverController, XboxController.Button.kStart.value)
-                .onTrue(new InstantCommand(
-                        () -> m_robotDrive.zeroHeading(),
-                        m_robotDrive));
-    }
+//     private void configureButtonBindings() {
+//         new JoystickButton(m_driverController, Button.kX.value)
+//                 .whileTrue(new RunCommand(
+//                         () -> m_robotDrive.setX(),
+//                         m_robotDrive));
 
+//         new JoystickButton(m_driverController, XboxController.Button.kStart.value)
+//                 .onTrue(new InstantCommand(
+//                         () -> m_robotDrive.zeroHeading(),
+//                         m_robotDrive));
+//     }
+
+
+ private void configureButtonBindings() {
+
+    // Button definitions.
+    // Map the raw controller buttons to descriptive names for readability.
+    JoystickButton a_button = new JoystickButton(m_driverController, Button.kA.value);
+    JoystickButton b_button = new JoystickButton(m_driverController, Button.kB.value);
+    JoystickButton y_button = new JoystickButton(m_driverController, Button.kY.value);
+    JoystickButton x_button = new JoystickButton(m_driverController, Button.kX.value);
+    JoystickButton left_bumper = new JoystickButton(m_driverController, Button.kLeftBumper.value);
+    JoystickButton right_bumper = new JoystickButton(m_driverController, Button.kRightBumper.value);
+    JoystickButton start_button = new JoystickButton(m_driverController, Button.kStart.value);
+    JoystickButton right_stick = new JoystickButton(m_driverController, Button.kRightStick.value);
+    Trigger right_trigger = new Trigger(() -> m_driverController.getRightTriggerAxis() > 0.5);
+    Trigger left_trigger = new Trigger(() -> m_driverController.getLeftTriggerAxis() > 0.5);
+    POVButton dpad_up = new POVButton(m_driverController, 0);
+    POVButton dpad_down = new POVButton(m_driverController, 180);
+    POVButton dpad_left = new POVButton(m_driverController, 270);
+    POVButton dpad_right = new POVButton(m_driverController, 90);
+
+    // Profile triggers make it easy to reuse button bindings while the controller changes modes.
+//     Trigger coral_profileTrigger =
+//         new Trigger(
+//             () ->
+//                 m_coordinator.getCurrentControllerProfile()
+//                     == StateMachineCoordinator.ControllerProfile.DEFAULT_CORAL);
+//     Trigger algae_profileTrigger =
+//         new Trigger(
+//             () ->
+//                 m_coordinator.getCurrentControllerProfile()
+//                     == StateMachineCoordinator.ControllerProfile.ALGAE);
+//     Trigger manual_profileTrigger =
+//         new Trigger(
+//             () ->
+//                 m_coordinator.getCurrentControllerProfile()
+//                     == StateMachineCoordinator.ControllerProfile.MANUAL);
+//     Trigger climbe_profileTrigger =
+//         new Trigger(
+//             () ->
+//                 m_coordinator.getCurrentControllerProfile()
+//                     == StateMachineCoordinator.ControllerProfile.Climb);
+
+//     // Controller buttons.
+//     (a_button)
+//         .and(coral_profileTrigger)
+//         .onTrue(
+//             new InstantCommand(
+//                 () ->
+//                     m_coordinator.setRobotGoal(
+//                         RobotState.L1))); // Request the intake coral routine.
+//     (b_button)
+//         .and(coral_profileTrigger)
+//         .onTrue(
+//             new InstantCommand(
+//                 () ->
+//                     m_coordinator.setRobotGoal(RobotState.L2))); // Request the L2 scoring routine.
+//     (y_button)
+//         .and(coral_profileTrigger)
+//         .onTrue(
+//             new InstantCommand(
+//                 () ->
+//                     m_coordinator.setRobotGoal(RobotState.L3))); // Request the L3 scoring routine.
+//     (x_button)
+//         .and(coral_profileTrigger)
+//         .onTrue(
+//             new InstantCommand(
+//                 () ->
+//                     m_coordinator.setRobotGoal(RobotState.L4))); // Request the L4 scoring routine.
+
+//     (a_button)
+//         .and(algae_profileTrigger)
+//         .onTrue(
+//             new InstantCommand(
+//                 () ->
+//                     m_coordinator.setRobotGoal(
+//                         RobotState.PROCESSOR))); // Request Score Algage Processor
+//     (b_button)
+//         .and(algae_profileTrigger)
+//         .onTrue(
+//             new InstantCommand(
+//                 () -> m_coordinator.setRobotGoal(RobotState.ALGAE_L2))); // Request Intake Algae L2
+//     (y_button)
+//         .and(algae_profileTrigger)
+//         .onTrue(
+//             new InstantCommand(
+//                 () -> m_coordinator.setRobotGoal(RobotState.ALGAE_L3))); // Request Intake Algae L3
+//     (x_button)
+//         .and(algae_profileTrigger)
+//         .onTrue(
+//             new InstantCommand(
+//                 () -> m_coordinator.setRobotGoal(RobotState.BARGE))); // Request Barge
+
+//     (b_button)
+//         .and(start_button)
+//         .and(climbe_profileTrigger)
+//         .onTrue(
+//             new InstantCommand(
+//                 () ->
+//                     m_coordinator.setRobotGoal(
+//                         RobotState.CLIMB_ABORT))); // Request Score Algage Processor
+//     // (b_button).and(climbe_profileTrigger).onTrue(new InstantCommand(()
+//     // ->m_coordinator.setRobotGoal(RobotState.ALGAE_L2))); // Request Intake Algae L2
+//     (y_button)
+//         .and(climbe_profileTrigger)
+//         .onTrue(
+//             new InstantCommand(
+//                 () ->
+//                     m_coordinator.setRobotGoal(RobotState.CLIMB_READY))); // Request Intake Algae L3
+//     (a_button)
+//         .and(climbe_profileTrigger)
+//         .onTrue(
+//             new InstantCommand(
+//                 () -> m_coordinator.setRobotGoal(RobotState.CLIMB))); // Request Barge
+//     // Controller bumpers.
+//     (left_bumper)
+//         .onTrue(
+//             new InstantCommand(
+//                 () -> m_coordinator.setRightScore(false))); // Select the left reef branch.
+//     (right_bumper)
+//         .onTrue(
+//             new InstantCommand(
+//                 () -> m_coordinator.setRightScore(true))); // Select the right reef branch.
+
+//     // Controller triggers.
+//     left_trigger
+//         .onTrue(new InstantCommand(() -> m_coordinator.setReefAlign(true)))
+//         .onFalse(
+//             new InstantCommand(
+//                 () ->
+//                     m_coordinator.setReefAlign(
+//                         false))); // While held the robot tries to align with the reef.
+//     right_trigger
+//         .onTrue(new InstantCommand(() -> m_coordinator.requestToScore(true)))
+//         .onFalse(new InstantCommand(() -> m_coordinator.requestToScore(false)));
+
+//     // Legacy logic for automatically switching modes lives in the state machine now.
+//     // hasCoral.or(hasAlgae).and(notAuto).onFalse(m_state.setGoalDriveCommand(DriveState.CoralStation)).onTrue(m_state.setGoalDriveCommand(DriveState.Teleop));
+
+//     // Manual controls.
+//     dpad_up.toggleOnTrue(
+//         new ParallelCommandGroup(
+//             new InstantCommand(
+//                 () -> m_coordinator.setControllerProfile(ControllerProfile.DEFAULT_CORAL)),
+//             new InstantCommand(
+//                 () ->
+//                     m_coordinator.setRobotGoal(
+//                         RobotState.SAFE_CORAL_TRANSPORT)))); // Coral profile with safe travel goal.
+
+//     dpad_down.toggleOnTrue(
+//         new ParallelCommandGroup(
+//             new InstantCommand(() -> m_coordinator.setControllerProfile(ControllerProfile.ALGAE)),
+//             new InstantCommand(
+//                 () ->
+//                     m_coordinator.setRobotGoal(
+//                         RobotState.SAFE_ALGAE_TRANSPORT)))); // Algae profile with safe travel goal.
+
+//     dpad_left.toggleOnTrue(
+//         new ParallelCommandGroup(
+//             new InstantCommand(() -> m_coordinator.setControllerProfile(ControllerProfile.MANUAL)),
+//             new InstantCommand(
+//                 () -> m_coordinator.setRobotGoal(RobotState.MANUAL)))); // Manual profile.
+
+//     dpad_right
+//         .and(start_button)
+//         .toggleOnTrue(
+//             new ParallelCommandGroup( // against accidental presses
+//                 new InstantCommand(
+//                     () ->
+//                         m_coordinator.setControllerProfile(
+//                             ControllerProfile
+//                                 .Climb)), // this is for protection against scoring in climb profile
+//                 new InstantCommand(
+//                     () -> m_coordinator.setRobotGoal(RobotState.MANUAL)))); // Manual profile.
+
+//     manual_profileTrigger
+//         .and(y_button)
+//         .onTrue(m_elevator.incrementElevatorSetpoint(0.025)); // Manual move elevator up.
+//     manual_profileTrigger
+//         .and(a_button)
+//         .onTrue(m_elevator.incrementElevatorSetpoint(-0.025)); // Manual move elevator down.
+//     manual_profileTrigger
+//         .and(x_button)
+//         .onTrue(m_DiffArm.incrementExtensionSetpoint(5)); // Manual move diff arm out.
+//     manual_profileTrigger
+//         .and(b_button)
+//         .onTrue(m_DiffArm.incrementExtensionSetpoint(-5)); // Manual move diff arm in.
+//     manual_profileTrigger
+//         .and(left_bumper)
+//         .onTrue(m_DiffArm.incrementRotationSetpoint(5)); // Manual rotate diff arm out.
+//     manual_profileTrigger
+//         .and(right_bumper)
+//         .onTrue(m_DiffArm.incrementRotationSetpoint(-5)); // Manual rotate diff arm in.
+
+    // Other controls.
+    right_stick
+        .and(dpad_right)
+        .onTrue(new InstantCommand(() -> m_robotDrive.zeroHeading())); // Manual heading reset.
+  }
     /**
      * Use this to pass the autonomous command to the main {@link Robot} class.
      *
      * @return the command to run in autonomous
      */
     public Command getAutonomousCommand() {
-        // Create config for trajectory
-        TrajectoryConfig config = new TrajectoryConfig(
-                AutoConstants.kMaxSpeedMetersPerSecond,
-                AutoConstants.kMaxAccelerationMetersPerSecondSquared)
-                // Add kinematics to ensure max speed is actually obeyed
-                .setKinematics(DriveConstants.kDriveKinematics);
-
-        // An example trajectory to follow. All units in meters.
-        Trajectory exampleTrajectory = TrajectoryGenerator.generateTrajectory(
-                // Start at the origin facing the +X direction
-                new Pose2d(0, 0, new Rotation2d(0)),
-                // Pass through these two interior waypoints, making an 's' curve path
-                List.of(new Translation2d(1, 1), new Translation2d(2, -1)),
-                // End 3 meters straight ahead of where we started, facing forward
-                new Pose2d(3, 0, new Rotation2d(0)),
-                config);
-
-        var thetaController = new ProfiledPIDController(
-                AutoConstants.kPThetaController, 0, 0, AutoConstants.kThetaControllerConstraints);
-        thetaController.enableContinuousInput(-Math.PI, Math.PI);
-
-        SwerveControllerCommand swerveControllerCommand = new SwerveControllerCommand(
-                exampleTrajectory,
-                m_robotDrive::getPose, // Functional interface to feed supplier
-                DriveConstants.kDriveKinematics,
-
-                // Position controllers
-                new PIDController(AutoConstants.kPXController, 0, 0),
-                new PIDController(AutoConstants.kPYController, 0, 0),
-                thetaController,
-                m_robotDrive::setModuleStates,
-                m_robotDrive);
-
-        // Reset odometry to the starting pose of the trajectory.
-        m_robotDrive.resetOdometry(exampleTrajectory.getInitialPose());
-
-        // Run path following command, then stop at the end.
-        return swerveControllerCommand.andThen(() -> m_robotDrive.drive(0, 0, 0, false));
+        return auto_chooser.getSelected();
     }
 }

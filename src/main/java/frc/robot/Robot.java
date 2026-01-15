@@ -8,14 +8,16 @@ import org.littletonrobotics.urcl.URCL;
 
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.RobotState;
 import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
+import frc.robot.subsystems.DriveStateMachine;
 import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.subsystems.IntakeXtakeSubsystem;
+import frc.robot.subsystems.Coordinator;
+import frc.robot.subsystems.Coordinator.RobotState;
 import frc.utils.PoseEstimatorSubsystem;
 
 /**
@@ -44,29 +46,18 @@ public class Robot extends TimedRobot {
     private XboxController m_driver = new XboxController(0);
 
     // The robot's subsystems.
-
     /** Owns all hardware for swerve driving and exposes the drive commands. */
     private final DriveSubsystem m_robotDrive = new DriveSubsystem();
     private final IntakeXtakeSubsystem m_intakeShooter = new IntakeXtakeSubsystem();
     private final PoseEstimatorSubsystem m_poseEstimator = new PoseEstimatorSubsystem(m_robotDrive);
 
-    /* Manages motors related to intake */
-    // private final IntakeSubsystem m_robotintake = new IntakeSubsystem();
+    /** Coordinates all autonomous and teleop driving modes. */
+    private final DriveStateMachine m_driveStateMachine =
+      new DriveStateMachine(m_robotDrive, m_poseEstimator, m_driver);
 
-    /* Manage robot shooter */
-    // private final ShooterSubsystem m_robotshoot = new ShooterSubsystem():
-
-    /**
-     * Combines vision and gyro data to maintain the best guess at the robot's pose.
-     */
-    // private final PoseEstimatorSubsystem m_poseEstimator = new
-    // PoseEstimatorSubsystem(m_robotDrive);
-
-    // Activate when climb implemented
-    /**
-     * Hooking subsystem used during endgame climbs.
-     * private final ClimbSubsystem m_climber = new ClimbSubsystem();
-     */
+    /** Central coordinator that keeps drive and manipulator state machines in sync. */
+    private final Coordinator m_coordinator =
+      new Coordinator(m_driveStateMachine);
 
     /**
      * This function is run when the robot is first started up and should be used
@@ -79,22 +70,35 @@ public class Robot extends TimedRobot {
         // and put our
         // autonomous chooser on the dashboard.
         m_robotContainer = new RobotContainer(
-                m_driver,
                 m_robotDrive,
                 m_intakeShooter,
-                m_poseEstimator);
+                m_poseEstimator,
+                m_driveStateMachine,
+                m_coordinator,
+                m_driver);
 
-        URCL.start();
 
-        // If logging only to DataLog.
-        URCL.start(DataLogManager.getLog());
 
         DataLogManager.start();
         DriverStation.startDataLog(DataLogManager.getLog());
         // Start the logging framework so we can view graphs after a match or practice
         // run.
         // Display the Command Scheduler Status
+
+        URCL.start();
+
+        // If logging only to DataLog.
+        URCL.start(DataLogManager.getLog());
+
+
+
+
         SmartDashboard.putData(CommandScheduler.getInstance());
+        
+        //Display subystem satatus
+        SmartDashboard.putData(m_robotDrive);
+        
+
     }
 
     /**
@@ -119,7 +123,6 @@ public class Robot extends TimedRobot {
         CommandScheduler.getInstance().run();
     }
 
-    /** This function is called once each time the robot enters Disabled mode. */
     @Override
     public void disabledInit() {
         // m_coordinator.robotDisabled(true);
@@ -136,9 +139,8 @@ public class Robot extends TimedRobot {
     @Override
     public void autonomousInit() {
 
-        // m_coordinator.robotAuto(true);
-        // m_coordinator.robotDisabled(false);
-
+        m_coordinator.robotAuto(true);
+        m_coordinator.robotDisabled(false);
         m_autonomousCommand = m_robotContainer.getAutonomousCommand();
 
         /*
@@ -162,11 +164,12 @@ public class Robot extends TimedRobot {
     @Override
     public void teleopInit() {
 
-        // m_coordinator.robotAuto(false);
-        // m_coordinator.robotDisabled(false);
-        // // Reset both state machines back to their safe starting configuration for
-        // teleop.
-        // m_coordinator.setRobotGoal(RobotState.START_POSITION);
+        m_coordinator.robotAuto(false);
+        m_coordinator.robotDisabled(false);
+
+        m_coordinator.setRobotGoal(RobotState.START_POSITION);
+
+
 
         // This makes sure that the autonomous stops running when
         // teleop starts running. If you want the autonomous to
