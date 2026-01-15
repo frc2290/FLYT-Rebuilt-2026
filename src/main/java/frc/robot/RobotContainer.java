@@ -275,13 +275,13 @@ public class RobotContainer {
                  () -> m_coordinator.setRobotGoal(
                         RobotState.MANUAL)))); // Manual
 
-//     dpad_up.toggleOnTrue(
-//         new ParallelCommandGroup(
-//             new InstantCommand(() -> m_coordinator.setControllerProfile(ControllerProfile.ALGAE)),
-//             new InstantCommand(
-//                 () ->
-//                     m_coordinator.setRobotGoal(
-//                         RobotState.SAFE_ALGAE_TRANSPORT)))); // Algae profile with safe travel goal.
+    dpad_up.toggleOnTrue(
+         new ParallelCommandGroup(
+             new InstantCommand(() -> m_coordinator.setControllerProfile(ControllerProfile.MANUAL)),
+             new InstantCommand(
+                 () ->
+                     m_coordinator.setRobotGoal(
+                        RobotState.SHOOT)))); // Algae profile with safe travel goal.
 
 //     dpad_down.toggleOnTrue(
 //         new ParallelCommandGroup(

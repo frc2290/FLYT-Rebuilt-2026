@@ -174,10 +174,10 @@ public final class Constants {
         public static final double inToM = 1 / 39.37;
         public final double mToIn = 39.37;
 
-        public static final Pose3d hubCenter = new Pose3d(4.626, 4.035, 1.829, new Rotation3d(0, 0, 0));
-        public static final Pose2d outpost = new Pose2d(0, 0.665988, new Rotation2d(0)); // human player station (change x pos)
-        public static final Pose2d depot = new Pose2d(0.6858, 5.963158, new Rotation2d(0));
-        public static final Pose2d tower = new Pose2d(1.055624, 3.745484, new Rotation2d(0));
+        public static final Pose3d hubCenterPose = new Pose3d(4.626, 4.035, 1.829, new Rotation3d(0, 0, 0));
+        public static final Pose2d outpostPose = new Pose2d(0, 0.665988, new Rotation2d(0)); // human player station (change x pos)
+        public static final Pose2d depotPose = new Pose2d(0.6858, 5.963158, new Rotation2d(0));
+        public static final Pose2d towerPose = new Pose2d(1.055624, 3.745484, new Rotation2d(0));
         
         // R2OC Red and Blue average Pose
         public static final List<Pose2d> leftBranches = List.of(
