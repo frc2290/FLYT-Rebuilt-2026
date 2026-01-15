@@ -20,11 +20,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.DriveStateMachine.DriveState;
-import frc.robot.subsystems.ManipulatorStateMachine.ElevatorManipulatorState;
-import frc.utils.FlytDashboardV2;
-import frc.utils.LEDEffects;
-import frc.utils.LEDEffects.LEDEffect;
-import frc.utils.LEDUtility;
+
 
 /** Bridges the drive and manipulator state machines while updating LEDs for feedback. */
 public class StateMachineCoordinator extends SubsystemBase {
