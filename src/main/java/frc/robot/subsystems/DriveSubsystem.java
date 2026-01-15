@@ -9,6 +9,7 @@ import com.studica.frc.AHRS.NavXComType;
 import edu.wpi.first.hal.FRCNetComm.tInstances;
 import edu.wpi.first.hal.FRCNetComm.tResourceType;
 import edu.wpi.first.hal.HAL;
+import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -43,6 +44,20 @@ public class DriveSubsystem extends SubsystemBase {
 
     // The gyro sensor
     private final AHRS m_gyro = new AHRS(NavXComType.kMXP_SPI);
+
+    /**
+     * Scaling factor used when the robot is in "slow" mode for precision driving.
+     */
+    private double slowSpeed = 1.0;
+
+    /** PID used for heading control when commands request a specific angle. */
+    private PIDController rotPid = new PIDController(0.01, 0.0, 0.0); // 0.015 0 0
+
+    /** PID used to correct X position errors during auto-alignment routines. */
+    private PIDController xPid = new PIDController(1, 0.0, 0.085); // 2 0.0 0.5
+
+    /** PID used to correct Y position errors during auto-alignment routines. */
+    private PIDController yPid = new PIDController(1, 0.0, 0.085); // 2 0.0 0.5
 
     // Odometry class for tracking robot pose
     SwerveDriveOdometry m_odometry = new SwerveDriveOdometry(
@@ -212,5 +227,29 @@ public class DriveSubsystem extends SubsystemBase {
                 m_rearRight.getState()
         };
         return states;
+    }
+
+    public void setSlowSpeed() {
+        slowSpeed = 0.5;
+    }
+
+    public void setRegularSpeed() {
+        slowSpeed = 1;
+    }
+
+    public boolean isSlowSpeed() {
+        return slowSpeed < 1;
+    }
+
+    public PIDController getRotPidController() {
+        return rotPid;
+    }
+
+    public PIDController getXPidController() {
+        return xPid;
+    }
+
+    public PIDController getYPidController() {
+        return yPid;
     }
 }
