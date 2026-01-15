@@ -21,6 +21,7 @@ import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.OIConstants;
 import frc.robot.subsystems.Coordinator;
 import frc.robot.subsystems.Coordinator.ControllerProfile;
+import frc.robot.subsystems.Coordinator.RobotState;
 import frc.robot.subsystems.DriveStateMachine;
 import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.subsystems.IntakeXtakeSubsystem;
@@ -264,20 +265,17 @@ public class RobotContainer {
 //         .onTrue(new InstantCommand(() -> m_coordinator.requestToScore(true)))
 //         .onFalse(new InstantCommand(() -> m_coordinator.requestToScore(false)));
 
-//     // Legacy logic for automatically switching modes lives in the state machine now.
-//     // hasCoral.or(hasAlgae).and(notAuto).onFalse(m_state.setGoalDriveCommand(DriveState.CoralStation)).onTrue(m_state.setGoalDriveCommand(DriveState.Teleop));
 
-//     // Manual controls.
+     // Manual controls.
+     dpad_left.toggleOnTrue(
+         new ParallelCommandGroup(
+             new InstantCommand(
+                 () -> m_coordinator.setControllerProfile(ControllerProfile.MANUAL)),
+             new InstantCommand(
+                 () -> m_coordinator.setRobotGoal(
+                        RobotState.MANUAL)))); // Manual
+
 //     dpad_up.toggleOnTrue(
-//         new ParallelCommandGroup(
-//             new InstantCommand(
-//                 () -> m_coordinator.setControllerProfile(ControllerProfile.DEFAULT_CORAL)),
-//             new InstantCommand(
-//                 () ->
-//                     m_coordinator.setRobotGoal(
-//                         RobotState.SAFE_CORAL_TRANSPORT)))); // Coral profile with safe travel goal.
-
-//     dpad_down.toggleOnTrue(
 //         new ParallelCommandGroup(
 //             new InstantCommand(() -> m_coordinator.setControllerProfile(ControllerProfile.ALGAE)),
 //             new InstantCommand(
@@ -285,7 +283,7 @@ public class RobotContainer {
 //                     m_coordinator.setRobotGoal(
 //                         RobotState.SAFE_ALGAE_TRANSPORT)))); // Algae profile with safe travel goal.
 
-//     dpad_left.toggleOnTrue(
+//     dpad_down.toggleOnTrue(
 //         new ParallelCommandGroup(
 //             new InstantCommand(() -> m_coordinator.setControllerProfile(ControllerProfile.MANUAL)),
 //             new InstantCommand(
