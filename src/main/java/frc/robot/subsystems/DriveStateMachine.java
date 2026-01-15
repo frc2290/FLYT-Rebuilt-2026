@@ -43,6 +43,7 @@ public class DriveStateMachine extends SubsystemBase {
         FOLLOW_PATH, // Auto path following
         CLIMB_RELATIVE,
         FIELD_ORIENTED,
+        HUB_ORIENTED,
         CANCELLED; // Drive system cancelled
     }
 
@@ -51,8 +52,8 @@ public class DriveStateMachine extends SubsystemBase {
      */
     GraphCommandNode manualNode;
     GraphCommandNode followPathNode;
+    GraphCommandNode pointAtHubNode;
     GraphCommandNode cancelledNode;
-
 
     /**
      * Constructor for the DriveStateMachine
@@ -89,6 +90,12 @@ public class DriveStateMachine extends SubsystemBase {
                 new PrintCommand(""),
                 driveCommandFactory.createManualDriveCommand());
 
+        pointAtHubNode = m_graphCommand.new GraphCommandNode(
+                "PoinAtHub",
+                new PrintCommand(""),
+                new PrintCommand(""),
+                driveCommandFactory.createPointingAtPoseCommand(() -> VisionConstants.hubCenterPose.toPose2d(), false));
+
         followPathNode = m_graphCommand.new GraphCommandNode(
                 "FollowPath",
                 Commands.none(),
@@ -104,14 +111,13 @@ public class DriveStateMachine extends SubsystemBase {
         // Define transitions between drive states
         cancelledNode.AddNode(manualNode, 1.0);
         manualNode.AddNode(cancelledNode, 1.0);
+        manualNode.AddNode(pointAtHubNode,1.0,false);
         followPathNode.AddNode(cancelledNode, 1.0);
         followPathNode.AddNode(manualNode, 1.0);
 
     }
 
     /** ----- Branch Selection ----- */
-
-
 
     /** ----- State Transition Commands ----- */
 
@@ -127,6 +133,9 @@ public class DriveStateMachine extends SubsystemBase {
                 break;
             case FOLLOW_PATH:
                 m_graphCommand.setTargetNode(followPathNode);
+                break;
+            case HUB_ORIENTED:
+                m_graphCommand.setTargetNode(pointAtHubNode);
                 break;
             case CANCELLED:
                 m_graphCommand.setTargetNode(cancelledNode);
@@ -163,6 +172,8 @@ public class DriveStateMachine extends SubsystemBase {
             return DriveState.MANUAL;
         if (currentNode == followPathNode)
             return DriveState.FOLLOW_PATH;
+        if (currentNode == pointAtHubNode)
+            return DriveState.HUB_ORIENTED;
         if (currentNode == cancelledNode)
             return DriveState.CANCELLED;
         return DriveState.MANUAL; // Default

@@ -51,7 +51,7 @@ public class DriveSubsystem extends SubsystemBase {
     private double slowSpeed = 1.0;
 
     /** PID used for heading control when commands request a specific angle. */
-    private PIDController rotPid = new PIDController(0.01, 0.0, 0.0); // 0.015 0 0
+    private PIDController rotPid = new PIDController(0.0001, 0.0, 0.0); // 0.015 0 0
 
     /** PID used to correct X position errors during auto-alignment routines. */
     private PIDController xPid = new PIDController(1, 0.0, 0.085); // 2 0.0 0.5
