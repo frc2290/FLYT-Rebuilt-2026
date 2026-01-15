@@ -17,6 +17,7 @@ import frc.robot.subsystems.DriveStateMachine;
 import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.subsystems.IntakeXtakeSubsystem;
 import frc.robot.subsystems.StateMachineCoordinator;
+import frc.utils.PoseEstimatorSubsystem;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -47,6 +48,7 @@ public class Robot extends TimedRobot {
     /** Owns all hardware for swerve driving and exposes the drive commands. */
     private final DriveSubsystem m_robotDrive = new DriveSubsystem();
     private final IntakeXtakeSubsystem m_intakeShooter = new IntakeXtakeSubsystem();
+    private final PoseEstimatorSubsystem m_poseEstimator = new PoseEstimatorSubsystem(m_robotDrive);
 
     /** Coordinates all autonomous and teleop driving modes. */
     private final DriveStateMachine m_driveStateMachine =
@@ -71,7 +73,8 @@ public class Robot extends TimedRobot {
                 m_intakeShooter
                 m_driveStateMachine,
                 m_coordinator,
-                m_driver);
+                m_driver,
+                m_poseEstimator);
 
 
 

@@ -188,4 +188,29 @@ public class DriveSubsystem extends SubsystemBase {
     public double getAngle() {
         return m_gyro.getAngle() * (DriveConstants.kGyroReversed ? -1.0 : 1.0);
     }
+
+    public Rotation2d newHeading() {
+        return m_gyro.getRotation2d();
+        // return Rotation2d.fromDegrees(-m_gyro.getAngle());
+    }
+
+    public SwerveModulePosition[] getModulePositions() {
+        SwerveModulePosition[] positions = new SwerveModulePosition[] {
+                m_frontLeft.getPosition(),
+                m_frontRight.getPosition(),
+                m_rearLeft.getPosition(),
+                m_rearRight.getPosition()
+        };
+        return positions;
+    }
+
+    public SwerveModuleState[] getModuleStates() {
+        SwerveModuleState[] states = new SwerveModuleState[] {
+                m_frontLeft.getState(),
+                m_frontRight.getState(),
+                m_rearLeft.getState(),
+                m_rearRight.getState()
+        };
+        return states;
+    }
 }

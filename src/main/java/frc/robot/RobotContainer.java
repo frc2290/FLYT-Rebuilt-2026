@@ -21,6 +21,7 @@ import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.OIConstants;
 import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.subsystems.IntakeXtakeSubsystem;
+import frc.utils.PoseEstimatorSubsystem;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.RunCommand;
@@ -42,6 +43,7 @@ public class RobotContainer {
     // The robot's subsystems
     private final DriveSubsystem m_robotDrive;
     private final IntakeXtakeSubsystem m_intakeShooter;
+    private final PoseEstimatorSubsystem m_PoseEstimator;
 
     // The driver's controller
     XboxController m_driverController;
@@ -51,11 +53,14 @@ public class RobotContainer {
      */
     public RobotContainer(
             XboxController _driverController,
-            DriveSubsystem _drive, IntakeXtakeSubsystem _intake) {
+            DriveSubsystem _drive,
+            IntakeXtakeSubsystem _intake,
+            PoseEstimatorSubsystem _PoseEstimator) {
 
         m_driverController = _driverController;
         m_robotDrive = _drive;
         m_intakeShooter = _intake;
+        m_PoseEstimator = _PoseEstimator;
 
         // Configure the button bindings
         configureButtonBindings();
