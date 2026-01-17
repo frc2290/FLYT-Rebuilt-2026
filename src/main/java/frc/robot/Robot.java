@@ -15,7 +15,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.subsystems.DriveStateMachine;
 import frc.robot.subsystems.DriveSubsystem;
-import frc.robot.subsystems.IntakeXtakeSubsystem;
+import frc.robot.subsystems.IntakeShooter;
 import frc.robot.subsystems.Coordinator;
 import frc.robot.subsystems.Coordinator.RobotState;
 import frc.utils.PoseEstimatorSubsystem;
@@ -48,7 +48,7 @@ public class Robot extends TimedRobot {
     // The robot's subsystems.
     /** Owns all hardware for swerve driving and exposes the drive commands. */
     private final DriveSubsystem m_robotDrive = new DriveSubsystem();
-    private final IntakeXtakeSubsystem m_intakeShooter = new IntakeXtakeSubsystem();
+    private final IntakeShooter m_intakeShooter = new IntakeShooter();
     private final PoseEstimatorSubsystem m_poseEstimator = new PoseEstimatorSubsystem(m_robotDrive);
 
     /** Coordinates all autonomous and teleop driving modes. */
