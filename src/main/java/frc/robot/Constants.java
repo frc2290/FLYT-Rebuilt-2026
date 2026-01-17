@@ -120,7 +120,7 @@ public final class Constants {
      * Shared geometry describing the robot's vision sensors and AprilTag layout.
      */
     public static final class VisionConstants {
-        public static final double CAMERA_HEIGHT_METERS = 0.9144;
+        public static final double CAMERA_HEIGHT_METERS = 0.314325;
         public static final double CAMERA_PITCH_RADIANS = degreesToRadians(45);
         public static final double TARGET_HEIGHT_METERS = 1.4351;
 
@@ -129,7 +129,7 @@ public final class Constants {
          * of the robot.
          */
         public static final Transform3d APRILTAG_CAMERA_TO_ROBOT = new Transform3d(
-                new Translation3d(0.239191, -0.344616, 0.324842),
+                new Translation3d(0.34925, 0.346075, CAMERA_HEIGHT_METERS),
                 new Rotation3d(0.0, 0, degreesToRadians(30)));
 
         public static final Transform3d APRILTAG_CAMERA2_TO_ROBOT = new Transform3d(
