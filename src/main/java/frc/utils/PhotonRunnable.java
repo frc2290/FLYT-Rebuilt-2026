@@ -62,7 +62,7 @@ public class PhotonRunnable implements Runnable {
         this.photonCamera = new PhotonCamera(cameraName);
         ;
         PhotonPoseEstimator photonPoseEstimator = null;
-        layout = AprilTagFieldLayout.loadField(AprilTagFields.k2025ReefscapeAndyMark);
+        layout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
         // PV estimates will always be blue, they'll get flipped by robot thread
         layout.setOrigin(OriginPosition.kBlueAllianceWallRightSide);
         if (DriverStation.getAlliance().get() == Alliance.Red) {
@@ -81,6 +81,13 @@ public class PhotonRunnable implements Runnable {
             List<PhotonPipelineResult> results = photonCamera.getAllUnreadResults();
 
             for (PhotonPipelineResult result : results) {
+                try {
+                    System.out.println(result.getBestTarget().toString());
+                    System.out.println(result.getBestTarget().getYaw());
+                    System.out.println(result.getBestTarget().yaw);
+                } catch (Exception e) {
+                    //System.out.println("no targets");
+                };
                 Heading tempHeading = heading.get();
                 photonPoseEstimator.addHeadingData(tempHeading.timestamp, tempHeading.rotation);
                 Optional<EstimatedRobotPose> photonPose = photonPoseEstimator.update(result, Optional.empty(),

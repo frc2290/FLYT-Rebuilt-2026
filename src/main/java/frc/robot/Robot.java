@@ -85,7 +85,7 @@ public class Robot extends TimedRobot {
         // run.
         // Display the Command Scheduler Status
 
-        URCL.start();
+        //URCL.start();
 
         // If logging only to DataLog.
         URCL.start(DataLogManager.getLog());

@@ -96,10 +96,10 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
     private final PhotonRunnable photonEstimator;
 
     /** PhotonVision pipeline for the rear camera. */
-    //private final PhotonRunnable photonEstimator2;
+    private final PhotonRunnable photonEstimator2;
 
     private final Notifier photonNotifier;
-    //private final Notifier photonNotifier2;
+    private final Notifier photonNotifier2;
 
     private OriginPosition originPosition = kBlueAllianceWallRightSide;
     private boolean sawTag = false;
@@ -117,11 +117,11 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
     public PoseEstimatorSubsystem(DriveSubsystem m_drive) {
         photonEstimator = new PhotonRunnable(
                 "FrontCamera", VisionConstants.APRILTAG_CAMERA_TO_ROBOT, () -> getHeading());
-        /*photonEstimator2 = new PhotonRunnable(
-                "RearCamera", VisionConstants.APRILTAG_CAMERA2_TO_ROBOT, () -> getHeading());*/
+        photonEstimator2 = new PhotonRunnable(
+                "ObjectDetectionCamera", VisionConstants.APRILTAG_CAMERA2_TO_ROBOT, () -> getHeading());
 
         photonNotifier = new Notifier(photonEstimator);
-        //photonNotifier2 = new Notifier(photonEstimator2);
+        photonNotifier2 = new Notifier(photonEstimator2);
 
         this.rotationSupplier = m_drive::newHeading;
         this.modulePositionSupplier = m_drive::getModulePositions;
@@ -138,8 +138,8 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
         // Start PhotonVision thread.
         photonNotifier.setName("PhotonRunnable");
         photonNotifier.startPeriodic(0.01);
-        //photonNotifier2.setName("PhotonRunnable2");
-        //photonNotifier2.startPeriodic(0.01);
+        photonNotifier2.setName("PhotonRunnable2");
+        photonNotifier2.startPeriodic(0.01);
 
         try {
             config = RobotConfig.fromGUISettings();
