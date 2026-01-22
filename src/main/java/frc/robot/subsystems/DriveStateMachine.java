@@ -19,7 +19,6 @@ package frc.robot.subsystems;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.PrintCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.Commands.DriveCommandFactory;
@@ -43,7 +42,8 @@ public class DriveStateMachine extends SubsystemBase {
         FOLLOW_PATH, // Auto path following
         CLIMB_RELATIVE,
         FIELD_ORIENTED,
-        HUB_ORIENTED,
+        HUB_ORIENTED, // point at hub
+        POINT_AT_FUEL,
         CANCELLED; // Drive system cancelled
     }
 
@@ -53,6 +53,7 @@ public class DriveStateMachine extends SubsystemBase {
     GraphCommandNode manualNode;
     GraphCommandNode followPathNode;
     GraphCommandNode pointAtHubNode;
+    GraphCommandNode pointAtFuelNode;
     GraphCommandNode cancelledNode;
 
     /**
@@ -86,15 +87,25 @@ public class DriveStateMachine extends SubsystemBase {
         // Create all graph command nodes
         manualNode = m_graphCommand.new GraphCommandNode(
                 "Manual",
-                new PrintCommand(""),
-                new PrintCommand(""),
+                Commands.none(),
+                Commands.none(),
                 driveCommandFactory.createManualDriveCommand());
 
         pointAtHubNode = m_graphCommand.new GraphCommandNode(
-                "PoinAtHub",
-                new PrintCommand(""),
-                new PrintCommand(""),
+                "PointAtHub",
+                Commands.none(),
+                Commands.none(),
                 driveCommandFactory.createPointingAtPoseCommand(() -> VisionConstants.hubCenterPose.toPose2d(), false));
+        
+        pointAtFuelNode = m_graphCommand.new GraphCommandNode(
+                "PointAtFuel",
+                Commands.none(),
+                Commands.none(),
+                driveCommandFactory.createHeadingLockCommand(() -> {
+                    System.out.println(pose.getDegrees() - pose.getTargetYaw());
+                    System.out.println(pose.getTargetYaw());
+                    return pose.getDegrees() - pose.getTargetYaw();
+                }));
 
         followPathNode = m_graphCommand.new GraphCommandNode(
                 "FollowPath",
@@ -111,7 +122,8 @@ public class DriveStateMachine extends SubsystemBase {
         // Define transitions between drive states
         cancelledNode.AddNode(manualNode, 1.0);
         manualNode.AddNode(cancelledNode, 1.0);
-        manualNode.AddNode(pointAtHubNode,1.0,false);
+        manualNode.AddNode(pointAtHubNode,1.0);
+        manualNode.AddNode(pointAtFuelNode,1.0);
         followPathNode.AddNode(cancelledNode, 1.0);
         followPathNode.AddNode(manualNode, 1.0);
 
@@ -136,6 +148,9 @@ public class DriveStateMachine extends SubsystemBase {
                 break;
             case HUB_ORIENTED:
                 m_graphCommand.setTargetNode(pointAtHubNode);
+                break;
+            case POINT_AT_FUEL:
+                m_graphCommand.setTargetNode(pointAtFuelNode);
                 break;
             case CANCELLED:
                 m_graphCommand.setTargetNode(cancelledNode);
@@ -174,6 +189,8 @@ public class DriveStateMachine extends SubsystemBase {
             return DriveState.FOLLOW_PATH;
         if (currentNode == pointAtHubNode)
             return DriveState.HUB_ORIENTED;
+        if (currentNode == pointAtFuelNode)
+            return DriveState.POINT_AT_FUEL;
         if (currentNode == cancelledNode)
             return DriveState.CANCELLED;
         return DriveState.MANUAL; // Default

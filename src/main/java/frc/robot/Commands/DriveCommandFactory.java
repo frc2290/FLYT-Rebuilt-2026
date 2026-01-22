@@ -196,6 +196,7 @@ public final class DriveCommandFactory {
           }
 
           double headingTarget = headingSupplier.getAsDouble();
+          // System.out.println(headingTarget);
           double rotSpeed = rotPid.calculate(poseEstimator.getDegrees(), headingTarget);
           drive.drive(inputs.xSpeed, inputs.ySpeed, rotSpeed, true);
         });
