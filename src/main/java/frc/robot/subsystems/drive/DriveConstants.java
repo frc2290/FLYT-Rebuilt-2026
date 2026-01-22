@@ -15,7 +15,10 @@ import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 
 public class DriveConstants {
+  public static final boolean gyroReversed = true;
+
   public static final double maxSpeedMetersPerSec = 7.6;
+  public static final double maxAngularSpeed = 2 * Math.PI;
   public static final double odometryFrequency = 100.0; // Hz
   public static final double trackWidth = Units.inchesToMeters(26.5);
   public static final double wheelBase = Units.inchesToMeters(26.5);

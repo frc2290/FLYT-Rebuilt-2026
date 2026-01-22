@@ -21,6 +21,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.VisionConstants;
+import frc.robot.subsystems.drive.Drive;
 import frc.robot.Commands.DriveCommandFactory;
 import frc.robot.Commands.GraphCommand;
 import frc.robot.Commands.GraphCommand.GraphCommandNode;
@@ -31,7 +32,7 @@ public class DriveStateMachine extends SubsystemBase {
 
     private GraphCommand m_graphCommand = new GraphCommand();
     private FlytDashboard dashboard = new FlytDashboard("DriveStateMachine");
-    private DriveSubsystem drive;
+    private Drive drive;
     private PoseEstimatorSubsystem pose;
     private XboxController driverController;
     private final DriveCommandFactory driveCommandFactory;
@@ -64,7 +65,7 @@ public class DriveStateMachine extends SubsystemBase {
      * @param m_driverController
      */
     public DriveStateMachine(
-            DriveSubsystem m_drive, PoseEstimatorSubsystem m_pose, XboxController m_driverController) {
+            Drive m_drive, PoseEstimatorSubsystem m_pose, XboxController m_driverController) {
         drive = m_drive;
         pose = m_pose;
         driverController = m_driverController;

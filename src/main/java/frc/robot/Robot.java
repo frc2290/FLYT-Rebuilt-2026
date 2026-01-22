@@ -18,11 +18,16 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import frc.robot.subsystems.DriveStateMachine;
-import frc.robot.subsystems.DriveSubsystem;
-import frc.robot.subsystems.IntakeShooter;
 import frc.robot.subsystems.Coordinator;
 import frc.robot.subsystems.Coordinator.RobotState;
+import frc.robot.subsystems.DriveStateMachine;
+import frc.robot.subsystems.IntakeShooter;
+import frc.robot.subsystems.drive.Drive;
+import frc.robot.subsystems.drive.GyroIO;
+import frc.robot.subsystems.drive.GyroIONavX;
+import frc.robot.subsystems.drive.ModuleIO;
+import frc.robot.subsystems.drive.ModuleIOSim;
+import frc.robot.subsystems.drive.ModuleIOSpark;
 import frc.utils.PoseEstimatorSubsystem;
 
 /**
@@ -52,17 +57,18 @@ public class Robot extends LoggedRobot {
 
     // The robot's subsystems.
     /** Owns all hardware for swerve driving and exposes the drive commands. */
-    private final DriveSubsystem m_robotDrive = new DriveSubsystem();
+    // private final DriveSubsystem m_robotDrive = new DriveSubsystem();
+    private final Drive m_robotDrive;
     private final IntakeShooter m_intakeShooter = new IntakeShooter();
-    private final PoseEstimatorSubsystem m_poseEstimator = new PoseEstimatorSubsystem(m_robotDrive);
+    private final PoseEstimatorSubsystem m_poseEstimator;
 
     /** Coordinates all autonomous and teleop driving modes. */
-    private final DriveStateMachine m_driveStateMachine =
-      new DriveStateMachine(m_robotDrive, m_poseEstimator, m_driver);
+    private final DriveStateMachine m_driveStateMachine;
 
-    /** Central coordinator that keeps drive and manipulator state machines in sync. */
-    private final Coordinator m_coordinator =
-      new Coordinator(m_driveStateMachine);
+    /**
+     * Central coordinator that keeps drive and manipulator state machines in sync.
+     */
+    private final Coordinator m_coordinator;
 
     public Robot() {
         Logger.recordMetadata("GitSHA", BuildConstants.GIT_SHA);
@@ -73,12 +79,52 @@ public class Robot extends LoggedRobot {
             Logger.addDataReceiver(new NT4Publisher()); // Publish data to NetworkTables
         } else {
             setUseTiming(false); // Run as fast as possible
-            String logPath = LogFileUtil.findReplayLog(); // Pull the replay log from AdvantageScope (or prompt the user)
+            String logPath = LogFileUtil.findReplayLog(); // Pull the replay log from AdvantageScope (or prompt the
+                                                          // user)
             Logger.setReplaySource(new WPILOGReader(logPath)); // Read replay log
-            Logger.addDataReceiver(new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim"))); // Save outputs to a new log
+            Logger.addDataReceiver(new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim"))); // Save outputs to a
+                                                                                                  // new log
         }
 
-        Logger.start(); // Start logging! No more data receivers, replay sources, or metadata values may be added.
+        Logger.start(); // Start logging! No more data receivers, replay sources, or metadata values may
+                        // be added.
+
+        switch (Constants.currentMode) {
+            case REAL:
+                // Real robot, instantiate hardware IO implementations
+                m_robotDrive = new Drive(
+                               new GyroIONavX(),
+                               new ModuleIOSpark(0),
+                               new ModuleIOSpark(1),
+                               new ModuleIOSpark(2),
+                               new ModuleIOSpark(3));
+                break;
+
+            case SIM:
+                // Sim robot, instantiate physics sim IO implementations
+                m_robotDrive = new Drive(
+                               new GyroIO() {},
+                               new ModuleIOSim(),
+                               new ModuleIOSim(),
+                               new ModuleIOSim(),
+                               new ModuleIOSim());
+                break;
+
+            default:
+                // Replayed robot, disable IO implementations
+                m_robotDrive = new Drive(
+                               new GyroIO() {},
+                               new ModuleIO() {},
+                               new ModuleIO() {},
+                               new ModuleIO() {},
+                               new ModuleIO() {});
+                break;
+        }
+
+        m_poseEstimator = new PoseEstimatorSubsystem(m_robotDrive);
+        m_driveStateMachine = new DriveStateMachine(m_robotDrive, m_poseEstimator,
+            m_driver);
+        m_coordinator = new Coordinator(m_driveStateMachine);
     }
 
     /**
@@ -99,27 +145,21 @@ public class Robot extends LoggedRobot {
                 m_coordinator,
                 m_driver);
 
-
-
         DataLogManager.start();
         DriverStation.startDataLog(DataLogManager.getLog());
         // Start the logging framework so we can view graphs after a match or practice
         // run.
         // Display the Command Scheduler Status
 
-        //URCL.start();
+        // URCL.start();
 
         // If logging only to DataLog.
         URCL.start(DataLogManager.getLog());
 
-
-
-
         SmartDashboard.putData(CommandScheduler.getInstance());
-        
-        //Display subystem satatus
+
+        // Display subystem satatus
         SmartDashboard.putData(m_robotDrive);
-        
 
     }
 
@@ -190,8 +230,6 @@ public class Robot extends LoggedRobot {
         m_coordinator.robotDisabled(false);
 
         m_coordinator.setRobotGoal(RobotState.START_POSITION);
-
-
 
         // This makes sure that the autonomous stops running when
         // teleop starts running. If you want the autonomous to

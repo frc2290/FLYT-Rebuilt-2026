@@ -44,9 +44,12 @@ import frc.robot.Constants;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.subsystems.DriveSubsystem;
+import frc.robot.subsystems.drive.Drive;
 import frc.utils.FLYTLib.FLYTDashboard.FlytLogger;
 import frc.utils.PoseUtils.Heading;
 import java.util.function.Supplier;
+
+import org.littletonrobotics.junction.AutoLogOutput;
 
 /** Pose estimator that uses odometry and AprilTags with PhotonVision. */
 public class PoseEstimatorSubsystem extends SubsystemBase {
@@ -117,7 +120,7 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
     /** Logger that streams pose data for tuning and match review. */
     private FlytLogger poseDash = new FlytLogger("Pose");
 
-    public PoseEstimatorSubsystem(DriveSubsystem m_drive) {
+    public PoseEstimatorSubsystem(Drive m_drive) {
         photonEstimator = new PhotonRunnable(
                 "FrontCamera", VisionConstants.APRILTAG_CAMERA_TO_ROBOT, () -> getHeading());
         photonEstimator2 = new PhotonRunnable(
@@ -279,6 +282,7 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
         return poseEstimator.getEstimatedPosition().getRotation().getDegrees();
     }
 
+    @AutoLogOutput(key = "Odometry/Robot")
     public Pose2d getCurrentPose() {
         return poseEstimator.getEstimatedPosition();
     }
