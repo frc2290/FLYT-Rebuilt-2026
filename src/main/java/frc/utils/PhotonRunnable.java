@@ -44,6 +44,9 @@ public class PhotonRunnable implements Runnable {
     /** Latest pose estimate published from the PhotonVision thread. */
     private final AtomicReference<EstimatedRobotPose> atomicEstimatedRobotPose = new AtomicReference<EstimatedRobotPose>();
 
+    /** java is evil */
+    private final AtomicReference<Double> atomicTargetYaw = new AtomicReference<Double>();
+
     /** Heading supplier used to inject gyro data into the pose estimator. */
     private Supplier<Heading> heading;
 
@@ -82,9 +85,10 @@ public class PhotonRunnable implements Runnable {
 
             for (PhotonPipelineResult result : results) {
                 try {
-                    System.out.println(result.getBestTarget().toString());
-                    System.out.println(result.getBestTarget().getYaw());
-                    System.out.println(result.getBestTarget().yaw);
+                    // System.out.println(result.getBestTarget().toString());
+                    // System.out.println(result.getBestTarget().getYaw());
+                    // System.out.println(result.getBestTarget().yaw);
+                    atomicTargetYaw.set(result.getBestTarget().yaw);
                 } catch (Exception e) {
                     //System.out.println("no targets");
                 };
@@ -115,6 +119,10 @@ public class PhotonRunnable implements Runnable {
      */
     public EstimatedRobotPose grabLatestEstimatedPose() {
         return atomicEstimatedRobotPose.getAndSet(null);
+    }
+
+    public Double getTargetYaw() {
+        return atomicTargetYaw.getAndSet(null);
     }
 
     public Pose2d grabLatestResult() {

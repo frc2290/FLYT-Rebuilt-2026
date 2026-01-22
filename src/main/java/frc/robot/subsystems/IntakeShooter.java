@@ -15,8 +15,8 @@ public class IntakeShooter extends SubsystemBase {
     private SparkFlex intakeShootMotor;
     private SparkMax redirectMotor;
 
-    private SparkFlexConfig intakeShootConfig;
-    private SparkMaxConfig redirectConfig;
+    private SparkFlexConfig intakeShootConfig = new SparkFlexConfig();
+    private SparkMaxConfig redirectConfig = new SparkMaxConfig();
 
     // add dashboard maybe?
 

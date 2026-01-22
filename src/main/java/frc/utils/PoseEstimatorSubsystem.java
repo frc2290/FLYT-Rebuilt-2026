@@ -92,6 +92,9 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
 
     private final FieldObject2d target2d = field2d.getObject("Target");
 
+    /** target yaw for pointing */
+    private double targetYaw = 0;
+
     /** PhotonVision pipeline for the front camera. */
     private final PhotonRunnable photonEstimator;
 
@@ -194,6 +197,11 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
         // Update pose estimator with drivetrain sensors.
         poseEstimator.update(rotationSupplier.get(), modulePositionSupplier.get());
 
+        var maybeTargetYaw = photonEstimator2.getTargetYaw();
+        if (maybeTargetYaw != null) {
+            targetYaw = maybeTargetYaw;
+        }
+
         var visionPose = photonEstimator.grabLatestEstimatedPose();
         if (visionPose != null) {
             // New pose from vision.
@@ -293,6 +301,10 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
 
     public Pose2d getTargetPose() {
         return targetPose;
+    }
+
+    public double getTargetYaw() {
+        return targetYaw;
     }
 
     public void setTargetPose(Pose2d newTarget) {
