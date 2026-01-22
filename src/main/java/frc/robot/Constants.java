@@ -18,6 +18,7 @@ import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.RobotBase;
 
 /**
  * The Constants class provides a convenient place for teams to hold robot-wide
@@ -32,6 +33,22 @@ import edu.wpi.first.math.util.Units;
  * constants are needed, to reduce verbosity.
  */
 public final class Constants {
+    // BEGIN advantagekit stuff
+    public static final Mode simMode = Mode.SIM;
+    public static final Mode currentMode = RobotBase.isReal() ? Mode.REAL : simMode;
+
+    public static enum Mode {
+        /** Running on a real robot. */
+        REAL,
+
+        /** Running a physics simulator. */
+        SIM,
+
+        /** Replaying from a log file. */
+        REPLAY
+    }
+    // END advantagekit stuff
+
     public static final boolean debugMode = false;
 
     public static final class DriveConstants {
@@ -150,35 +167,36 @@ public final class Constants {
         /*
          * April Tag IDs:
          * - Red Alliance:
-         *  - Left Trench: 6, 7
-         *  - Tower: 15, 16
-         *  - Outpost: 13, 14
-         *  - Right Trench: 12, 1
-         *  - Hub:
-         *   - Front: 9, 10
-         *   - Back: 3, 4
-         *   - Left: 5, 8
-         *   - Right: 11, 2
+         * - Left Trench: 6, 7
+         * - Tower: 15, 16
+         * - Outpost: 13, 14
+         * - Right Trench: 12, 1
+         * - Hub:
+         * - Front: 9, 10
+         * - Back: 3, 4
+         * - Left: 5, 8
+         * - Right: 11, 2
          * - Blue Alliance:
-         *  - Left Trench: 22, 23
-         *  - Tower: 31, 32
-         *  - Outpost: 29, 30
-         *  - Right Trench: 17, 28
-         *  - Hub:
-         *   - Front: 25, 26
-         *   - Back: 19, 20
-         *   - Left: 21, 24
-         *   - Right: 18, 27 
+         * - Left Trench: 22, 23
+         * - Tower: 31, 32
+         * - Outpost: 29, 30
+         * - Right Trench: 17, 28
+         * - Hub:
+         * - Front: 25, 26
+         * - Back: 19, 20
+         * - Left: 21, 24
+         * - Right: 18, 27
          */
 
         public static final double inToM = 1 / 39.37;
         public final double mToIn = 39.37;
 
         public static final Pose3d hubCenterPose = new Pose3d(4.626, 4.035, 1.829, new Rotation3d(0, 0, 0));
-        public static final Pose2d outpostPose = new Pose2d(0, 0.665988, new Rotation2d(0)); // human player station (change x pos)
+        public static final Pose2d outpostPose = new Pose2d(0, 0.665988, new Rotation2d(0)); // human player station
+                                                                                             // (change x pos)
         public static final Pose2d depotPose = new Pose2d(0.6858, 5.963158, new Rotation2d(0));
         public static final Pose2d towerPose = new Pose2d(1.055624, 3.745484, new Rotation2d(0));
-        
+
         // R2OC Red and Blue average Pose
         public static final List<Pose2d> leftBranches = List.of(
                 new Pose2d(3.182, 4.192, new Rotation2d(Math.toRadians(-1.4))), // 18_LEFT
@@ -194,7 +212,6 @@ public final class Constants {
                 new Pose2d(5.796, 4.206, new Rotation2d(Math.toRadians(179.7))), // 21_RIGHT
                 new Pose2d(4.989, 5.246, new Rotation2d(Math.toRadians(-121.0))), // 20_RIGHT
                 new Pose2d(3.691, 5.073, new Rotation2d(Math.toRadians(-61.4)))); // 19_RIGHT
-
 
         public static final Translation2d reefCenter = new Translation2d(176 * inToM, 158.5 * inToM);
         public static final Translation2d processor = new Translation2d(6, 0);
