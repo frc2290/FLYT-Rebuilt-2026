@@ -25,6 +25,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants.OIConstants;
 import frc.robot.subsystems.DriveSubsystem;
+import frc.robot.subsystems.drive.Drive;
 import frc.utils.PoseEstimatorSubsystem;
 import java.util.Objects;
 import java.util.function.Consumer;
@@ -43,7 +44,7 @@ import java.util.function.Supplier;
  */
 public final class DriveCommandFactory {
 
-  private final DriveSubsystem drive;
+  private final Drive drive;
   private final PoseEstimatorSubsystem poseEstimator;
   private final XboxController driverController;
   private final PIDController rotPid;
@@ -55,13 +56,18 @@ public final class DriveCommandFactory {
    * estimator, and driver controller references.
    */
   public DriveCommandFactory(
-      DriveSubsystem drive, PoseEstimatorSubsystem poseEstimator, XboxController driverController) {
+      Drive drive, PoseEstimatorSubsystem poseEstimator, XboxController driverController) {
     this.drive = Objects.requireNonNull(drive);
     this.poseEstimator = Objects.requireNonNull(poseEstimator);
     this.driverController = Objects.requireNonNull(driverController);
-    this.rotPid = drive.getRotPidController();
-    this.xPid = drive.getXPidController();
-    this.yPid = drive.getYPidController();
+    // this.rotPid = drive.getRotPidController();
+    // this.xPid = drive.getXPidController();
+    // this.yPid = drive.getYPidController();
+    this.rotPid = new PIDController(0.001, 0.0, 0.0); // 0.015 0 0
+    this.xPid = new PIDController(1, 0.0, 0.085); // 2 0.0 0.5
+    this.yPid = new PIDController(1, 0.0, 0.085); // 2 0.0 0.5
+
+
   }
 
   /** Small helper that bundles the driver stick inputs for a single loop of command execution. */

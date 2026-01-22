@@ -22,6 +22,7 @@ import frc.robot.Constants.OIConstants;
 import frc.robot.subsystems.Coordinator;
 import frc.robot.subsystems.Coordinator.ControllerProfile;
 import frc.robot.subsystems.Coordinator.RobotState;
+import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.DriveStateMachine;
 import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.subsystems.IntakeShooter;
@@ -49,7 +50,7 @@ import java.util.List;
  */
 public class RobotContainer {
     // The robot's subsystems
-    private final DriveSubsystem m_robotDrive;
+    private final Drive m_robotDrive;
     private final IntakeShooter m_intakeShooter;
     private final PoseEstimatorSubsystem m_PoseEstimator;
     private final DriveStateMachine m_drive_state;
@@ -64,7 +65,7 @@ public class RobotContainer {
      * The container for the robot. Contains subsystems, OI devices, and commands.
      */
     public RobotContainer(
-            DriveSubsystem _drive,
+            Drive _drive,
             IntakeShooter _intake,
             PoseEstimatorSubsystem _PoseEstimator,
             DriveStateMachine _driveStateMachine,
@@ -318,10 +319,11 @@ public class RobotContainer {
         // .onTrue(m_DiffArm.incrementRotationSetpoint(-5)); // Manual rotate diff arm
         // in.
 
+        // TODO: FIX THIS
         // Other controls.
-        right_stick
-                .and(dpad_right)
-                .onTrue(new InstantCommand(() -> m_robotDrive.zeroHeading())); // Manual heading reset.
+        // right_stick
+        //         .and(dpad_right)
+        //         .onTrue(new InstantCommand(() -> m_robotDrive.zeroHeading())); // Manual heading reset.
 
         left_trigger.whileTrue(new Intake(m_intakeShooter));
         right_trigger.whileTrue(new Shoot(m_intakeShooter, 1));
