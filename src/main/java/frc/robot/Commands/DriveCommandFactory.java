@@ -142,7 +142,7 @@ public final class DriveCommandFactory {
     return runDriveCommand(
         inputs ->
             // Pass the field-relative speeds straight to the drivetrain.
-            drive.drive(inputs.xSpeed, inputs.ySpeed, inputs.rotSpeed, true));
+            drive.drive(inputs.xSpeed*0.5, inputs.ySpeed*0.5, inputs.rotSpeed*0.5, true));
   }
 
   /**
