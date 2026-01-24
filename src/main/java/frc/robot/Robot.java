@@ -28,6 +28,7 @@ import frc.robot.subsystems.drive.GyroIONavX;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOSpark;
+import frc.utils.FuelSim;
 import frc.utils.PoseEstimatorSubsystem;
 
 /**
@@ -267,5 +268,10 @@ public class Robot extends LoggedRobot {
     /** This function is called periodically during test mode. */
     @Override
     public void testPeriodic() {
+    }
+
+    @Override
+    public void simulationPeriodic() {
+        FuelSim.getInstance().updateSim();
     }
 }
