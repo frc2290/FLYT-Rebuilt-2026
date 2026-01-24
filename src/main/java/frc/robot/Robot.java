@@ -117,7 +117,9 @@ public class Robot extends LoggedRobot {
                 m_poseEstimator = new PoseEstimatorSubsystem(m_robotDrive);
                 m_turret = new Turret(new TurretIOSim(m_fuelSim,
                                       m_poseEstimator::getCurrentPose,
-                                      m_poseEstimator::getChassisSpeeds));
+                                      m_poseEstimator::getChassisSpeeds),
+                                      m_poseEstimator::getCurrentPose,
+                                      m_robotDrive::getChassisSpeeds);
                 break;
 
             case SIM:
@@ -131,7 +133,9 @@ public class Robot extends LoggedRobot {
                 m_poseEstimator = new PoseEstimatorSubsystem(m_robotDrive);
                 m_turret = new Turret(new TurretIOSim(m_fuelSim,
                                       m_poseEstimator::getCurrentPose,
-                                      m_poseEstimator::getChassisSpeeds));
+                                      m_poseEstimator::getChassisSpeeds),
+                                      m_poseEstimator::getCurrentPose,
+                                      m_robotDrive::getChassisSpeeds);
                 break;
 
             default:
@@ -143,7 +147,9 @@ public class Robot extends LoggedRobot {
                                new ModuleIO() {},
                                new ModuleIO() {});
                 m_poseEstimator = new PoseEstimatorSubsystem(m_robotDrive);
-                m_turret = new Turret(new TurretIO() {});
+                m_turret = new Turret(new TurretIO() {},
+                                        m_poseEstimator::getCurrentPose,
+                                        m_robotDrive::getChassisSpeeds);
                 break;
         }
 

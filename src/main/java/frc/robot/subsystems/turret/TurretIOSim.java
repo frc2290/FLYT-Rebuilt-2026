@@ -39,6 +39,9 @@ public class TurretIOSim implements TurretIO {
     private Supplier<ChassisSpeeds> speedSupplier;
     private int fuelCount = 30;
     private double turretAngle = 0;
+    private double turretSpeed = 0;
+    private double turretHoodAngle = 0;
+    private double turretAngleSetpoint = 0;
 
     public TurretIOSim(FuelSim fuelSim, Supplier<Pose2d> poseSupplier, Supplier<ChassisSpeeds> speedSupplier) {
         this.fuelSim = fuelSim;
@@ -60,47 +63,56 @@ public class TurretIOSim implements TurretIO {
 
     @Override
     public void updateInputs(TurretIOInputs inputs) {
-        double hub = turnToTarget(VisionConstants.hubCenterPose.toPose2d().getTranslation());
-        turretTurnAppliedVolts = turretTurnController.calculate(turretTurnSim.getAngularPositionRad(),
-                Radians.convertFrom(hub, Units.Degrees));
+        // double hub =
+        // turnToTarget(VisionConstants.hubCenterPose.toPose2d().getTranslation());
+        // turretTurnAppliedVolts =
+        // turretTurnController.calculate(turretTurnSim.getAngularPositionRad(),
+        // Radians.convertFrom(hub, Units.Degrees));
+        turretTurnAppliedVolts = turretTurnController.calculate(turretTurnSim.getAngularPositionRad());
         turretTurnSim.setInputVoltage(MathUtil.clamp(turretTurnAppliedVolts, -12.0, 12.0));
         turretTurnSim.update(0.02);
 
         turretAngle = turretTurnSim.getAngularPosition().in(Units.Degrees);
         inputs.turretAngle = turretAngle;
+        inputs.turretSpeed = turretSpeed;
+        inputs.turretHoodAngle = turretHoodAngle;
+        inputs.turretAngleSetpoint = turretAngleSetpoint;
     }
 
     @Override
     public void setTurnPosition(Rotation2d rotation) {
-        turretTurnController.setSetpoint(rotation.getDegrees());
+        turretTurnController.setSetpoint(rotation.getRadians());
+        turretAngleSetpoint = rotation.getDegrees();
     }
+
+    @Override
+    public void setHoodAngle(double angle) {
+        turretHoodAngle = angle;
+    };
+
+    @Override
+    public void setShooterSpeed(double speed) {
+        turretSpeed = speed;
+    };
 
     @Override
     public void shootFuel() {
         // if (fuelCount <= 0) return;
-        fuelCount--;
+        //fuelCount--;
 
         Pose2d robotPose = poseSupplier.get();
-        ChassisSpeeds robotSpeed = speedSupplier.get();
 
-        Rotation2d targetAngle = Rotation2d.fromDegrees(turretAngle);
+        double yawRad = Math.toRadians(turretAngle);
+        double pitchRad = Math.toRadians(turretHoodAngle);
 
-        double magnitude = 4.0;
+        Translation3d velocity = new Translation3d(
+                turretSpeed * Math.cos(pitchRad) * Math.cos(yawRad), // X (forward)
+                turretSpeed * Math.cos(pitchRad) * Math.sin(yawRad), // Y (left)
+                turretSpeed * Math.sin(pitchRad) // Z (up)
+        );
 
-        Translation3d shootVelocity = new Translation3d(
-                magnitude * targetAngle.getCos() + robotSpeed.vxMetersPerSecond,
-                magnitude * targetAngle.getSin() + robotSpeed.vyMetersPerSecond,
-                magnitude * 1.75);
         this.fuelSim.spawnFuel(
-            new Translation3d(robotPose.getX(), robotPose.getY(), TurretConstants.turretHeight),
-            shootVelocity);
-    }
-
-    private double turnToTarget(Translation2d target) {
-        Translation2d currentTrans = poseSupplier.get().getTranslation();
-        double offsetX = target.getX() - currentTrans.getX();
-        double offsetY = target.getY() - currentTrans.getY();
-        // return (360 - Math.toDegrees(Math.atan2(offsetY, offsetX)) % 360);
-        return Math.toDegrees(Math.atan2(offsetY, offsetX)) % 360;
+                new Translation3d(robotPose.getX(), robotPose.getY(), TurretConstants.turretHeight),
+                velocity);
     }
 }
