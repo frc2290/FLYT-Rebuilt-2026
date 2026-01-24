@@ -23,6 +23,7 @@ import frc.robot.subsystems.Coordinator;
 import frc.robot.subsystems.Coordinator.ControllerProfile;
 import frc.robot.subsystems.Coordinator.RobotState;
 import frc.robot.subsystems.drive.Drive;
+import frc.robot.subsystems.turret.Turret;
 import frc.robot.subsystems.DriveStateMachine;
 import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.subsystems.IntakeShooter;
@@ -58,6 +59,7 @@ public class RobotContainer {
     private final PoseEstimatorSubsystem m_PoseEstimator;
     private final DriveStateMachine m_drive_state;
     private final Coordinator m_coordinator;
+    private final Turret m_turret;
 
     // The driver's controller
     XboxController m_driverController;
@@ -73,6 +75,7 @@ public class RobotContainer {
             PoseEstimatorSubsystem _PoseEstimator,
             DriveStateMachine _driveStateMachine,
             Coordinator _coordinator,
+            Turret _turret,
             XboxController _driverController) {
 
         m_robotDrive = _drive;
@@ -80,6 +83,7 @@ public class RobotContainer {
         m_PoseEstimator = _PoseEstimator;
         m_drive_state = _driveStateMachine;
         m_coordinator = _coordinator;
+        m_turret = _turret;
         m_driverController = _driverController;
 
         // Configure the button bindings
@@ -146,128 +150,7 @@ public class RobotContainer {
         POVButton dpad_left = new POVButton(m_driverController, 270);
         POVButton dpad_right = new POVButton(m_driverController, 90);
 
-        // Profile triggers make it easy to reuse button bindings while the controller
-        // changes modes.
-        // Trigger coral_profileTrigger =
-        // new Trigger(
-        // () ->
-        // m_coordinator.getCurrentControllerProfile()
-        // == StateMachineCoordinator.ControllerProfile.DEFAULT_CORAL);
-        // Trigger algae_profileTrigger =
-        // new Trigger(
-        // () ->
-        // m_coordinator.getCurrentControllerProfile()
-        // == StateMachineCoordinator.ControllerProfile.ALGAE);
-        // Trigger manual_profileTrigger =
-        // new Trigger(
-        // () ->
-        // m_coordinator.getCurrentControllerProfile()
-        // == StateMachineCoordinator.ControllerProfile.MANUAL);
-        // Trigger climbe_profileTrigger =
-        // new Trigger(
-        // () ->
-        // m_coordinator.getCurrentControllerProfile()
-        // == StateMachineCoordinator.ControllerProfile.Climb);
-
-        // // Controller buttons.
-        // (a_button)
-        // .and(coral_profileTrigger)
-        // .onTrue(
-        // new InstantCommand(
-        // () ->
-        // m_coordinator.setRobotGoal(
-        // RobotState.L1))); // Request the intake coral routine.
-        // (b_button)
-        // .and(coral_profileTrigger)
-        // .onTrue(
-        // new InstantCommand(
-        // () ->
-        // m_coordinator.setRobotGoal(RobotState.L2))); // Request the L2 scoring
-        // routine.
-        // (y_button)
-        // .and(coral_profileTrigger)
-        // .onTrue(
-        // new InstantCommand(
-        // () ->
-        // m_coordinator.setRobotGoal(RobotState.L3))); // Request the L3 scoring
-        // routine.
-        // (x_button)
-        // .and(coral_profileTrigger)
-        // .onTrue(
-        // new InstantCommand(
-        // () ->
-        // m_coordinator.setRobotGoal(RobotState.L4))); // Request the L4 scoring
-        // routine.
-
-        // (a_button)
-        // .and(algae_profileTrigger)
-        // .onTrue(
-        // new InstantCommand(
-        // () ->
-        // m_coordinator.setRobotGoal(
-        // RobotState.PROCESSOR))); // Request Score Algage Processor
-        // (b_button)
-        // .and(algae_profileTrigger)
-        // .onTrue(
-        // new InstantCommand(
-        // () -> m_coordinator.setRobotGoal(RobotState.ALGAE_L2))); // Request Intake
-        // Algae L2
-        // (y_button)
-        // .and(algae_profileTrigger)
-        // .onTrue(
-        // new InstantCommand(
-        // () -> m_coordinator.setRobotGoal(RobotState.ALGAE_L3))); // Request Intake
-        // Algae L3
-        // (x_button)
-        // .and(algae_profileTrigger)
-        // .onTrue(
-        // new InstantCommand(
-        // () -> m_coordinator.setRobotGoal(RobotState.BARGE))); // Request Barge
-
-        // (b_button)
-        // .and(start_button)
-        // .and(climbe_profileTrigger)
-        // .onTrue(
-        // new InstantCommand(
-        // () ->
-        // m_coordinator.setRobotGoal(
-        // RobotState.CLIMB_ABORT))); // Request Score Algage Processor
-        // // (b_button).and(climbe_profileTrigger).onTrue(new InstantCommand(()
-        // // ->m_coordinator.setRobotGoal(RobotState.ALGAE_L2))); // Request Intake
-        // Algae L2
-        // (y_button)
-        // .and(climbe_profileTrigger)
-        // .onTrue(
-        // new InstantCommand(
-        // () ->
-        // m_coordinator.setRobotGoal(RobotState.CLIMB_READY))); // Request Intake Algae
-        // L3
-        // (a_button)
-        // .and(climbe_profileTrigger)
-        // .onTrue(
-        // new InstantCommand(
-        // () -> m_coordinator.setRobotGoal(RobotState.CLIMB))); // Request Barge
-        // // Controller bumpers.
-        // (left_bumper)
-        // .onTrue(
-        // new InstantCommand(
-        // () -> m_coordinator.setRightScore(false))); // Select the left reef branch.
-        // (right_bumper)
-        // .onTrue(
-        // new InstantCommand(
-        // () -> m_coordinator.setRightScore(true))); // Select the right reef branch.
-
-        // // Controller triggers.
-        // left_trigger
-        // .onTrue(new InstantCommand(() -> m_coordinator.setReefAlign(true)))
-        // .onFalse(
-        // new InstantCommand(
-        // () ->
-        // m_coordinator.setReefAlign(
-        // false))); // While held the robot tries to align with the reef.
-        // right_trigger
-        // .onTrue(new InstantCommand(() -> m_coordinator.requestToScore(true)))
-        // .onFalse(new InstantCommand(() -> m_coordinator.requestToScore(false)));
+        a_button.onTrue(m_turret.shoot());
 
         // Manual controls.
         dpad_left.toggleOnTrue(
@@ -284,50 +167,6 @@ public class RobotContainer {
                         new InstantCommand(
                                 () -> m_coordinator.setRobotGoal(
                                         RobotState.SHOOT)))); // Algae profile with safe travel goal.
-
-        // dpad_down.toggleOnTrue(
-        // new ParallelCommandGroup(
-        // new InstantCommand(() ->
-        // m_coordinator.setControllerProfile(ControllerProfile.MANUAL)),
-        // new InstantCommand(
-        // () -> m_coordinator.setRobotGoal(RobotState.MANUAL)))); // Manual profile.
-
-        // dpad_right
-        // .and(start_button)
-        // .toggleOnTrue(
-        // new ParallelCommandGroup( // against accidental presses
-        // new InstantCommand(
-        // () ->
-        // m_coordinator.setControllerProfile(
-        // ControllerProfile
-        // .Climb)), // this is for protection against scoring in climb profile
-        // new InstantCommand(
-        // () -> m_coordinator.setRobotGoal(RobotState.MANUAL)))); // Manual profile.
-
-        // manual_profileTrigger
-        // .and(y_button)
-        // .onTrue(m_elevator.incrementElevatorSetpoint(0.025)); // Manual move elevator
-        // up.
-        // manual_profileTrigger
-        // .and(a_button)
-        // .onTrue(m_elevator.incrementElevatorSetpoint(-0.025)); // Manual move
-        // elevator down.
-        // manual_profileTrigger
-        // .and(x_button)
-        // .onTrue(m_DiffArm.incrementExtensionSetpoint(5)); // Manual move diff arm
-        // out.
-        // manual_profileTrigger
-        // .and(b_button)
-        // .onTrue(m_DiffArm.incrementExtensionSetpoint(-5)); // Manual move diff arm
-        // in.
-        // manual_profileTrigger
-        // .and(left_bumper)
-        // .onTrue(m_DiffArm.incrementRotationSetpoint(5)); // Manual rotate diff arm
-        // out.
-        // manual_profileTrigger
-        // .and(right_bumper)
-        // .onTrue(m_DiffArm.incrementRotationSetpoint(-5)); // Manual rotate diff arm
-        // in.
 
         // TODO: FIX THIS
         // Other controls.
