@@ -297,7 +297,11 @@ public class Drive extends SubsystemBase {
 
   /** better getrotation */
   public Rotation2d newHeading() {
-    return gyroIO.getRotation();
+    if (gyroInputs.connected) {
+      return gyroIO.getRotation();
+    } else {
+      return rawGyroRotation;
+    }
   }
 
   /** Resets the current odometry pose. */
@@ -325,7 +329,7 @@ public class Drive extends SubsystemBase {
   }
 
   public double getAngle() {
-    return gyroIO.getAngle() * (DriveConstants.gyroReversed ? -1.0 : 1.0);
+    return gyroIO.getAngle();
   }
 
   /**
@@ -346,7 +350,7 @@ public class Drive extends SubsystemBase {
     var swerveModuleStates = kinematics.toSwerveModuleStates(
         fieldRelative
             ? ChassisSpeeds.fromFieldRelativeSpeeds(xSpeedDelivered, ySpeedDelivered, rotDelivered,
-                Rotation2d.fromDegrees(getAngle()))
+                rawGyroRotation)
             : new ChassisSpeeds(xSpeedDelivered, ySpeedDelivered, rotDelivered));
     SwerveDriveKinematics.desaturateWheelSpeeds(
         swerveModuleStates, DriveConstants.maxSpeedMetersPerSec);

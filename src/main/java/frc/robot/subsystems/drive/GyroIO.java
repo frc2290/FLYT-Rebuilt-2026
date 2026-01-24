@@ -23,5 +23,5 @@ public interface GyroIO {
   public default void updateInputs(GyroIOInputs inputs) {}
 
   public default double getAngle() {return 0;};
-  public default Rotation2d getRotation() {return Rotation2d.fromDegrees(getAngle());};
+  public default Rotation2d getRotation() {return Rotation2d.fromDegrees(getAngle() * (DriveConstants.gyroReversed ? -1.0 : 1.0));};
 }
