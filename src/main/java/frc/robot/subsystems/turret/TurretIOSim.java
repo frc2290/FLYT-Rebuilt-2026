@@ -4,11 +4,15 @@ import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Radians;
 import static frc.robot.subsystems.turret.TurretConstants.*;
 
+import java.util.function.Supplier;
+
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.units.Units;
@@ -31,13 +35,15 @@ public class TurretIOSim implements TurretIO {
     private double turretTurnAppliedVolts = 0.0;
 
     private FuelSim fuelSim;
-    private PoseEstimatorSubsystem pose;
+    private Supplier<Pose2d> poseSupplier;
+    private Supplier<ChassisSpeeds> speedSupplier;
     private int fuelCount = 30;
     private double turretAngle = 0;
 
-    public TurretIOSim(FuelSim fuelSim, PoseEstimatorSubsystem pose) {
+    public TurretIOSim(FuelSim fuelSim, Supplier<Pose2d> poseSupplier, Supplier<ChassisSpeeds> speedSupplier) {
         this.fuelSim = fuelSim;
-        this.pose = pose;
+        this.poseSupplier = poseSupplier;
+        this.speedSupplier = speedSupplier;
 
         turretTurnSim = new DCMotorSim(
                 LinearSystemId.createDCMotorSystem(turretTurnGearbox, 0.025, turretTurnReduction),
@@ -71,26 +77,30 @@ public class TurretIOSim implements TurretIO {
 
     @Override
     public void shootFuel() {
-        if (fuelCount > 0) {
-            Translation2d currentTrans = pose.getCurrentPose().getTranslation();
-            Rotation2d targetAngle = Rotation2d.fromDegrees(turretAngle);
-            double magnitude = 4.0;
-            Translation3d shootTranslation = new Translation3d(
-                    magnitude * targetAngle.getCos(),
-                    magnitude * targetAngle.getSin(),
-                    7.0);
-            this.fuelSim.spawnFuel(
-                new Translation3d(currentTrans.getX(), currentTrans.getY(), 0.6),
-                shootTranslation);
-            fuelCount--;
-        }
+        // if (fuelCount <= 0) return;
+        fuelCount--;
+
+        Pose2d robotPose = poseSupplier.get();
+        ChassisSpeeds robotSpeed = speedSupplier.get();
+
+        Rotation2d targetAngle = Rotation2d.fromDegrees(turretAngle);
+
+        double magnitude = 4.0;
+
+        Translation3d shootVelocity = new Translation3d(
+                magnitude * targetAngle.getCos() + robotSpeed.vxMetersPerSecond,
+                magnitude * targetAngle.getSin() + robotSpeed.vyMetersPerSecond,
+                magnitude * 1.75);
+        this.fuelSim.spawnFuel(
+            new Translation3d(robotPose.getX(), robotPose.getY(), TurretConstants.turretHeight),
+            shootVelocity);
     }
 
     private double turnToTarget(Translation2d target) {
-        Translation2d currentTrans = pose.getCurrentPose().getTranslation();
+        Translation2d currentTrans = poseSupplier.get().getTranslation();
         double offsetX = target.getX() - currentTrans.getX();
         double offsetY = target.getY() - currentTrans.getY();
         // return (360 - Math.toDegrees(Math.atan2(offsetY, offsetX)) % 360);
-        return (Math.toDegrees(Math.atan2(offsetY, offsetX)) % 360);
+        return Math.toDegrees(Math.atan2(offsetY, offsetX)) % 360;
     }
 }

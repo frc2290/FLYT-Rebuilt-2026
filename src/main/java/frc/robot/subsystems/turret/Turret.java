@@ -11,20 +11,19 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class Turret extends SubsystemBase {
-    private final TurretIO turretIO;
-    private final TurretIOInputsAutoLogged turretInputs = new TurretIOInputsAutoLogged();
+    private final TurretIO io;
+    private final TurretIOInputsAutoLogged inputs = new TurretIOInputsAutoLogged();
     private boolean stopShoot = false;
 
     /** Creates a new Turret. */
     public Turret(TurretIO turretIO) {
-        this.turretIO = turretIO;
+        this.io = turretIO;
     }
 
     @Override
     public void periodic() {
-        // This method will be called once per scheduler run
-        turretIO.updateInputs(turretInputs);
-        Logger.processInputs("Turret", turretInputs);
+        io.updateInputs(inputs);
+        Logger.processInputs("Turret", inputs);
 
         if (!stopShoot) {
             
@@ -40,6 +39,6 @@ public class Turret extends SubsystemBase {
     }
 
     public Command shoot() {
-        return runOnce(() -> turretIO.shootFuel());
+        return runOnce(() -> io.shootFuel());
     }
 }

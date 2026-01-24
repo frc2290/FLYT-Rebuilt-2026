@@ -115,7 +115,9 @@ public class Robot extends LoggedRobot {
                                new ModuleIOSpark(2),
                                new ModuleIOSpark(3));
                 m_poseEstimator = new PoseEstimatorSubsystem(m_robotDrive);
-                m_turret = new Turret(new TurretIOSim(m_fuelSim, m_poseEstimator));
+                m_turret = new Turret(new TurretIOSim(m_fuelSim,
+                                      m_poseEstimator::getCurrentPose,
+                                      m_poseEstimator::getChassisSpeeds));
                 break;
 
             case SIM:
@@ -127,7 +129,9 @@ public class Robot extends LoggedRobot {
                                new ModuleIOSim(),
                                new ModuleIOSim());
                 m_poseEstimator = new PoseEstimatorSubsystem(m_robotDrive);
-                m_turret = new Turret(new TurretIOSim(m_fuelSim, m_poseEstimator));
+                m_turret = new Turret(new TurretIOSim(m_fuelSim,
+                                      m_poseEstimator::getCurrentPose,
+                                      m_poseEstimator::getChassisSpeeds));
                 break;
 
             default:
