@@ -28,6 +28,9 @@ import frc.robot.subsystems.drive.GyroIONavX;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOSpark;
+import frc.robot.subsystems.turret.Turret;
+import frc.robot.subsystems.turret.TurretIO;
+import frc.robot.subsystems.turret.TurretIOSim;
 import frc.utils.FuelSim;
 import frc.utils.PoseEstimatorSubsystem;
 
@@ -62,6 +65,8 @@ public class Robot extends LoggedRobot {
     private final Drive m_robotDrive;
     private final IntakeShooter m_intakeShooter = new IntakeShooter();
     private final PoseEstimatorSubsystem m_poseEstimator;
+    private final Turret m_turret;
+    private final FuelSim m_fuelSim = FuelSim.getInstance();
 
     /** Coordinates all autonomous and teleop driving modes. */
     private final DriveStateMachine m_driveStateMachine;
@@ -109,6 +114,8 @@ public class Robot extends LoggedRobot {
                                new ModuleIOSpark(1),
                                new ModuleIOSpark(2),
                                new ModuleIOSpark(3));
+                m_poseEstimator = new PoseEstimatorSubsystem(m_robotDrive);
+                m_turret = new Turret(new TurretIOSim(m_fuelSim, m_poseEstimator));
                 break;
 
             case SIM:
@@ -119,6 +126,8 @@ public class Robot extends LoggedRobot {
                                new ModuleIOSim(),
                                new ModuleIOSim(),
                                new ModuleIOSim());
+                m_poseEstimator = new PoseEstimatorSubsystem(m_robotDrive);
+                m_turret = new Turret(new TurretIOSim(m_fuelSim, m_poseEstimator));
                 break;
 
             default:
@@ -129,10 +138,11 @@ public class Robot extends LoggedRobot {
                                new ModuleIO() {},
                                new ModuleIO() {},
                                new ModuleIO() {});
+                m_poseEstimator = new PoseEstimatorSubsystem(m_robotDrive);
+                m_turret = new Turret(new TurretIO() {});
                 break;
         }
 
-        m_poseEstimator = new PoseEstimatorSubsystem(m_robotDrive);
         m_driveStateMachine = new DriveStateMachine(m_robotDrive, m_poseEstimator,
             m_driver);
         m_coordinator = new Coordinator(m_driveStateMachine);
@@ -154,6 +164,7 @@ public class Robot extends LoggedRobot {
                 m_poseEstimator,
                 m_driveStateMachine,
                 m_coordinator,
+                m_turret,
                 m_driver);
 
         DataLogManager.start();
@@ -272,6 +283,6 @@ public class Robot extends LoggedRobot {
 
     @Override
     public void simulationPeriodic() {
-        FuelSim.getInstance().updateSim();
+        m_fuelSim.updateSim();
     }
 }
