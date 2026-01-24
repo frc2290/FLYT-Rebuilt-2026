@@ -8,6 +8,7 @@ public interface TurretIO {
     @AutoLog
     public static class TurretIOInputs {
         public double turretAngle = 0;
+        public double hoodAngle = 0;
     }
 
     public default void updateInputs(TurretIOInputs inputs) {}

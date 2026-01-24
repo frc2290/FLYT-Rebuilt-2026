@@ -109,7 +109,7 @@ public class RobotContainer {
 
         if (Robot.isSimulation()) {
             FuelSim instance = FuelSim.getInstance();
-            instance.spawnStartingFuel();
+            // instance.spawnStartingFuel();
             instance.registerRobot(inchesToMeters(30.0), inchesToMeters(30.0), inchesToMeters(5.0), _drive::getPose, _drive::getChassisSpeeds);
             instance.start();
         }

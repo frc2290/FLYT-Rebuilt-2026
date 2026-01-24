@@ -1,6 +1,10 @@
 package frc.robot.subsystems.turret;
 
+import static edu.wpi.first.math.util.Units.inchesToMeters;
+
 public class TurretConstants {
+    public static final double turretHeight = inchesToMeters(24);
+
     public static final int turretTurnMotor = 50;
     public static final double turretTurnReduction = 7/1;
     public static final int turretShootMotor = 51;
