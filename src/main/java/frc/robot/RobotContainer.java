@@ -26,6 +26,7 @@ import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.DriveStateMachine;
 import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.subsystems.IntakeShooter;
+import frc.utils.FuelSim;
 import frc.utils.PoseEstimatorSubsystem;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
@@ -39,6 +40,8 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.XboxController.Button;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+
+import static edu.wpi.first.math.util.Units.inchesToMeters;
 
 import java.util.List;
 
@@ -99,6 +102,13 @@ public class RobotContainer {
         // OIConstants.kDriveDeadband),
         // true),
         // m_robotDrive));
+
+        if (Robot.isSimulation()) {
+            FuelSim instance = FuelSim.getInstance();
+            instance.spawnStartingFuel();
+            instance.registerRobot(inchesToMeters(30.0), inchesToMeters(30.0), inchesToMeters(5.0), _drive::getPose, _drive::getChassisSpeeds);
+            instance.start();
+        }
     }
 
     // private void configureButtonBindings() {
