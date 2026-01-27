@@ -67,7 +67,7 @@ public class ShootOnTheFly {
 
         // 6. SOLVE FOR NEW PITCH/RPM
         // Assuming constant total exit velocity, variable hood:
-        double totalExitVelocity = 15.0; // m/s
+        double totalExitVelocity = 8.0; // m/s
         // Clamp to avoid domain errors if we need more speed than possible
         double ratio = Math.min(newHorizontalSpeed / totalExitVelocity, 1.0);
         double newPitch = Math.acos(ratio);

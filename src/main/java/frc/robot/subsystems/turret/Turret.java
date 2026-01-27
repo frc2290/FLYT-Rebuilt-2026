@@ -45,6 +45,7 @@ public class Turret extends SubsystemBase {
 
         if (!stopShoot) {
             SOTFResult result = sotf.calculate(VisionConstants.hubCenterPose.toPose2d().getTranslation(), pose.get(), speeds.get());
+            Logger.recordOutput("SOTF Pitch", result.pitch);
             io.setHoodAngle(result.pitch);
             io.setTurnPosition(Rotation2d.fromDegrees(result.yaw));
             io.setShooterSpeed(result.vel);
