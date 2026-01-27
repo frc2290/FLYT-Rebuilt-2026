@@ -27,14 +27,16 @@ public class TurretConstants {
     public static final double turretHoodSimD = 0.0;
 
     public static final double[][] turretRPMData = {
-        {1, 500},
-        {2, 1000},
-        {3, 1500}
+        {1, 5},
+        {3, 9},
+        {5, 10},
+        {7, 11}
     };
 
     public static final double[][] turretHoodData = {
-        {1, 70},
-        {2, 50},
-        {3, 40}
+        {1, 80},
+        {3, 75},
+        {5, 65},
+        {7, 60}
     };
 }
