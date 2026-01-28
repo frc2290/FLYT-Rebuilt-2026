@@ -101,13 +101,14 @@ public class TurretIOSim implements TurretIO {
         //fuelCount--;
 
         Pose2d robotPose = poseSupplier.get();
+        ChassisSpeeds robotSpeed = speedSupplier.get();
 
         double yawRad = Math.toRadians(turretAngle);
         double pitchRad = Math.toRadians(turretHoodAngle);
 
         Translation3d velocity = new Translation3d(
-                turretSpeed * Math.cos(pitchRad) * Math.cos(yawRad), // X (forward)
-                turretSpeed * Math.cos(pitchRad) * Math.sin(yawRad), // Y (left)
+                turretSpeed * Math.cos(pitchRad) * Math.cos(yawRad) + robotSpeed.vxMetersPerSecond, // X (forward)
+                turretSpeed * Math.cos(pitchRad) * Math.sin(yawRad) + robotSpeed.vyMetersPerSecond, // Y (left)
                 turretSpeed * Math.sin(pitchRad) // Z (up)
         );
 
