@@ -294,5 +294,6 @@ public class Robot extends LoggedRobot {
     @Override
     public void simulationPeriodic() {
         m_fuelSim.updateSim();
+        Logger.recordOutput("Fuel Scored", FuelSim.Hub.BLUE_HUB.getScore());
     }
 }

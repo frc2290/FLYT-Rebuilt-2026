@@ -5,8 +5,11 @@ import static edu.wpi.first.units.Units.Radians;
 
 import org.littletonrobotics.junction.Logger;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.interpolation.InterpolatingTreeMap;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.units.Unit;
@@ -15,6 +18,17 @@ public class ShootOnTheFly {
     public static ShootOnTheFly instance = null;
     private LinearInterpolator shootAngleInterp = new LinearInterpolator();
     private LinearInterpolator shootSpeedInterp = new LinearInterpolator();
+
+    public record FullShooterParams(double rpm, double hoodAngle, double timeOfFlight) {}
+    private InterpolatingTreeMap<Double, FullShooterParams> SHOOTER_MAP;
+    public static FullShooterParams interpolateParams(FullShooterParams startValue, FullShooterParams endValue, double t) {
+        return new FullShooterParams(
+            MathUtil.interpolate(startValue.rpm(), endValue.rpm(), t),
+            MathUtil.interpolate(startValue.hoodAngle(), endValue.hoodAngle(), t),
+            MathUtil.interpolate(startValue.timeOfFlight(), endValue.timeOfFlight(), t)
+        );
+    }
+
 
     public static class SOTFResult {
         public double yaw;   // turretAngle
@@ -28,12 +42,66 @@ public class ShootOnTheFly {
         }
     }
 
+    public void addShootInterpData(InterpolatingTreeMap<Double, FullShooterParams> shooterMap) {
+        SHOOTER_MAP = shooterMap;
+    }
+
     public void addShootAngleInterpData(double[][] data) {
         shootAngleInterp.build_table(data);
     }
 
     public void addShootSpeedInterpData(double[][] data) {
         shootSpeedInterp.build_table(data); 
+    }
+
+    public SOTFResult calculateTOF(Translation2d goalLocation, Pose2d robotPose, ChassisSpeeds robotSpeeds) {
+        Translation2d robotVelocity = new Translation2d(robotSpeeds.vxMetersPerSecond, robotSpeeds.vyMetersPerSecond);
+        double latencyCompensation = 0.15;
+
+                // 1. Project future position
+        Translation2d futurePos = robotPose.getTranslation().plus(
+            robotVelocity.times(latencyCompensation)
+        );
+
+        // 2. Get target vector
+        Translation2d toGoal = goalLocation.minus(futurePos);
+        double distance = toGoal.getNorm();
+        Translation2d targetDirection = toGoal.div(distance);
+
+        // 3. Look up baseline velocity from table
+        FullShooterParams baseline = SHOOTER_MAP.get(distance);
+        double baselineVelocity = distance / baseline.timeOfFlight;
+
+        // 4. Build target velocity vector
+        Translation2d targetVelocity = targetDirection.times(baselineVelocity);
+
+        // 5. THE MAGIC: subtract robot velocity
+        Translation2d shotVelocity = targetVelocity.minus(robotVelocity);
+
+        // 6. Extract results
+        Rotation2d turretAngle = shotVelocity.getAngle();
+        double requiredVelocity = shotVelocity.getNorm();
+
+
+    //         FullShooterParams baseline = SHOOTER_MAP.get(distance);
+    // double baselineVelocity = distance / baseline.timeOfFlight;
+    double velocityRatio = requiredVelocity / baselineVelocity;
+
+    // Split the correction: sqrt gives equal "contribution" from each
+    double rpmFactor = Math.sqrt(velocityRatio);
+    double hoodFactor = Math.sqrt(velocityRatio);
+
+    // Apply RPM scaling
+    double adjustedRpm = baseline.rpm * rpmFactor;
+
+    // Apply hood adjustment (changes horizontal component)
+    double totalVelocity = baselineVelocity / Math.cos(Math.toRadians(baseline.hoodAngle));
+    double targetHorizFromHood = baselineVelocity * hoodFactor;
+    double ratio = MathUtil.clamp(targetHorizFromHood / totalVelocity, 0.0, 1.0);
+    double adjustedHood = Math.toDegrees(Math.acos(ratio));
+
+        return new SOTFResult(turretAngle.getDegrees(), adjustedHood, totalVelocity);
+    // return new ShooterCommand(adjustedRpm, adjustedHood);
     }
 
     public SOTFResult calculate(Translation2d goalLocation, Pose2d robotPose, ChassisSpeeds robotSpeed) {

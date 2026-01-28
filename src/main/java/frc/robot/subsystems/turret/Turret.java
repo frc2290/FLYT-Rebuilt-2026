@@ -34,6 +34,7 @@ public class Turret extends SubsystemBase {
         this.io = turretIO;
         this.pose = pose;
         this.speeds = speeds;
+        sotf.addShootInterpData(TurretConstants.SHOOTER_MAP);
         sotf.addShootSpeedInterpData(turretRPMData);
         sotf.addShootAngleInterpData(turretHoodData);
     }
@@ -44,7 +45,7 @@ public class Turret extends SubsystemBase {
         Logger.processInputs("Turret", inputs);
 
         if (!stopShoot) {
-            SOTFResult result = sotf.calculate(VisionConstants.hubCenterPose.toPose2d().getTranslation(), pose.get(), speeds.get());
+            SOTFResult result = sotf.calculateTOF(VisionConstants.hubCenterPose.toPose2d().getTranslation(), pose.get(), speeds.get());
             Logger.recordOutput("SOTF Pitch", result.pitch);
             io.setHoodAngle(result.pitch);
             io.setTurnPosition(Rotation2d.fromDegrees(result.yaw));

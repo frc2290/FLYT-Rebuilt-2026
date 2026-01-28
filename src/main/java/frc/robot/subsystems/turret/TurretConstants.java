@@ -2,6 +2,12 @@ package frc.robot.subsystems.turret;
 
 import static edu.wpi.first.math.util.Units.inchesToMeters;
 
+import edu.wpi.first.math.interpolation.InterpolatingDoubleTreeMap;
+import edu.wpi.first.math.interpolation.InterpolatingTreeMap;
+import edu.wpi.first.math.interpolation.InverseInterpolator;
+import frc.utils.ShootOnTheFly;
+import frc.utils.ShootOnTheFly.FullShooterParams;
+
 public class TurretConstants {
     public static final double turretHeight = inchesToMeters(24);
 
@@ -25,6 +31,14 @@ public class TurretConstants {
     public static final double turretHoodSimP = 1.0;
     public static final double turretHoodSimI = 0.0;
     public static final double turretHoodSimD = 0.0;
+
+    public static final InterpolatingTreeMap<Double, FullShooterParams> SHOOTER_MAP = new InterpolatingTreeMap<>(InverseInterpolator.forDouble(), ShootOnTheFly::interpolateParams);
+    static {
+        SHOOTER_MAP.put(1.0, new FullShooterParams(5, 80, 3));
+        SHOOTER_MAP.put(3.0, new FullShooterParams(9, 75, 3));
+        SHOOTER_MAP.put(5.0, new FullShooterParams(10, 65, 3));
+        SHOOTER_MAP.put(7.0, new FullShooterParams(11, 60, 3));
+    };
 
     public static final double[][] turretRPMData = {
         {1, 5},
