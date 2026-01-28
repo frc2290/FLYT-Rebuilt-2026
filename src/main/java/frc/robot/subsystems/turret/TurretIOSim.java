@@ -2,6 +2,7 @@ package frc.robot.subsystems.turret;
 
 import static edu.wpi.first.units.Units.Degrees;
 import static edu.wpi.first.units.Units.Radians;
+import static frc.robot.subsystems.drive.DriveConstants.robotMOI;
 import static frc.robot.subsystems.turret.TurretConstants.*;
 
 import java.util.function.Supplier;

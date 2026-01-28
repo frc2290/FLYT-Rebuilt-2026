@@ -50,6 +50,13 @@ public class Turret extends SubsystemBase {
             io.setHoodAngle(result.pitch);
             io.setTurnPosition(Rotation2d.fromDegrees(result.yaw));
             io.setShooterSpeed(result.vel);
+
+            /*Translation2d toGoal = VisionConstants.hubCenterPose.toPose2d().getTranslation().minus(pose.get().getTranslation());
+            double distance = toGoal.getNorm();
+            Logger.recordOutput("Turret/Shot Distance", distance);
+            io.setTurnPosition(Rotation2d.fromDegrees(turnToTarget(VisionConstants.hubCenterPose.toPose2d().getTranslation(), pose.get().getTranslation())));
+            io.setShooterSpeed(sotf.getShootSpeedInterp(distance));
+            io.setHoodAngle(sotf.getShootAngleInterp(distance));*/
         }
     }
 

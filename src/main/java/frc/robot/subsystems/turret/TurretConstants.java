@@ -34,23 +34,20 @@ public class TurretConstants {
 
     public static final InterpolatingTreeMap<Double, FullShooterParams> SHOOTER_MAP = new InterpolatingTreeMap<>(InverseInterpolator.forDouble(), ShootOnTheFly::interpolateParams);
     static {
-        SHOOTER_MAP.put(1.0, new FullShooterParams(5, 80, 3));
-        SHOOTER_MAP.put(3.0, new FullShooterParams(9, 75, 3));
-        SHOOTER_MAP.put(5.0, new FullShooterParams(10, 65, 3));
-        SHOOTER_MAP.put(7.0, new FullShooterParams(11, 60, 3));
+        SHOOTER_MAP.put(1.5, new FullShooterParams(6.5, 80, 1.25));
+        SHOOTER_MAP.put(3.0, new FullShooterParams(7, 65, 1.1));
+        SHOOTER_MAP.put(5.0, new FullShooterParams(8, 50, 1.2));
     };
 
     public static final double[][] turretRPMData = {
-        {1, 5},
-        {3, 9},
-        {5, 10},
-        {7, 11}
+        {1.5, 6.5},
+        {3, 7},
+        {5, 8},
     };
 
     public static final double[][] turretHoodData = {
-        {1, 80},
-        {3, 75},
-        {5, 65},
-        {7, 60}
+        {1.5, 80},
+        {3, 65},
+        {5, 50},
     };
 }
