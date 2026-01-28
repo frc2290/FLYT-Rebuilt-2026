@@ -19,22 +19,24 @@ public class ShootOnTheFly {
     private LinearInterpolator shootAngleInterp = new LinearInterpolator();
     private LinearInterpolator shootSpeedInterp = new LinearInterpolator();
 
-    public record FullShooterParams(double rpm, double hoodAngle, double timeOfFlight) {}
-    private InterpolatingTreeMap<Double, FullShooterParams> SHOOTER_MAP;
-    public static FullShooterParams interpolateParams(FullShooterParams startValue, FullShooterParams endValue, double t) {
-        return new FullShooterParams(
-            MathUtil.interpolate(startValue.rpm(), endValue.rpm(), t),
-            MathUtil.interpolate(startValue.hoodAngle(), endValue.hoodAngle(), t),
-            MathUtil.interpolate(startValue.timeOfFlight(), endValue.timeOfFlight(), t)
-        );
+    public record FullShooterParams(double rpm, double hoodAngle, double timeOfFlight) {
     }
 
+    private InterpolatingTreeMap<Double, FullShooterParams> SHOOTER_MAP;
+
+    public static FullShooterParams interpolateParams(FullShooterParams startValue, FullShooterParams endValue,
+            double t) {
+        return new FullShooterParams(
+                MathUtil.interpolate(startValue.rpm(), endValue.rpm(), t),
+                MathUtil.interpolate(startValue.hoodAngle(), endValue.hoodAngle(), t),
+                MathUtil.interpolate(startValue.timeOfFlight(), endValue.timeOfFlight(), t));
+    }
 
     public static class SOTFResult {
-        public double yaw;   // turretAngle
+        public double yaw; // turretAngle
         public double pitch; // hoodAngle
-        public double vel;   // exitVelocity
-        
+        public double vel; // exitVelocity
+
         public SOTFResult(double yaw, double pitch, double vel) {
             this.yaw = yaw;
             this.pitch = pitch;
@@ -50,18 +52,25 @@ public class ShootOnTheFly {
         shootAngleInterp.build_table(data);
     }
 
+    public double getShootAngleInterp(double dist) {
+        return shootAngleInterp.getInterpolatedValue(dist);
+    }
+
     public void addShootSpeedInterpData(double[][] data) {
-        shootSpeedInterp.build_table(data); 
+        shootSpeedInterp.build_table(data);
+    }
+
+    public double getShootSpeedInterp(double dist) {
+        return shootSpeedInterp.getInterpolatedValue(dist);
     }
 
     public SOTFResult calculateTOF(Translation2d goalLocation, Pose2d robotPose, ChassisSpeeds robotSpeeds) {
         Translation2d robotVelocity = new Translation2d(robotSpeeds.vxMetersPerSecond, robotSpeeds.vyMetersPerSecond);
-        double latencyCompensation = 0.15;
+        double latencyCompensation = -0.15;
 
-                // 1. Project future position
+        // 1. Project future position
         Translation2d futurePos = robotPose.getTranslation().plus(
-            robotVelocity.times(latencyCompensation)
-        );
+                robotVelocity.times(latencyCompensation));
 
         // 2. Get target vector
         Translation2d toGoal = goalLocation.minus(futurePos);
@@ -82,33 +91,32 @@ public class ShootOnTheFly {
         Rotation2d turretAngle = shotVelocity.getAngle();
         double requiredVelocity = shotVelocity.getNorm();
 
+        // Both Calculation
+        //FullShooterParams baseline = SHOOTER_MAP.get(distance);
+        //double baselineVelocity = distance / baseline.timeOfFlight;
+        double velocityRatio = requiredVelocity / baselineVelocity;
 
-    //         FullShooterParams baseline = SHOOTER_MAP.get(distance);
-    // double baselineVelocity = distance / baseline.timeOfFlight;
-    double velocityRatio = requiredVelocity / baselineVelocity;
+        // Split the correction: sqrt gives equal "contribution" from each
+        double rpmFactor = Math.sqrt(velocityRatio);
+        double hoodFactor = Math.sqrt(velocityRatio);
 
-    // Split the correction: sqrt gives equal "contribution" from each
-    double rpmFactor = Math.sqrt(velocityRatio);
-    double hoodFactor = Math.sqrt(velocityRatio);
+        // Apply RPM scaling
+        double adjustedRpm = baseline.rpm * rpmFactor;
 
-    // Apply RPM scaling
-    double adjustedRpm = baseline.rpm * rpmFactor;
+        // Apply hood adjustment (changes horizontal component)
+        double totalVelocity = baselineVelocity / Math.cos(Math.toRadians(baseline.hoodAngle));
+        double targetHorizFromHood = baselineVelocity * hoodFactor;
+        double ratio = MathUtil.clamp(targetHorizFromHood / totalVelocity, 0.0, 1.0);
+        double adjustedHood = Math.toDegrees(Math.acos(ratio));
 
-    // Apply hood adjustment (changes horizontal component)
-    double totalVelocity = baselineVelocity / Math.cos(Math.toRadians(baseline.hoodAngle));
-    double targetHorizFromHood = baselineVelocity * hoodFactor;
-    double ratio = MathUtil.clamp(targetHorizFromHood / totalVelocity, 0.0, 1.0);
-    double adjustedHood = Math.toDegrees(Math.acos(ratio));
-
-        return new SOTFResult(turretAngle.getDegrees(), adjustedHood, totalVelocity);
-    // return new ShooterCommand(adjustedRpm, adjustedHood);
+        return new SOTFResult(turretAngle.getDegrees(), adjustedHood, adjustedRpm);
+        // return new ShooterCommand(adjustedRpm, adjustedHood);
     }
 
     public SOTFResult calculate(Translation2d goalLocation, Pose2d robotPose, ChassisSpeeds robotSpeed) {
         double latency = 0.15; // Tuned constant
         Translation2d futurePos = robotPose.getTranslation().plus(
-            new Translation2d(robotSpeed.vxMetersPerSecond, robotSpeed.vyMetersPerSecond).times(latency)
-        );
+                new Translation2d(robotSpeed.vxMetersPerSecond, robotSpeed.vyMetersPerSecond).times(latency));
 
         // 2. GET TARGET VECTOR
         Translation2d targetVec = goalLocation.minus(futurePos);
@@ -150,5 +158,6 @@ public class ShootOnTheFly {
         return instance;
     }
 
-    private ShootOnTheFly() {}
+    private ShootOnTheFly() {
+    }
 }
