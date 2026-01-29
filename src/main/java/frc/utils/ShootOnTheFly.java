@@ -66,7 +66,7 @@ public class ShootOnTheFly {
 
     public SOTFResult calculateTOF(Translation2d goalLocation, Pose2d robotPose, ChassisSpeeds robotSpeeds) {
         Translation2d robotVelocity = new Translation2d(robotSpeeds.vxMetersPerSecond, robotSpeeds.vyMetersPerSecond);
-        double latencyCompensation = -0.15;
+        double latencyCompensation = 0.15;
 
         // 1. Project future position
         Translation2d futurePos = robotPose.getTranslation().plus(
