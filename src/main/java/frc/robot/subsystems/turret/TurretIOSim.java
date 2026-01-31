@@ -1,8 +1,5 @@
 package frc.robot.subsystems.turret;
 
-import static edu.wpi.first.units.Units.Degrees;
-import static edu.wpi.first.units.Units.Radians;
-import static frc.robot.subsystems.drive.DriveConstants.robotMOI;
 import static frc.robot.subsystems.turret.TurretConstants.*;
 
 import java.util.function.Supplier;
@@ -13,16 +10,13 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
-import frc.robot.Constants.VisionConstants;
 import frc.utils.FuelSim;
-import frc.utils.PoseEstimatorSubsystem;
 
 public class TurretIOSim implements TurretIO {
     private final DCMotorSim turretTurnSim;

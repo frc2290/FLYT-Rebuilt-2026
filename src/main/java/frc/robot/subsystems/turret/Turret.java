@@ -45,7 +45,7 @@ public class Turret extends SubsystemBase {
         Logger.processInputs("Turret", inputs);
 
         if (!stopShoot) {
-            SOTFResult result = sotf.calculateTOF(VisionConstants.hubCenterPose.toPose2d().getTranslation(), pose.get(), speeds.get());
+            SOTFResult result = sotf.calculateRecursiveTOF(VisionConstants.hubCenterPose.toPose2d().getTranslation(), pose.get(), speeds.get());
             Logger.recordOutput("SOTF Pitch", result.pitch);
             io.setHoodAngle(result.pitch);
             io.setTurnPosition(Rotation2d.fromDegrees(result.yaw));
