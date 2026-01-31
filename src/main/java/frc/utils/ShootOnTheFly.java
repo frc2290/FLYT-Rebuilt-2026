@@ -64,6 +64,41 @@ public class ShootOnTheFly {
         return shootSpeedInterp.getInterpolatedValue(dist);
     }
 
+    public SOTFResult calculateRecursiveTOF(Translation2d goalLocation, Pose2d robotPose, ChassisSpeeds robotSpeeds) {
+        Translation2d robotVelocity = new Translation2d(robotSpeeds.vxMetersPerSecond, robotSpeeds.vyMetersPerSecond);
+
+        double latencyCompensation = 0.0;
+        Translation2d futurePos = robotPose.getTranslation().plus(
+                robotVelocity.times(latencyCompensation));
+
+        // robot-relative goal position
+        Translation2d toGoal = goalLocation.minus(futurePos);
+        // the calculated final goal position relative to the robot
+        Translation2d ballGoal = toGoal;
+
+        FullShooterParams params = null;
+        double distance = ballGoal.getNorm();
+
+        // the reason this is done is because when you want to apply the velocity
+        // corrections, you also need to know how long the ball will be in the air for.
+        // this is important because that allows us to take the velocity of the robot
+        // and convert it into an actual position we can use to point towards and get
+        // the distance of for the LUT
+        for (int i = 0; i < 5; i++) {
+            params = SHOOTER_MAP.get(distance);
+            // the reason the TOF is negative isn't for the TOF, but rather the velocity.
+            // here, instead of wanting field-relative robot velocity, we want the
+            // robot-relative goal velocity, which will be the opposite.
+            ballGoal = toGoal.plus(robotVelocity.times(-params.timeOfFlight));
+            distance = ballGoal.getNorm();
+        }
+
+        // we get the params one more time with the updated distance...
+        params = SHOOTER_MAP.get(distance);
+        // ...and then return the params and direction
+        return new SOTFResult(ballGoal.getAngle().getDegrees(), params.hoodAngle, params.rpm);
+    }
+
     public SOTFResult calculateTOF(Translation2d goalLocation, Pose2d robotPose, ChassisSpeeds robotSpeeds) {
         Translation2d robotVelocity = new Translation2d(robotSpeeds.vxMetersPerSecond, robotSpeeds.vyMetersPerSecond);
         double latencyCompensation = 0.15;
@@ -92,8 +127,8 @@ public class ShootOnTheFly {
         double requiredVelocity = shotVelocity.getNorm();
 
         // Both Calculation
-        //FullShooterParams baseline = SHOOTER_MAP.get(distance);
-        //double baselineVelocity = distance / baseline.timeOfFlight;
+        // FullShooterParams baseline = SHOOTER_MAP.get(distance);
+        // double baselineVelocity = distance / baseline.timeOfFlight;
         double velocityRatio = requiredVelocity / baselineVelocity;
 
         // Split the correction: sqrt gives equal "contribution" from each

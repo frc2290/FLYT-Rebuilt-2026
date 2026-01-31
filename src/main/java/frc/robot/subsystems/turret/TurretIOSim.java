@@ -7,6 +7,8 @@ import static frc.robot.subsystems.turret.TurretConstants.*;
 
 import java.util.function.Supplier;
 
+import org.littletonrobotics.junction.Logger;
+
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
@@ -38,7 +40,7 @@ public class TurretIOSim implements TurretIO {
     private FuelSim fuelSim;
     private Supplier<Pose2d> poseSupplier;
     private Supplier<ChassisSpeeds> speedSupplier;
-    private int fuelCount = 30;
+    private int fuelCount = 0;
     private double turretAngle = 0;
     private double turretSpeed = 0;
     private double turretHoodAngle = 0;
@@ -99,7 +101,9 @@ public class TurretIOSim implements TurretIO {
     @Override
     public void shootFuel() {
         // if (fuelCount <= 0) return;
-        //fuelCount--;
+        fuelCount++;
+        Logger.recordOutput("Fuel Shot", fuelCount);
+
 
         Pose2d robotPose = poseSupplier.get();
         ChassisSpeeds robotSpeed = speedSupplier.get();
