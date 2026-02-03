@@ -21,13 +21,16 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.subsystems.Coordinator;
 import frc.robot.subsystems.Coordinator.RobotState;
 import frc.robot.subsystems.DriveStateMachine;
-import frc.robot.subsystems.IntakeShooter;
+// import frc.robot.subsystems.IntakeShooter;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
 import frc.robot.subsystems.drive.GyroIONavX;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOSpark;
+import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.intake.IntakeIO;
+import frc.robot.subsystems.intake.IntakeIOSim;
 import frc.robot.subsystems.turret.Turret;
 import frc.robot.subsystems.turret.TurretIO;
 import frc.robot.subsystems.turret.TurretIOSim;
@@ -63,7 +66,8 @@ public class Robot extends LoggedRobot {
     /** Owns all hardware for swerve driving and exposes the drive commands. */
     // private final DriveSubsystem m_robotDrive = new DriveSubsystem();
     private final Drive m_robotDrive;
-    private final IntakeShooter m_intakeShooter = new IntakeShooter();
+    private final Intake m_intake;
+    // private final IntakeShooter m_intakeShooter = new IntakeShooter();
     private final PoseEstimatorSubsystem m_poseEstimator;
     private final Turret m_turret;
     private final FuelSim m_fuelSim = FuelSim.getInstance();
@@ -114,6 +118,7 @@ public class Robot extends LoggedRobot {
                                new ModuleIOSpark(1),
                                new ModuleIOSpark(2),
                                new ModuleIOSpark(3));
+                m_intake = new Intake(new IntakeIO() {}, new IntakeIO() {});
                 m_poseEstimator = new PoseEstimatorSubsystem(m_robotDrive);
                 m_turret = new Turret(new TurretIOSim(m_fuelSim,
                                       m_poseEstimator::getCurrentPose,
@@ -130,6 +135,7 @@ public class Robot extends LoggedRobot {
                                new ModuleIOSim(),
                                new ModuleIOSim(),
                                new ModuleIOSim());
+                m_intake = new Intake(new IntakeIOSim(), new IntakeIOSim());
                 m_poseEstimator = new PoseEstimatorSubsystem(m_robotDrive);
                 m_turret = new Turret(new TurretIOSim(m_fuelSim,
                                       m_poseEstimator::getCurrentPose,
@@ -146,6 +152,7 @@ public class Robot extends LoggedRobot {
                                new ModuleIO() {},
                                new ModuleIO() {},
                                new ModuleIO() {});
+                m_intake = new Intake(new IntakeIO() {}, new IntakeIO() {});
                 m_poseEstimator = new PoseEstimatorSubsystem(m_robotDrive);
                 m_turret = new Turret(new TurretIO() {},
                                         m_poseEstimator::getCurrentPose,
@@ -170,7 +177,8 @@ public class Robot extends LoggedRobot {
         // autonomous chooser on the dashboard.
         m_robotContainer = new RobotContainer(
                 m_robotDrive,
-                m_intakeShooter,
+                m_intake,
+                // m_intakeShooter,
                 m_poseEstimator,
                 m_driveStateMachine,
                 m_coordinator,
