@@ -22,7 +22,7 @@ import frc.utils.ShootOnTheFly;
 import frc.utils.ShootOnTheFly.SOTFResult;
 
 public class Turret extends SubsystemBase {
-    private final TurretIO io;
+    private final TurretIO io; //input outs puts
     private final TurretIOInputsAutoLogged inputs = new TurretIOInputsAutoLogged();
     private Supplier<Pose2d> pose;
     private Supplier<ChassisSpeeds> speeds;
@@ -41,6 +41,8 @@ public class Turret extends SubsystemBase {
 
     @Override
     public void periodic() {
+
+        //turrent logging
         io.updateInputs(inputs);
         Logger.processInputs("Turret", inputs);
 
@@ -60,18 +62,35 @@ public class Turret extends SubsystemBase {
         }
     }
 
+    /**
+     * Give it a global pose to turn turret towards to
+     * @param targetPose
+     */
     public void turnTurretToPose(Pose2d targetPose) {
         io.setTurnPosition(Rotation2d.fromDegrees(turnToTarget(targetPose.getTranslation(), pose.get().getTranslation())));
     }
 
+    /**
+     * Stop/Unstop shooting
+     * @param stop for true
+     */
     public void setStopShoot(boolean stop) {
         stopShoot = stop;
     }
 
+    /**
+     * Command shoot
+     */
     public Command shoot() {
         return runOnce(() -> io.shootFuel());
     }
 
+    /**
+     * Calculates angle difference 
+     * @param target
+     * @param current
+     * @return angle difference
+     */
     private double turnToTarget(Translation2d target, Translation2d current) {
         double offsetX = target.getX() - current.getX();
         double offsetY = target.getY() - current.getY();

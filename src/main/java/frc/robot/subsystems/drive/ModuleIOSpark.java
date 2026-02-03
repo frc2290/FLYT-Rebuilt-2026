@@ -54,7 +54,7 @@ public class ModuleIOSpark implements ModuleIO {
   private final Queue<Double> drivePositionQueue;
   private final Queue<Double> turnPositionQueue;
 
-  // Connection debouncers
+  // Connection debouncers (What is this For?!?)
   private final Debouncer driveConnectedDebounce =
       new Debouncer(0.5, Debouncer.DebounceType.kFalling);
   private final Debouncer turnConnectedDebounce =

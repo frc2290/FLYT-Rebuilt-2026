@@ -31,6 +31,41 @@ public class TurretConstants {
     public static final double turretHoodSimI = 0.0;
     public static final double turretHoodSimD = 0.0;
 
+    // Device CAN ID(s)
+    public static final int turretCanId = 20;
+    public static final int hoodCanId = 21;
+    public static final int flywheel1CanId = 22;
+    public static final int flywheel2CanId = 23;
+
+    // Turret config
+    public static final boolean turretIsInverted = false;
+    public static final int turretMotorCurrent = 40;
+    public static final double turretEncoderPositionFactor = 1;
+    public static final double turretEncoderVelocityFactor = 1;
+    public static final double turretKp = 0.001;
+    public static final double turretKi = 0.0;
+    public static final double turretKd = 0.0;
+
+    // Hood config
+    public static final boolean hoodIsInverted = false;
+    public static final int hoodMotorCurrent = 40;
+    public static final boolean hoodEncoderInverted = false;
+    public static final double hoodEncoderPositionFactor = 1;
+    public static final double hoodEncoderVelocityFactor = 1;
+    public static final double hoodKp = 0.001;
+    public static final double hoodKi = 0.0;
+    public static final double hoodKd = 0.0;
+
+    // Flywheel config
+    public static final boolean flywheelIsInverted = false;
+    public static final int flywheelMotorCurrent = 40;
+    public static final double flywheelEncoderPositionFactor = 1;
+    public static final double flywheelEncoderVelocityFactor = 1;
+    public static final double flywheelKp = 0.001;
+    public static final double flywheelKi = 0.0;
+    public static final double flywheelKd = 0.0;
+
+
     public static final InterpolatingTreeMap<Double, FullShooterParams> SHOOTER_MAP = new InterpolatingTreeMap<>(
             InverseInterpolator.forDouble(), ShootOnTheFly::interpolateParams);
     static {
