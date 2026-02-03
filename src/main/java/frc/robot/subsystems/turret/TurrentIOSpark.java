@@ -3,6 +3,8 @@ package frc.robot.subsystems.turret;
 import static frc.robot.subsystems.turret.TurretConstants.*;
 import static frc.utils.SparkUtil.*;
 
+import org.littletonrobotics.junction.Logger;
+
 import com.revrobotics.AbsoluteEncoder;
 import com.revrobotics.PersistMode;
 import com.revrobotics.RelativeEncoder;
@@ -16,6 +18,12 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.SparkMax;
 
+import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation3d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.units.Units;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
 
 public class TurrentIOSpark implements TurretIO {
@@ -154,10 +162,67 @@ public class TurrentIOSpark implements TurretIO {
                 flywheel2Spark.configure(
                     flywheelConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
 
-
-
     }
 
+
     
-    
+    @Override
+    public void updateInputs(TurretIOInputs inputs) {
+        // double hub =
+        // turnToTarget(VisionConstants.hubCenterPose.toPose2d().getTranslation());
+        // turretTurnAppliedVolts =
+        // turretTurnController.calculate(turretTurnSim.getAngularPositionRad(),
+        // Radians.convertFrom(hub, Units.Degrees));
+        // turretTurnAppliedVolts = turretTurnController.calculate(turretTurnSim.getAngularPositionRad());
+        // turretTurnSim.setInputVoltage(MathUtil.clamp(turretTurnAppliedVolts, -12.0, 12.0));
+        // turretTurnSim.update(0.02);
+
+        // turretAngle = turretTurnSim.getAngularPosition().in(Units.Degrees);
+        // inputs.turretAngle = turretAngle;
+        // inputs.turretSpeed = turretSpeed;
+        // inputs.turretHoodAngle = turretHoodAngle;
+        // inputs.turretAngleSetpoint = turretAngleSetpoint;
+    }
+
+    @Override
+    public void setTurnPosition(Rotation2d rotation) {
+        // turretTurnController.setSetpoint(rotation.getRadians());
+        // turretAngleSetpoint = rotation.getDegrees();
+    }
+
+    @Override
+    public void setHoodAngle(double angle) {
+        // turretHoodAngle = angle;
+    };
+
+    @Override
+    public void setShooterSpeed(double speed) {
+        // turretSpeed = speed;
+    };
+
+    @Override
+    public void shootFuel() {
+        // if (fuelCount <= 0) return;
+        // fuelCount++;
+        // Logger.recordOutput("Fuel Shot", fuelCount);
+
+
+        // Pose2d robotPose = poseSupplier.get();
+        // ChassisSpeeds robotSpeed = speedSupplier.get();
+
+        // double yawRad = Math.toRadians(turretAngle);
+        // double pitchRad = Math.toRadians(turretHoodAngle);
+
+        // Translation3d velocity = new Translation3d(
+        //         turretSpeed * Math.cos(pitchRad) * Math.cos(yawRad) + robotSpeed.vxMetersPerSecond, // X (forward)
+        //         turretSpeed * Math.cos(pitchRad) * Math.sin(yawRad) + robotSpeed.vyMetersPerSecond, // Y (left)
+        //         turretSpeed * Math.sin(pitchRad) // Z (up)
+        // );
+
+        // this.fuelSim.spawnFuel(
+        //         new Translation3d(robotPose.getX(), robotPose.getY(), TurretConstants.turretHeight),
+        //         velocity);
+    }
+
+       
 }
