@@ -1,9 +1,9 @@
 turretIO.java
-    takes of turrent inputs and outputs and automatic updates
+    takes of turrent inputs and outputs and automatic updates, bassicaly a file that takes care of turret subsystem in general
 
 turrentIOSim.java
 TurrentConstants.java
     saves turrent constant like pid tuned variables
-    
+
 Turrent.java
     turret control logic
