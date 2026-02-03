@@ -14,7 +14,7 @@ import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.trajectory.TrajectoryConfig;
 import edu.wpi.first.math.trajectory.TrajectoryGenerator;
 import edu.wpi.first.wpilibj.XboxController;
-import frc.robot.Commands.Intake;
+// import frc.robot.Commands.Intake;
 import frc.robot.Commands.Shoot;
 import frc.robot.Constants.AutoConstants;
 import frc.robot.Constants.DriveConstants;
@@ -23,6 +23,8 @@ import frc.robot.subsystems.Coordinator;
 import frc.robot.subsystems.Coordinator.ControllerProfile;
 import frc.robot.subsystems.Coordinator.RobotState;
 import frc.robot.subsystems.drive.Drive;
+import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.intake.IntakeConstants.IntakeSide;
 import frc.robot.subsystems.turret.Turret;
 import frc.robot.subsystems.DriveStateMachine;
 import frc.robot.subsystems.DriveSubsystem;
@@ -55,7 +57,8 @@ import java.util.List;
 public class RobotContainer {
     // The robot's subsystems
     private final Drive m_robotDrive;
-    private final IntakeShooter m_intakeShooter;
+//     private final IntakeShooter m_intakeShooter;
+    private final Intake m_intake;
     private final PoseEstimatorSubsystem m_PoseEstimator;
     private final DriveStateMachine m_drive_state;
     private final Coordinator m_coordinator;
@@ -71,7 +74,7 @@ public class RobotContainer {
      */
     public RobotContainer(
             Drive _drive,
-            IntakeShooter _intake,
+            Intake _intake,
             PoseEstimatorSubsystem _PoseEstimator,
             DriveStateMachine _driveStateMachine,
             Coordinator _coordinator,
@@ -79,7 +82,7 @@ public class RobotContainer {
             XboxController _driverController) {
 
         m_robotDrive = _drive;
-        m_intakeShooter = _intake;
+        m_intake = _intake;
         m_PoseEstimator = _PoseEstimator;
         m_drive_state = _driveStateMachine;
         m_coordinator = _coordinator;
@@ -152,6 +155,9 @@ public class RobotContainer {
 
         a_button.onTrue(m_turret.shoot());
 
+        x_button.onTrue(m_intake.intakeOut(IntakeSide.LEFT));
+        y_button.onTrue(m_intake.intakeIn(IntakeSide.LEFT));
+
         // Manual controls.
         dpad_left.toggleOnTrue(
                 new ParallelCommandGroup(
@@ -174,8 +180,8 @@ public class RobotContainer {
         //         .and(dpad_right)
         //         .onTrue(new InstantCommand(() -> m_robotDrive.zeroHeading())); // Manual heading reset.
 
-        left_trigger.whileTrue(new Intake(m_intakeShooter));
-        right_trigger.whileTrue(new Shoot(m_intakeShooter, 1));
+        // left_trigger.whileTrue(new Intake(m_intakeShooter));
+        // right_trigger.whileTrue(new Shoot(m_intakeShooter, 1));
     }
 
     /**

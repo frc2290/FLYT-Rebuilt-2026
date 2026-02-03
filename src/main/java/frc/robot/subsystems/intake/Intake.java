@@ -5,6 +5,8 @@ import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+
+import static edu.wpi.first.math.util.Units.degreesToRadians;
 import static frc.robot.subsystems.intake.IntakeConstants.*;
 
 public class Intake extends SubsystemBase {
@@ -32,7 +34,11 @@ public class Intake extends SubsystemBase {
     }
 
     public double getPosition(IntakeSide side) {
-        return -1;
+        if (side == IntakeSide.LEFT) {
+            return inputsLeft.deployPosition.getDegrees();
+        } else {
+            return inputsRight.deployPosition.getDegrees();
+        }
     }
 
     public boolean isIn(IntakeSide side) {
@@ -44,7 +50,7 @@ public class Intake extends SubsystemBase {
     }
 
     public void deploy(IntakeSide side, boolean out) {
-        getIntake(side).setDeployPosition(new Rotation2d(out ? outPosition : inPosition));
+        getIntake(side).setDeployPosition(new Rotation2d(degreesToRadians(out ? outPosition : inPosition)));
     }
 
     public void driveRoller(IntakeSide side, double vel) {

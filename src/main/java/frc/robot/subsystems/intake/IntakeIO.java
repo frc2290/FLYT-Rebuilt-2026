@@ -13,14 +13,15 @@ public interface IntakeIO {
         public double driveAppliedVolts = 0.0;
         public double driveCurrentAmps = 0.0;
 
-        public boolean turnConnected = false;
-        public Rotation2d turnPosition = Rotation2d.kZero;
-        public double turnVelocityRadPerSec = 0.0;
-        public double turnAppliedVolts = 0.0;
-        public double turnCurrentAmps = 0.0;
+        public boolean deployConnected = false;
+        public Rotation2d deployPosition = Rotation2d.kZero;
+        public double deployVelocityRadPerSec = 0.0;
+        public double deployAppliedVolts = 0.0;
+        public double deployCurrentAmps = 0.0;
     }
 
     public default void updateInputs(IntakeIOInputs inputs) {}
+    
     public default void setIntakeVelocity(double vel) {}
     public default void setDeployPosition(Rotation2d rotation) {}
 }
