@@ -57,7 +57,6 @@ import java.util.List;
 public class RobotContainer {
     // The robot's subsystems
     private final Drive m_robotDrive;
-//     private final IntakeShooter m_intakeShooter;
     private final Intake m_intake;
     private final PoseEstimatorSubsystem m_PoseEstimator;
     private final DriveStateMachine m_drive_state;
@@ -95,21 +94,6 @@ public class RobotContainer {
         // Auto poses place here
         SmartDashboard.putData(auto_chooser);
 
-        // // Configure default commands
-        // m_robotDrive.setDefaultCommand(
-        // // The left stick controls translation of the robot.
-        // // Turning is controlled by the X axis of the right stick.
-        // new RunCommand(
-        // () -> m_robotDrive.drive(
-        // -MathUtil.applyDeadband(m_driverController.getLeftY(),
-        // OIConstants.kDriveDeadband),
-        // -MathUtil.applyDeadband(m_driverController.getLeftX(),
-        // OIConstants.kDriveDeadband),
-        // -MathUtil.applyDeadband(m_driverController.getRightX(),
-        // OIConstants.kDriveDeadband),
-        // true),
-        // m_robotDrive));
-
         if (Robot.isSimulation()) {
             FuelSim instance = FuelSim.getInstance();
             // instance.spawnStartingFuel();
@@ -117,18 +101,6 @@ public class RobotContainer {
             instance.start();
         }
     }
-
-    // private void configureButtonBindings() {
-    // new JoystickButton(m_driverController, Button.kX.value)
-    // .whileTrue(new RunCommand(
-    // () -> m_robotDrive.setX(),
-    // m_robotDrive));
-
-    // new JoystickButton(m_driverController, XboxController.Button.kStart.value)
-    // .onTrue(new InstantCommand(
-    // () -> m_robotDrive.zeroHeading(),
-    // m_robotDrive));
-    // }
 
     private void configureButtonBindings() {
         // Button definitions.

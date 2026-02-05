@@ -22,6 +22,11 @@ public class TurretConstants {
     public static final double turretTurnSimP = 1.0;
     public static final double turretTurnSimI = 0.0;
     public static final double turretTurnSimD = 0.0;
+    public static final double turretTurnP = 1.0;
+    public static final double turretTurnI = 0.0;
+    public static final double turretTurnD = 0.0;
+    public static final double turretff = 0;
+
 
     public static final double turretShootSimP = 1.0;
     public static final double turretShootSimI = 0.0;
