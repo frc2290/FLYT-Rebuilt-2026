@@ -26,6 +26,10 @@ public class Intake extends SubsystemBase {
         ioRight.updateInputs(inputsRight);
         Logger.processInputs("Intake/Left", inputsLeft);
         Logger.processInputs("Intake/Right", inputsRight);
+        Logger.recordOutput("Intake/LeftIn", isIn(IntakeSide.LEFT));
+        Logger.recordOutput("Intake/LeftOut", isOut(IntakeSide.LEFT));
+        Logger.recordOutput("Intake/RightIn", isIn(IntakeSide.RIGHT));
+        Logger.recordOutput("Intake/RightOut", isOut(IntakeSide.RIGHT));
     }
 
     private IntakeIO getIntake(IntakeSide side) {
@@ -41,10 +45,12 @@ public class Intake extends SubsystemBase {
         }
     }
 
+    // when it is FULLY undeployed
     public boolean isIn(IntakeSide side) {
         return getPosition(side) < (inPosition + positionBuffer);
     }
 
+    // when it is FULLY deployed
     public boolean isOut(IntakeSide side) {
         return getPosition(side) > (outPosition - positionBuffer);
     }
