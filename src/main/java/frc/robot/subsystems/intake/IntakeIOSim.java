@@ -1,5 +1,7 @@
 package frc.robot.subsystems.intake;
 
+import static edu.wpi.first.math.util.Units.inchesToMeters;
+import static edu.wpi.first.math.util.Units.radiansToDegrees;
 import static frc.robot.subsystems.intake.IntakeConstants.*;
 
 import edu.wpi.first.math.MathUtil;
@@ -8,7 +10,9 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
-import frc.robot.subsystems.intake.IntakeIO.IntakeIOInputs;
+import frc.robot.subsystems.intake.IntakeConstants.IntakeSide;
+import frc.robot.subsystems.turret.TurretIOSim;
+import frc.utils.FuelSim;
 
 public class IntakeIOSim implements IntakeIO {
     private final DCMotorSim driveSim;
@@ -16,49 +20,53 @@ public class IntakeIOSim implements IntakeIO {
     private final DCMotorSim deploySim;
     private final DCMotor deployGearbox = DCMotor.getNEO(1);
 
-    private boolean driveClosedLoop = false;
-    private boolean deployClosedLoop = false;
-    private PIDController driveController = new PIDController(driveSimP, 0, 0);
     private PIDController deployController = new PIDController(deploySimP, 0, 0);
-    private double driveFFVolts = 0.0;
-    private double driveAppliedVolts = 0.0;
     private double deployAppliedVolts = 0.0;
 
-    public IntakeIOSim() {
+    private double driveSpeed = 0.0;
+
+    public IntakeIOSim(FuelSim fuelSim, IntakeSide side, TurretIOSim turret) {
         driveSim = new DCMotorSim(
                 LinearSystemId.createDCMotorSystem(driveGearbox, 0.025, driveMotorReduction),
                 driveGearbox);
         deploySim = new DCMotorSim(
                 LinearSystemId.createDCMotorSystem(deployGearbox, 0.025, deployMotorReduction),
                 deployGearbox);
+
+        if (side == IntakeSide.LEFT) {
+            fuelSim.registerIntake(
+                    -inchesToMeters(15), // length, min x
+                    inchesToMeters(15), // length, max x
+                    inchesToMeters(15), // width, min y
+                    inchesToMeters(15 + 12), // width, max y
+                    () -> radiansToDegrees(deploySim.getAngularPositionRad()) > outPosition - positionBuffer,
+                    turret::simIntake);
+        } else {
+            fuelSim.registerIntake(
+                    -inchesToMeters(15), // length, min x
+                    inchesToMeters(15), // length, max x
+                    -inchesToMeters(15 + 12), // width, min y
+                    -inchesToMeters(15), // width, max y
+                    () -> radiansToDegrees(deploySim.getAngularPositionRad()) > outPosition - positionBuffer,
+                    turret::simIntake);
+        }
     }
 
     @Override
     public void updateInputs(IntakeIOInputs inputs) {
-        if (driveClosedLoop) {
-            driveAppliedVolts = driveFFVolts + driveController.calculate(driveSim.getAngularVelocityRadPerSec());
-        } else {
-            driveController.reset();
-        }
-        if (deployClosedLoop) {
-            deployAppliedVolts = deployController.calculate(deploySim.getAngularPositionRad());
-        } else {
-            deployController.reset();
-        }
+        deployAppliedVolts = deployController.calculate(deploySim.getAngularPositionRad());
 
-        driveSim.setInputVoltage(MathUtil.clamp(driveAppliedVolts, -12.0, 12.0));
+        // driveSim.setInputVoltage(MathUtil.clamp(driveAppliedVolts, -12.0, 12.0));
+        driveSim.setInputVoltage(driveSpeed * 12.0); // i think this is right(?)
         deploySim.setInputVoltage(MathUtil.clamp(deployAppliedVolts, -12.0, 12.0));
         driveSim.update(0.02);
         deploySim.update(0.02);
 
-        inputs.driveConnected = true;
-        inputs.drivePositionRad = driveSim.getAngularPositionRad();
-        inputs.driveVelocityRadPerSec = driveSim.getAngularVelocityRadPerSec();
-        inputs.driveAppliedVolts = driveAppliedVolts;
+        inputs.driveSpeed = driveSpeed;
+        inputs.driveAppliedVolts = driveSim.getInputVoltage();
         inputs.driveCurrentAmps = Math.abs(driveSim.getCurrentDrawAmps());
 
         // Update turn inputs
-        inputs.deployConnected = true;
         inputs.deployPosition = new Rotation2d(deploySim.getAngularPositionRad());
         inputs.deployVelocityRadPerSec = deploySim.getAngularVelocityRadPerSec();
         inputs.deployAppliedVolts = deployAppliedVolts;
@@ -66,15 +74,12 @@ public class IntakeIOSim implements IntakeIO {
     }
 
     @Override
-    public void setIntakeVelocity(double vel) {
-        driveClosedLoop = true;
-        driveFFVolts = driveSimKs * Math.signum(vel) + driveSimKv * vel;
-        driveController.setSetpoint(vel);
+    public void setIntakeSpeed(double speed) {
+        driveSpeed = speed;
     }
 
     @Override
     public void setDeployPosition(Rotation2d rotation) {
-        deployClosedLoop = true;
         deployController.setSetpoint(rotation.getRadians());
     }
 }
