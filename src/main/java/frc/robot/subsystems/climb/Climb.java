@@ -2,9 +2,9 @@ package frc.robot.subsystems.climb;
 
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
-public class ClimbSubsystem extends SubsystemBase{
+public class Climb extends SubsystemBase{
 
-    public ClimbSubsystem(){
+    public Climb(){
 
     }
 
