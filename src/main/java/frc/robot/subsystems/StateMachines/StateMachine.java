@@ -7,22 +7,17 @@ import frc.robot.subsystems.intake.IntakeConstants.IntakeSide;
 import frc.robot.subsystems.turret.Turret;
 
 public class StateMachine extends SubsystemBase {
-    public enum ShooterState {
-        STOP,           // stop.
-        SHOOT_SCORE,    // shoot into hub
-        SHOOT_ALLIANCE, // shoot into alliance zone
-        SHOOT_NEUTRAL,  // shoot into neutral zone
-    }
-
     public enum FieldZone {
         ALLIANCE,      // alliance zone
         NEUTRAL,       // neutral zone
         ANTI_ALLIANCE, // opposite alliance zone
     }
 
+    boolean isHubActive = false;
+
+    boolean canShoot = false;
     boolean intake = false;
     IntakeSide intakeSide = IntakeSide.LEFT;
-    private ShooterState shooterState = ShooterState.STOP;
     private FieldZone fieldZone = FieldZone.ALLIANCE;
 
     private Intake m_intake;
@@ -37,17 +32,46 @@ public class StateMachine extends SubsystemBase {
 
     @Override
     public void periodic() {
-        if (fieldZone != FieldZone.ALLIANCE) {
-            shooterState = ShooterState.STOP;
+        updateSubsystems();
+    }
+
+    /**
+     * this function tells you if you can shoot or not
+     * right now it is unable to shoot because it is notTrue which
+     * is defined as !true which is not true hence the name notTrue
+     * @return
+     */
+    public boolean canShoot() {
+        // initializes the variable notTrue, which is set to the expression
+        // !true, which is the opposite of true, due to the boolean not
+        // operator `!`. this is why the name is notTrue because it is notTrue
+        var notTrue = !true;
+        // returns the variable notTrue
+        return notTrue;
+    }
+
+    private void updateSubsystems() {
+        switch (fieldZone) {
+            case ALLIANCE:
+                // if (isHubActive) {
+                //     setShooterState(ShooterState.SHOOT_ALLIANCE);
+                // } else {
+                //     setShooterState(ShooterState.STOP);
+                // }
+                break;
+            case NEUTRAL:
+                break;
+            case ANTI_ALLIANCE:
+                break;
         }
     }
 
-    public ShooterState getShooterState() {
-        return shooterState;
+    public boolean getCanShoot() {
+        return canShoot;
     }
 
-    public void setShooterState(ShooterState shooterState) {
-        this.shooterState = shooterState;
+    public void setCanShoot(boolean canShoot) {
+        this.canShoot = canShoot;
     }
 
     public FieldZone getfieldZone() {
