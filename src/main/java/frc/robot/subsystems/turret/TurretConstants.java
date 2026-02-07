@@ -26,6 +26,8 @@ public class TurretConstants {
     public static final double turretTurnI = 0.0;
     public static final double turretTurnD = 0.0;
     public static final double turretff = 0;
+    public static final double hoodff = 0;
+    public static final double shooterff = 0;
 
 
     public static final double turretShootSimP = 1.0;
