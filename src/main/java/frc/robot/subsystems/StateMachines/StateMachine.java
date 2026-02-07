@@ -13,9 +13,6 @@ public class StateMachine extends SubsystemBase {
         ANTI_ALLIANCE, // opposite alliance zone
     }
 
-    boolean isHubActive = false;
-
-    boolean canShoot = false;
     boolean intake = false;
     IntakeSide intakeSide = IntakeSide.LEFT;
     private FieldZone fieldZone = FieldZone.ALLIANCE;
@@ -81,4 +78,5 @@ public class StateMachine extends SubsystemBase {
     public void setfieldZone(FieldZone fieldZone) {
         this.fieldZone = fieldZone;
     }
+
 }
