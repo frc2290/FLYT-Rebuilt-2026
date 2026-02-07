@@ -1,24 +1,29 @@
 package frc.robot.subsystems.StateMachines;
 
-import org.littletonrobotics.junction.Logger;
-
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.hopper.DyeRotor;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.IntakeConstants.IntakeSide;
 import frc.robot.subsystems.turret.Turret;
-import frc.utils.FlytDashboard;
 
 public class StateMachine extends SubsystemBase {
-    public enum State {
-        NOTHING, // nothing
-        SHOOT_SCORE, // shoot into hub
-        SHOOT_ZONE, // shoot into alliance zone
+    public enum ShooterState {
+        STOP,           // stop.
+        SHOOT_SCORE,    // shoot into hub
+        SHOOT_ALLIANCE, // shoot into alliance zone
+        SHOOT_NEUTRAL,  // shoot into neutral zone
+    }
+
+    public enum FieldZone {
+        ALLIANCE,      // alliance zone
+        NEUTRAL,       // neutral zone
+        ANTI_ALLIANCE, // opposite alliance zone
     }
 
     boolean intake = false;
     IntakeSide intakeSide = IntakeSide.LEFT;
-    private State state = State.NOTHING;
+    private ShooterState shooterState = ShooterState.STOP;
+    private FieldZone fieldZone = FieldZone.ALLIANCE;
 
     private Intake m_intake;
     private Turret m_turret;
@@ -32,27 +37,24 @@ public class StateMachine extends SubsystemBase {
 
     @Override
     public void periodic() {
-
+        if (fieldZone != FieldZone.ALLIANCE) {
+            shooterState = ShooterState.STOP;
+        }
     }
 
-    /**
-     * get current state
-     * 
-     * @return state
-     */
-    public State getState() {
-        return state;
+    public ShooterState getShooterState() {
+        return shooterState;
     }
 
-    /**
-     * this function, setState, takes in a State state and sets the
-     * state to the State state that was inputted into setState
-     * 
-     * @param state state to set
-     */
-    public void setState(State state) {
-        // sets the state to the state (State state) provided
-        // by the State state argument to setState
-        this.state = state;
+    public void setShooterState(ShooterState shooterState) {
+        this.shooterState = shooterState;
+    }
+
+    public FieldZone getfieldZone() {
+        return fieldZone;
+    }
+
+    public void setfieldZone(FieldZone fieldZone) {
+        this.fieldZone = fieldZone;
     }
 }
