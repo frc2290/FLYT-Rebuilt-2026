@@ -31,6 +31,7 @@ import frc.robot.subsystems.drive.ModuleIOSpark;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.IntakeIO;
 import frc.robot.subsystems.intake.IntakeIOSim;
+import frc.robot.subsystems.intake.IntakeConstants.IntakeSide;
 import frc.robot.subsystems.turret.Turret;
 import frc.robot.subsystems.turret.TurretIO;
 import frc.robot.subsystems.turret.TurretIOSim;
@@ -135,11 +136,12 @@ public class Robot extends LoggedRobot {
                                new ModuleIOSim(),
                                new ModuleIOSim(),
                                new ModuleIOSim());
-                m_intake = new Intake(new IntakeIOSim(), new IntakeIOSim());
                 m_poseEstimator = new PoseEstimatorSubsystem(m_robotDrive);
-                m_turret = new Turret(new TurretIOSim(m_fuelSim,
+                var turretIO = new TurretIOSim(m_fuelSim,
                                       m_poseEstimator::getCurrentPose,
-                                      m_poseEstimator::getChassisSpeeds),
+                                      m_poseEstimator::getChassisSpeeds);
+                m_intake = new Intake(new IntakeIOSim(m_fuelSim, IntakeSide.LEFT, turretIO), new IntakeIOSim(m_fuelSim, IntakeSide.RIGHT, turretIO));
+                m_turret = new Turret(turretIO,
                                       m_poseEstimator::getCurrentPose,
                                       m_robotDrive::getChassisSpeeds);
                 break;

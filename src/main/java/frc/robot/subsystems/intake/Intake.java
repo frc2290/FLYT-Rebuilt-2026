@@ -25,7 +25,7 @@ public class Intake extends SubsystemBase {
         ioLeft.updateInputs(inputsLeft);
         ioRight.updateInputs(inputsRight);
         Logger.processInputs("Intake/Left", inputsLeft);
-        Logger.processInputs("Intake/Right", inputsLeft);
+        Logger.processInputs("Intake/Right", inputsRight);
     }
 
     private IntakeIO getIntake(IntakeSide side) {
@@ -53,8 +53,8 @@ public class Intake extends SubsystemBase {
         getIntake(side).setDeployPosition(new Rotation2d(degreesToRadians(out ? outPosition : inPosition)));
     }
 
-    public void driveRoller(IntakeSide side, double vel) {
-        getIntake(side).setIntakeVelocity(vel);
+    public void driveRoller(IntakeSide side, double speed) {
+        getIntake(side).setIntakeSpeed(speed);
     }
 
     public Command intakeIn(IntakeSide side) {
@@ -69,7 +69,7 @@ public class Intake extends SubsystemBase {
 
     public Command intakeOut(IntakeSide side) {
         return intakeIn(side.opposite()).andThen(run(() -> {
-            driveRoller(side, rollerVelocity);
+            driveRoller(side, rollerSpeed);
             deploy(side, true);
         }).until(() -> {
             return isOut(side);

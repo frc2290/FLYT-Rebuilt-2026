@@ -11,21 +11,17 @@ import java.util.function.DoubleSupplier;
 
 import com.revrobotics.AbsoluteEncoder;
 import com.revrobotics.PersistMode;
-import com.revrobotics.RelativeEncoder;
 import com.revrobotics.ResetMode;
-import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.FeedbackSensor;
 import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkClosedLoopController;
-import com.revrobotics.spark.SparkClosedLoopController.ArbFFUnits;
 import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Rotation2d;
 
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
@@ -101,14 +97,12 @@ public class IntakeIOSpark implements IntakeIO {
 
     @Override
     public void updateInputs(IntakeIOInputs inputs) {
-        inputs.driveConnected = true;
         ifOk(
                 driveSpark,
                 new DoubleSupplier[] { driveSpark::getAppliedOutput, driveSpark::getBusVoltage },
                 (values) -> inputs.driveAppliedVolts = values[0] * values[1]);
         ifOk(driveSpark, driveSpark::getOutputCurrent, (value) -> inputs.driveCurrentAmps = value);
 
-        inputs.deployConnected = true;
         ifOk(
                 deploySpark,
                 deployEncoder::getPosition,
@@ -122,16 +116,8 @@ public class IntakeIOSpark implements IntakeIO {
     }
 
     @Override
-    public void setIntakeVelocity(double vel) {
-        driveSpark.set(vel);
-
-        // double ffVolts = driveKs * Math.signum(velocityRadPerSec) + driveKv * velocityRadPerSec;
-        // driveController.setSetpoint(
-        //         velocityRadPerSec,
-        //         ControlType.kVelocity,
-        //         ClosedLoopSlot.kSlot0,
-        //         ffVolts,
-        //         ArbFFUnits.kVoltage);
+    public void setIntakeSpeed(double speed) {
+        driveSpark.set(speed);
     }
 
     @Override

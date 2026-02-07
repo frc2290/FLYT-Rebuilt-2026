@@ -128,7 +128,7 @@ public class RobotContainer {
         a_button.onTrue(m_turret.shoot());
 
         x_button.onTrue(m_intake.intakeOut(IntakeSide.LEFT));
-        y_button.onTrue(m_intake.intakeIn(IntakeSide.LEFT));
+        y_button.onTrue(m_intake.intakeOut(IntakeSide.RIGHT));
 
         // Manual controls.
         dpad_left.toggleOnTrue(

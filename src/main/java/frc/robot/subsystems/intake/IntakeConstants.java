@@ -16,7 +16,7 @@ public class IntakeConstants {
     public static final double outPosition = 90;
     public static final double positionBuffer = 5;
 
-    public static final double rollerVelocity = 0.5;
+    public static final double rollerSpeed = 0.5;
 
     // public static final double odometryFrequency = 100.0;
 

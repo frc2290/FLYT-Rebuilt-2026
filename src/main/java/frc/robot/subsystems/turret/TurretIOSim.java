@@ -34,7 +34,7 @@ public class TurretIOSim implements TurretIO {
     private FuelSim fuelSim;
     private Supplier<Pose2d> poseSupplier;
     private Supplier<ChassisSpeeds> speedSupplier;
-    private int fuelCount = 0;
+    private int fuelCount = 30;
     private double turretAngle = 0;
     private double turretSpeed = 0;
     private double turretHoodAngle = 0;
@@ -60,6 +60,8 @@ public class TurretIOSim implements TurretIO {
 
     @Override
     public void updateInputs(TurretIOInputs inputs) {
+        Logger.recordOutput("Fuel", fuelCount);
+
         // double hub =
         // turnToTarget(VisionConstants.hubCenterPose.toPose2d().getTranslation());
         // turretTurnAppliedVolts =
@@ -92,12 +94,14 @@ public class TurretIOSim implements TurretIO {
         turretSpeed = speed;
     };
 
+    public void simIntake() {
+        fuelCount++;
+    }
+
     @Override
     public void shootFuel() {
-        // if (fuelCount <= 0) return;
-        fuelCount++;
-        Logger.recordOutput("Fuel Shot", fuelCount);
-
+        if (fuelCount <= 0) return;
+        fuelCount--;
 
         Pose2d robotPose = poseSupplier.get();
         ChassisSpeeds robotSpeed = speedSupplier.get();
