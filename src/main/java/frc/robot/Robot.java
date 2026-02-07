@@ -20,7 +20,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.subsystems.Coordinator;
 import frc.robot.subsystems.Coordinator.RobotState;
-import frc.robot.subsystems.DriveStateMachine;
+import frc.robot.subsystems.StateMachines.DriveStateMachine;
 // import frc.robot.subsystems.IntakeShooter;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
