@@ -4,6 +4,7 @@ turretIO.java
 turrentIOSim.java
 TurrentConstants.java
     saves turrent constant like pid tuned variables
+    #TODO get cascade loop working
 
 Turrent.java
     turret control logic

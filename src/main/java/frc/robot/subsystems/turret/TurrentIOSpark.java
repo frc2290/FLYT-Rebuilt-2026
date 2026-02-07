@@ -178,52 +178,58 @@ public class TurrentIOSpark implements TurretIO {
 
     // Right now it is stupid but here we going to put
     // Absolute dual encoder position of turret estimator master piece
-    private double getTurretPos(){
+    // Also I think this function should be run only once to set position for rerlative encoder
+    private double getTurretPosAtStart(){
         return turnEncoder1.get()+turnEncoder1.get();
     }
 
 
-    
+    private double getTurretPos(){
+        return turnRelEncoder.getPosition();
+    }
+    private double getTurretVel(){
+        return turnRelEncoder.getVelocity();
+    }
+
+
+
+    // I think this is used for logger pro to keep track of things?
     @Override
     public void updateInputs(TurretIOInputs inputs) {
-
         turretAngle = getTurretPos();
         inputs.turretAngle = turretAngle;
+        turretSpeed = getTurretVel();
         inputs.turretSpeed = turretSpeed;
+        turretHoodAngle = hoodEncoder.getPosition();
         inputs.turretHoodAngle = turretHoodAngle;
         inputs.turretAngleSetpoint = turretAngleSetpoint;
     }
 
+
     @Override
     public void setTurnPosition(Rotation2d rotation) {
-        turretController.setSetpoint(rotation.getRadians(), ControlType.kMAXMotionPositionControl, ClosedLoopSlot.kSlot0, turretff);
+        turretController.setSetpoint(rotation.getDegrees(), ControlType.kMAXMotionPositionControl, ClosedLoopSlot.kSlot0, turretff);
         turretAngleSetpoint = rotation.getDegrees();
     }
 
+
     @Override
     public void setHoodAngle(double angle) {
+        hoodController.setSetpoint(angle, ControlType.kMAXMotionPositionControl, ClosedLoopSlot.kSlot0, hoodff);
         turretHoodAngle = angle;
     };
 
     @Override
     public void setShooterSpeed(double speed) {
+        flywheelController1.setSetpoint(speed, ControlType.kMAXMotionVelocityControl, ClosedLoopSlot.kSlot0, shooterff);
         turretSpeed = speed;
     };
 
     @Override
     public void shootFuel() {
 
-        // Pose2d robotPose = poseSupplier.get();
-        // ChassisSpeeds robotSpeed = speedSupplier.get();
+        //Code for making turret shoot fuel to position?
 
-        // double yawRad = Math.toRadians(turretAngle);
-        // double pitchRad = Math.toRadians(turretHoodAngle);
-
-        // Translation3d velocity = new Translation3d(
-        //         turretSpeed * Math.cos(pitchRad) * Math.cos(yawRad) + robotSpeed.vxMetersPerSecond, // X (forward)
-        //         turretSpeed * Math.cos(pitchRad) * Math.sin(yawRad) + robotSpeed.vyMetersPerSecond, // Y (left)
-        //         turretSpeed * Math.sin(pitchRad) // Z (up)
-        // );
 
     }
 
