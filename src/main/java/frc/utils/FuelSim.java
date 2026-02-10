@@ -1,4 +1,4 @@
-package frc.robot.util;
+package frc.utils;
 
 import static edu.wpi.first.units.Units.Meters;
 import static edu.wpi.first.units.Units.MetersPerSecond;
@@ -89,6 +89,15 @@ public class FuelSim {
                 TRENCH_HEIGHT + TRENCH_BAR_HEIGHT),
         new Translation3d(FIELD_LENGTH - 4.61 + TRENCH_BAR_WIDTH / 2, FIELD_WIDTH, TRENCH_HEIGHT + TRENCH_BAR_HEIGHT),
     };
+
+    public static FuelSim fuelSim = null;
+
+    public static FuelSim getInstance() {
+        if (fuelSim == null) {
+            fuelSim = new FuelSim();
+        }
+        return fuelSim;
+    }
 
     protected static class Fuel {
         protected Translation3d pos;
