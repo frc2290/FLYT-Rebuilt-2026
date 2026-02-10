@@ -36,10 +36,7 @@ public class IntakeConstants {
     public static final double driveMotorReduction = 7 / 1;
     public static final double deployMotorReduction = 90 / 1;
 
-    public static final double driveSimP = 1.0;
-    public static final double deploySimP = 1.0;
-
-    public static final double driveSimKs = 0.0;
-    // good number idk what this does i just copied it from driveconstants
-    public static final double driveSimKv = 0.0789;
+    public static final double deployKp = 1.0;
+    public static final double deployKi = 0.0;
+    public static final double deployKd = 1.0;
 }

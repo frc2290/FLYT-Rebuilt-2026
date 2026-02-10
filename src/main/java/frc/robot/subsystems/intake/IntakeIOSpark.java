@@ -1,10 +1,7 @@
 package frc.robot.subsystems.intake;
 
-import static frc.robot.subsystems.drive.DriveConstants.driveKs;
-import static frc.robot.subsystems.drive.DriveConstants.driveKv;
 import static frc.robot.subsystems.intake.IntakeConstants.*;
 import static frc.utils.SparkUtil.ifOk;
-import static frc.utils.SparkUtil.sparkStickyFault;
 import static frc.utils.SparkUtil.tryUntilOk;
 
 import java.util.function.DoubleSupplier;
@@ -17,15 +14,13 @@ import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkFlex;
-import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.math.geometry.Rotation2d;
-
-import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
-
 import frc.robot.subsystems.intake.IntakeConstants.IntakeSide;
 
 public class IntakeIOSpark implements IntakeIO {
@@ -78,7 +73,8 @@ public class IntakeIOSpark implements IntakeIO {
                 .inverted(deployEncoderInverted);
         // position and velocity conversion factors? idk what they should be tho
         deployConfig.closedLoop
-                .feedbackSensor(FeedbackSensor.kAbsoluteEncoder);
+                .feedbackSensor(FeedbackSensor.kAbsoluteEncoder)
+                .pid(deployKp, deployKi, deployKd);
         // driveConfig.signals
         // .absoluteEncoderPositionAlwaysOn(true)
         // .absoluteEncoderPositionPeriodMs((int) (1000.0 / odometryFrequency))

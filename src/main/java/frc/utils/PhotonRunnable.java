@@ -65,7 +65,8 @@ public class PhotonRunnable implements Runnable {
         this.photonCamera = new PhotonCamera(cameraName);
         ;
         PhotonPoseEstimator photonPoseEstimator = null;
-        layout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
+        // layout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
+        layout = FieldConstants.AprilTagLayoutType.OFFICIAL.getLayout();
         // PV estimates will always be blue, they'll get flipped by robot thread
         layout.setOrigin(OriginPosition.kBlueAllianceWallRightSide);
         // if (DriverStation.getAlliance().get() == Alliance.Red) {
