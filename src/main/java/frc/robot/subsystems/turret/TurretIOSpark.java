@@ -21,7 +21,7 @@ import com.revrobotics.spark.SparkBase.ControlType;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
 
-public class TurrentIOSpark implements TurretIO {
+public class TurretIOSpark implements TurretIO {
 
     // Harware objects
     private final SparkBase turretSpark;
@@ -53,7 +53,7 @@ public class TurrentIOSpark implements TurretIO {
     private double turretHoodAngle = 0;
     private double turretAngleSetpoint = 0;
 
-    public TurrentIOSpark() {
+    public TurretIOSpark() {
 
         // Create motor controllers
         turretSpark = new SparkMax(turretCanId, MotorType.kBrushless);

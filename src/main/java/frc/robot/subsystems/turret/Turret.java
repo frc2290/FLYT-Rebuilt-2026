@@ -13,7 +13,6 @@ import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -28,8 +27,8 @@ public class Turret extends SubsystemBase {
     private Supplier<ChassisSpeeds> speeds;
     private boolean stopShoot = false;
     private ShootOnTheFly sotf = ShootOnTheFly.getInstance();
+    private Pose2d targetPose = VisionConstants.hubCenterPose.toPose2d();
 
-    /** Creates a new Turret. */
     public Turret(TurretIO turretIO, Supplier<Pose2d> pose, Supplier<ChassisSpeeds> speeds) {
         this.io = turretIO;
         this.pose = pose;
@@ -41,60 +40,63 @@ public class Turret extends SubsystemBase {
 
     @Override
     public void periodic() {
-
-        //turrent logging
+        // turret logging
         io.updateInputs(inputs);
         Logger.processInputs("Turret", inputs);
 
         if (!stopShoot) {
-            SOTFResult result = sotf.calculateRecursiveTOF(VisionConstants.hubCenterPose.toPose2d().getTranslation(), pose.get(), speeds.get());
+            SOTFResult result = sotf.calculateRecursiveTOF(targetPose.getTranslation(), pose.get(), speeds.get());
             Logger.recordOutput("SOTF Pitch", result.pitch);
             io.setHoodAngle(result.pitch);
             io.setTurnPosition(Rotation2d.fromDegrees(result.yaw));
             io.setShooterSpeed(result.vel);
-
-            /*Translation2d toGoal = VisionConstants.hubCenterPose.toPose2d().getTranslation().minus(pose.get().getTranslation());
-            double distance = toGoal.getNorm();
-            Logger.recordOutput("Turret/Shot Distance", distance);
-            io.setTurnPosition(Rotation2d.fromDegrees(turnToTarget(VisionConstants.hubCenterPose.toPose2d().getTranslation(), pose.get().getTranslation())));
-            io.setShooterSpeed(sotf.getShootSpeedInterp(distance));
-            io.setHoodAngle(sotf.getShootAngleInterp(distance));*/
         }
     }
 
     /**
-     * Give it a global pose to turn turret towards to
-     * @param targetPose
+     * set the pose to point at for the turret
+     * @param targetPose the pose to point at
      */
-    public void turnTurretToPose(Pose2d targetPose) {
-        io.setTurnPosition(Rotation2d.fromDegrees(turnToTarget(targetPose.getTranslation(), pose.get().getTranslation())));
+    public void setTargetPose(Pose2d targetPose) {
+        this.targetPose = targetPose;
     }
 
     /**
-     * Stop/Unstop shooting
-     * @param stop for true
+     * manually set the hood angle
+     * @param angle angle in degrees to set the hood
+     */
+    public void setHoodAngle(double angle) {
+        io.setHoodAngle(angle);
+    }
+
+    /**
+     * manually set the turn position
+     * @param rotation turn position as a rotation2d
+     */
+    public void setTurnPosition(Rotation2d rotation) {
+        io.setTurnPosition(rotation);
+    }
+
+    /**
+     * manually set the shooter speed
+     * @param speed speed in rpm to set the shooter
+     */
+    public void setShooterSpeed(double speed) {
+        io.setShooterSpeed(speed);
+    }
+
+    /**
+     * stop/unstop shooting
+     * @param stop stopped?
      */
     public void setStopShoot(boolean stop) {
         stopShoot = stop;
     }
 
     /**
-     * Command shoot
+     * shoot command for sim
      */
     public Command shoot() {
         return runOnce(() -> io.shootFuel());
-    }
-
-    /**
-     * Calculates angle difference 
-     * @param target
-     * @param current
-     * @return angle difference
-     */
-    private double turnToTarget(Translation2d target, Translation2d current) {
-        double offsetX = target.getX() - current.getX();
-        double offsetY = target.getY() - current.getY();
-        // return (360 - Math.toDegrees(Math.atan2(offsetY, offsetX)) % 360);
-        return Math.toDegrees(Math.atan2(offsetY, offsetX)) % 360;
     }
 }

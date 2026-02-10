@@ -1,5 +1,8 @@
 package frc.robot.subsystems.StateMachines;
 
+import java.util.function.Supplier;
+
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.hopper.DyeRotor;
 import frc.robot.subsystems.intake.Intake;
@@ -13,18 +16,25 @@ public class StateMachine extends SubsystemBase {
         ANTI_ALLIANCE, // opposite alliance zone
     }
 
-    boolean isHubActive = false;
+    public enum SpecialZone {
+        NONE,   // no special zone
+        TOWER,  // we don't really want to shoot here
+        TRENCH, // we want to put the hood down under here
+    }
 
-    boolean canShoot = false;
+    boolean isHubActive = false;
     boolean intake = false;
     IntakeSide intakeSide = IntakeSide.LEFT;
     private FieldZone fieldZone = FieldZone.ALLIANCE;
+    private SpecialZone specialZone = SpecialZone.NONE;
 
+    private Supplier<Pose2d> poseSupplier;
     private Intake m_intake;
     private Turret m_turret;
     private DyeRotor m_dyeRotor;
 
-    public StateMachine(Intake intake, Turret turret, DyeRotor dyeRotor) {
+    public StateMachine(Supplier<Pose2d> poseSupplier, Intake intake, Turret turret, DyeRotor dyeRotor) {
+        this.poseSupplier = poseSupplier;
         m_intake = intake;
         m_turret = turret;
         m_dyeRotor = dyeRotor;
@@ -32,54 +42,48 @@ public class StateMachine extends SubsystemBase {
 
     @Override
     public void periodic() {
+        updateZones();
         updateSubsystems();
     }
 
-    /**
-     * this function tells you if you can shoot or not
-     * right now it is unable to shoot because it is notTrue which
-     * is defined as !true which is not true hence the name notTrue
-     * @return
-     */
-    public boolean canShoot() {
-        // initializes the variable notTrue, which is set to the expression
-        // !true, which is the opposite of true, due to the boolean not
-        // operator `!`. this is why the name is notTrue because it is notTrue
-        var notTrue = !true;
-        // returns the variable notTrue
-        return notTrue;
+    private void updateZones() {
+        Pose2d currentPose = poseSupplier.get();
     }
 
     private void updateSubsystems() {
-        switch (fieldZone) {
-            case ALLIANCE:
-                // if (isHubActive) {
-                //     setShooterState(ShooterState.SHOOT_ALLIANCE);
-                // } else {
-                //     setShooterState(ShooterState.STOP);
-                // }
+        switch (specialZone) {
+            case NONE:
+                switch (fieldZone) {
+                    case ALLIANCE:
+                        // point at the hub, but only shoot if hub is active
+                        break;
+                    case NEUTRAL:
+                        // point at one side of the alliance zone, shoot if magic
+                        break;
+                    case ANTI_ALLIANCE:
+                        // point at one side of neutral zone, shoot if uhh more magic
+                        break;
+                }
                 break;
-            case NEUTRAL:
-                break;
-            case ANTI_ALLIANCE:
+            // this case is for both tower & trench
+            case TOWER:
+            case TRENCH:
+                // stop shooting (dye rotor & turret) & hood down (turret)
+                m_turret.setStopShoot(true);
+                m_turret.setHoodAngle(0);
                 break;
         }
     }
 
-    public boolean getCanShoot() {
-        return canShoot;
-    }
-
-    public void setCanShoot(boolean canShoot) {
-        this.canShoot = canShoot;
-    }
-
-    public FieldZone getfieldZone() {
+    public FieldZone getFieldZone() {
         return fieldZone;
+    }
+
+    public SpecialZone getSpecialZone() {
+        return specialZone;
     }
 
     public void setfieldZone(FieldZone fieldZone) {
         this.fieldZone = fieldZone;
     }
-
 }
