@@ -256,6 +256,10 @@ public class FieldConstants {
                         - innerOpeningWidth / 2
                         - Units.inchesToMeters(0.75));
 
+        public static final Translation2d rightBackCorner = new Translation2d(
+                0,
+                rightUpright.getY());
+
         // Relevant reference points on opposing side
         public static final Translation2d oppCenterPoint = new Translation2d(
                 fieldLength - frontFaceX,

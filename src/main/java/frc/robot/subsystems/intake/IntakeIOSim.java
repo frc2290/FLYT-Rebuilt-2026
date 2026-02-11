@@ -24,7 +24,7 @@ public class IntakeIOSim implements IntakeIO {
     private double deployAppliedVolts = 0.0;
     private double driveSpeed = 0.0;
 
-    public IntakeIOSim(FuelSim fuelSim, IntakeSide side, TurretIOSim turret) {
+    public IntakeIOSim(IntakeSide side, TurretIOSim turret) {
         driveSim = new DCMotorSim(
                 LinearSystemId.createDCMotorSystem(driveGearbox, 0.025, driveMotorReduction),
                 driveGearbox);
@@ -32,6 +32,8 @@ public class IntakeIOSim implements IntakeIO {
                 LinearSystemId.createDCMotorSystem(deployGearbox, 0.025, deployMotorReduction),
                 deployGearbox);
 
+        FuelSim fuelSim = FuelSim.getInstance();
+        
         if (side == IntakeSide.LEFT) {
             fuelSim.registerIntake(
                     -inchesToMeters(15), // length, min x

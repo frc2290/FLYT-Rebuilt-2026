@@ -31,7 +31,6 @@ public class TurretIOSim implements TurretIO {
 
     private double turretTurnAppliedVolts = 0.0;
 
-    private FuelSim fuelSim;
     private Supplier<Pose2d> poseSupplier;
     private Supplier<ChassisSpeeds> speedSupplier;
     private int fuelCount = 30;
@@ -40,8 +39,7 @@ public class TurretIOSim implements TurretIO {
     private double turretHoodAngle = 0;
     private double turretAngleSetpoint = 0;
 
-    public TurretIOSim(FuelSim fuelSim, Supplier<Pose2d> poseSupplier, Supplier<ChassisSpeeds> speedSupplier) {
-        this.fuelSim = fuelSim;
+    public TurretIOSim(Supplier<Pose2d> poseSupplier, Supplier<ChassisSpeeds> speedSupplier) {
         this.poseSupplier = poseSupplier;
         this.speedSupplier = speedSupplier;
 
@@ -115,7 +113,7 @@ public class TurretIOSim implements TurretIO {
                 turretSpeed * Math.sin(pitchRad) // Z (up)
         );
 
-        this.fuelSim.spawnFuel(
+        FuelSim.getInstance().spawnFuel(
                 new Translation3d(robotPose.getX(), robotPose.getY(), TurretConstants.turretHeight),
                 velocity);
     }

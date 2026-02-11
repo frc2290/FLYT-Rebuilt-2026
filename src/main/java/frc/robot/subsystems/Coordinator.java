@@ -113,7 +113,8 @@ public class Coordinator extends SubsystemBase {
         setDriveGoal(DriveState.MANUAL);
         break;
       case SHOOT:
-        setDriveGoal(DriveState.HUB_ORIENTED);
+        setDriveGoal(DriveState.SNAKE);
+        //setDriveGoal(DriveState.HUB_ORIENTED);
         //setDriveGoal(DriveState.POINT_AT_FUEL);
         break;
       case RESET:

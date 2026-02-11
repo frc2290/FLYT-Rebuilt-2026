@@ -63,7 +63,7 @@ public final class DriveCommandFactory {
     // this.rotPid = drive.getRotPidController();
     // this.xPid = drive.getXPidController();
     // this.yPid = drive.getYPidController();
-    this.rotPid = new PIDController(0.001, 0.0, 0.0); // 0.015 0 0
+    this.rotPid = new PIDController(0.015, 0.0, 0.0); // 0.015 0 0
     this.xPid = new PIDController(1, 0.0, 0.085); // 2 0.0 0.5
     this.yPid = new PIDController(1, 0.0, 0.085); // 2 0.0 0.5
 
@@ -87,7 +87,7 @@ public final class DriveCommandFactory {
    * Samples the driver's left Y stick, applies the configured deadband, and flips the axis so
    * forward stick pushes produce positive field-relative X speeds.
    */
-  private double sampleForwardInput() {
+  public double sampleForwardInput() {
     return -MathUtil.applyDeadband(driverController.getLeftY(), OIConstants.kDriveDeadband);
   }
 
@@ -95,7 +95,7 @@ public final class DriveCommandFactory {
    * Samples the driver's left X stick with the same shaping as the original manual drive command so
    * small stick noise is ignored.
    */
-  private double sampleStrafeInput() {
+  public double sampleStrafeInput() {
     return -MathUtil.applyDeadband(driverController.getLeftX(), OIConstants.kDriveDeadband);
   }
 

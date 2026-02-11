@@ -5,6 +5,7 @@
 package frc.robot;
 
 import static edu.wpi.first.math.util.Units.degreesToRadians;
+import static edu.wpi.first.math.util.Units.inchesToMeters;
 
 import java.util.List;
 
@@ -36,6 +37,8 @@ public final class Constants {
     // BEGIN advantagekit stuff
     public static final Mode simMode = Mode.SIM;
     public static final Mode currentMode = RobotBase.isReal() ? Mode.REAL : simMode;
+
+    public static final double boundBuffer = inchesToMeters(15);
 
     public static enum Mode {
         /** Running on a real robot. */
