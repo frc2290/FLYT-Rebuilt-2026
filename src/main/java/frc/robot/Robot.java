@@ -21,6 +21,7 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import frc.robot.subsystems.Coordinator;
 import frc.robot.subsystems.Coordinator.RobotState;
 import frc.robot.subsystems.StateMachines.DriveStateMachine;
+import frc.robot.subsystems.StateMachines.StateMachine;
 // import frc.robot.subsystems.IntakeShooter;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
@@ -71,9 +72,9 @@ public class Robot extends LoggedRobot {
     // private final IntakeShooter m_intakeShooter = new IntakeShooter();
     private final PoseEstimatorSubsystem m_poseEstimator;
     private final Turret m_turret;
-    private final FuelSim m_fuelSim = FuelSim.getInstance();
 
     /** Coordinates all autonomous and teleop driving modes. */
+    private final StateMachine m_stateMachine;
     private final DriveStateMachine m_driveStateMachine;
 
     /**
@@ -121,8 +122,7 @@ public class Robot extends LoggedRobot {
                                new ModuleIOSpark(3));
                 m_intake = new Intake(new IntakeIO() {}, new IntakeIO() {});
                 m_poseEstimator = new PoseEstimatorSubsystem(m_robotDrive);
-                m_turret = new Turret(new TurretIOSim(m_fuelSim,
-                                      m_poseEstimator::getCurrentPose,
+                m_turret = new Turret(new TurretIOSim(m_poseEstimator::getCurrentPose,
                                       m_poseEstimator::getChassisSpeeds),
                                       m_poseEstimator::getCurrentPose,
                                       m_robotDrive::getChassisSpeeds);
@@ -137,10 +137,9 @@ public class Robot extends LoggedRobot {
                                new ModuleIOSim(),
                                new ModuleIOSim());
                 m_poseEstimator = new PoseEstimatorSubsystem(m_robotDrive);
-                var turretIO = new TurretIOSim(m_fuelSim,
-                                      m_poseEstimator::getCurrentPose,
+                var turretIO = new TurretIOSim(m_poseEstimator::getCurrentPose,
                                       m_poseEstimator::getChassisSpeeds);
-                m_intake = new Intake(new IntakeIOSim(m_fuelSim, IntakeSide.LEFT, turretIO), new IntakeIOSim(m_fuelSim, IntakeSide.RIGHT, turretIO));
+                m_intake = new Intake(new IntakeIOSim(IntakeSide.LEFT, turretIO), new IntakeIOSim(IntakeSide.RIGHT, turretIO));
                 m_turret = new Turret(turretIO,
                                       m_poseEstimator::getCurrentPose,
                                       m_robotDrive::getChassisSpeeds);
@@ -162,6 +161,7 @@ public class Robot extends LoggedRobot {
                 break;
         }
 
+        m_stateMachine = new StateMachine(m_poseEstimator::getCurrentPose, m_intake, m_turret, null);
         m_driveStateMachine = new DriveStateMachine(m_robotDrive, m_poseEstimator,
             m_driver);
         m_coordinator = new Coordinator(m_driveStateMachine);
@@ -182,6 +182,7 @@ public class Robot extends LoggedRobot {
                 m_intake,
                 // m_intakeShooter,
                 m_poseEstimator,
+                m_stateMachine,
                 m_driveStateMachine,
                 m_coordinator,
                 m_turret,
@@ -303,7 +304,8 @@ public class Robot extends LoggedRobot {
 
     @Override
     public void simulationPeriodic() {
-        m_fuelSim.updateSim();
-        Logger.recordOutput("Fuel Scored", FuelSim.Hub.BLUE_HUB.getScore());
+        FuelSim.getInstance().updateSim();
+        Logger.recordOutput("Fuel Simulation/Blue Scored", FuelSim.Hub.BLUE_HUB.getScore());
+        Logger.recordOutput("Fuel Simulation/Red Scored", FuelSim.Hub.RED_HUB.getScore());
     }
 }

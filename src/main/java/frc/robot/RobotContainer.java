@@ -23,6 +23,7 @@ import frc.robot.subsystems.Coordinator;
 import frc.robot.subsystems.Coordinator.ControllerProfile;
 import frc.robot.subsystems.Coordinator.RobotState;
 import frc.robot.subsystems.StateMachines.DriveStateMachine;
+import frc.robot.subsystems.StateMachines.StateMachine;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.IntakeConstants.IntakeSide;
@@ -59,7 +60,8 @@ public class RobotContainer {
     private final Drive m_robotDrive;
     private final Intake m_intake;
     private final PoseEstimatorSubsystem m_PoseEstimator;
-    private final DriveStateMachine m_drive_state;
+    private final StateMachine m_stateMachine;
+    private final DriveStateMachine m_driveStateMachine;
     private final Coordinator m_coordinator;
     private final Turret m_turret;
 
@@ -74,7 +76,8 @@ public class RobotContainer {
     public RobotContainer(
             Drive _drive,
             Intake _intake,
-            PoseEstimatorSubsystem _PoseEstimator,
+            PoseEstimatorSubsystem _poseEstimator,
+            StateMachine _stateMachine,
             DriveStateMachine _driveStateMachine,
             Coordinator _coordinator,
             Turret _turret,
@@ -82,8 +85,9 @@ public class RobotContainer {
 
         m_robotDrive = _drive;
         m_intake = _intake;
-        m_PoseEstimator = _PoseEstimator;
-        m_drive_state = _driveStateMachine;
+        m_PoseEstimator = _poseEstimator;
+        m_stateMachine = _stateMachine;
+        m_driveStateMachine = _driveStateMachine;
         m_coordinator = _coordinator;
         m_turret = _turret;
         m_driverController = _driverController;

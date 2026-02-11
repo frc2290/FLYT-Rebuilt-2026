@@ -13,11 +13,14 @@ import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.VisionConstants;
+import frc.utils.FieldConstants;
 import frc.utils.ShootOnTheFly;
+import frc.utils.FieldConstants.Hub;
 import frc.utils.ShootOnTheFly.SOTFResult;
 
 public class Turret extends SubsystemBase {
@@ -27,7 +30,7 @@ public class Turret extends SubsystemBase {
     private Supplier<ChassisSpeeds> speeds;
     private boolean stopShoot = false;
     private ShootOnTheFly sotf = ShootOnTheFly.getInstance();
-    private Pose2d targetPose = VisionConstants.hubCenterPose.toPose2d();
+    private Translation2d targetTranslation = Hub.topCenterPoint.toTranslation2d();
 
     public Turret(TurretIO turretIO, Supplier<Pose2d> pose, Supplier<ChassisSpeeds> speeds) {
         this.io = turretIO;
@@ -45,7 +48,7 @@ public class Turret extends SubsystemBase {
         Logger.processInputs("Turret", inputs);
 
         if (!stopShoot) {
-            SOTFResult result = sotf.calculateRecursiveTOF(targetPose.getTranslation(), pose.get(), speeds.get());
+            SOTFResult result = sotf.calculateRecursiveTOF(targetTranslation, pose.get(), speeds.get());
             Logger.recordOutput("SOTF Pitch", result.pitch);
             io.setHoodAngle(result.pitch);
             io.setTurnPosition(Rotation2d.fromDegrees(result.yaw));
@@ -54,11 +57,11 @@ public class Turret extends SubsystemBase {
     }
 
     /**
-     * set the pose to point at for the turret
-     * @param targetPose the pose to point at
+     * set the translation to point at for the turret
+     * @param targetPose the translation to point at
      */
-    public void setTargetPose(Pose2d targetPose) {
-        this.targetPose = targetPose;
+    public void setTargetTranslation(Translation2d targetTranslation) {
+        this.targetTranslation = targetTranslation;
     }
 
     /**
