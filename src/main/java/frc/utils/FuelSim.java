@@ -21,6 +21,8 @@ import java.util.ArrayList;
 import java.util.function.BooleanSupplier;
 import java.util.function.Supplier;
 
+import org.littletonrobotics.junction.Logger;
+
 public class FuelSim {
     protected static final double PERIOD = 0.02; // sec
     protected static final Translation3d GRAVITY = new Translation3d(0, 0, -9.81); // m/s^2
@@ -337,9 +339,9 @@ public class FuelSim {
             }
         }
 
-        fuelPublisher = NetworkTableInstance.getDefault()
-                .getStructArrayTopic(tableKey + "/Fuels", Translation3d.struct)
-                .publish();
+        // fuelPublisher = NetworkTableInstance.getDefault()
+        //         .getStructArrayTopic(tableKey + "/Fuels", Translation3d.struct)
+        //         .publish();
     }
 
     /**
@@ -393,13 +395,15 @@ public class FuelSim {
         // Logger.recordOutput("Fuel Simulation/Lines (debug)", lines);
     }
 
-    protected StructArrayPublisher<Translation3d> fuelPublisher;
+    // protected StructArrayPublisher<Translation3d> fuelPublisher;
 
     /**
      * Adds array of `Translation3d`'s to NetworkTables at tableKey + "/Fuels"
      */
     public void logFuels() {
-        fuelPublisher.set(fuels.stream().map((fuel) -> fuel.pos).toArray(Translation3d[]::new));
+        Logger.recordOutput(
+                "Fuel Simulation/Fuels", fuels.stream().map((fuel) -> fuel.pos).toArray(Translation3d[]::new));
+        // fuelPublisher.set(fuels.stream().map((fuel) -> fuel.pos).toArray(Translation3d[]::new));
     }
 
     /**

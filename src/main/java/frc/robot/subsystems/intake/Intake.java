@@ -1,9 +1,11 @@
 package frc.robot.subsystems.intake;
 
 import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.rlog.RLOGServer;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import static edu.wpi.first.math.util.Units.degreesToRadians;
@@ -69,16 +71,33 @@ public class Intake extends SubsystemBase {
         }).until(() -> {
             return isIn(side);
         }).andThen(() -> {
+            // just in case
             driveRoller(side, 0);
         }, this);
     }
 
     public Command intakeOut(IntakeSide side) {
         return intakeIn(side.opposite()).andThen(run(() -> {
-            driveRoller(side, rollerSpeed);
+            // driveRoller(side, rollerSpeed);
             deploy(side, true);
         }).until(() -> {
             return isOut(side);
         }));
+    }
+
+    public Command driveIntake() {
+        return Commands.run(() -> {
+            if (!isIn(IntakeSide.LEFT)) {
+                driveRoller(IntakeSide.LEFT, rollerSpeed);
+            }
+            if (!isIn(IntakeSide.RIGHT)) {
+                driveRoller(IntakeSide.RIGHT, rollerSpeed);
+            }
+            // driveRoller(IntakeSide.LEFT, isIn(IntakeSide.LEFT) ? 0 : rollerSpeed);
+            // driveRoller(IntakeSide.RIGHT, isIn(IntakeSide.RIGHT) ? 0 : rollerSpeed);
+        }).finallyDo(() -> {
+                driveRoller(IntakeSide.LEFT, 0);
+                driveRoller(IntakeSide.RIGHT, 0);
+        });
     }
 }

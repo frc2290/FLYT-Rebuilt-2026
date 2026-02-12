@@ -9,6 +9,7 @@ import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.hopper.DyeRotor;
 import frc.robot.subsystems.intake.Intake;
@@ -60,7 +61,7 @@ public class StateMachine extends SubsystemBase {
     private void updateZones() {
         Translation2d currentTranslation = poseSupplier.get().getTranslation();
         double x = currentTranslation.getX();
-        double y = currentTranslation.getY();
+        // double y = currentTranslation.getY();
 
         if (x < LinesVertical.allianceZone) {
             fieldZone = FieldZone.ALLIANCE;
@@ -106,8 +107,6 @@ public class StateMachine extends SubsystemBase {
                 m_turret.setHoodAngle(0);
                 break;
         }
-
-        
     }
 
     public FieldZone getFieldZone() {

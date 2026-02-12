@@ -24,6 +24,7 @@ import frc.robot.subsystems.Coordinator.ControllerProfile;
 import frc.robot.subsystems.Coordinator.RobotState;
 import frc.robot.subsystems.StateMachines.DriveStateMachine;
 import frc.robot.subsystems.StateMachines.StateMachine;
+import frc.robot.subsystems.StateMachines.DriveStateMachine.DriveState;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.IntakeConstants.IntakeSide;
@@ -36,6 +37,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.RunCommand;
+import edu.wpi.first.wpilibj2.command.StartEndCommand;
 import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.POVButton;
@@ -101,7 +103,7 @@ public class RobotContainer {
         if (Robot.isSimulation()) {
             FuelSim instance = FuelSim.getInstance();
             // instance.spawnStartingFuel();
-            instance.registerRobot(inchesToMeters(30.0), inchesToMeters(30.0), inchesToMeters(5.0), _drive::getPose, _drive::getChassisSpeeds);
+            instance.registerRobot(inchesToMeters(30.0), inchesToMeters(30.0), inchesToMeters(5.0), _poseEstimator::getCurrentPose, _drive::getChassisSpeeds);
             instance.start();
         }
     }
@@ -130,25 +132,36 @@ public class RobotContainer {
         POVButton dpad_right = new POVButton(m_driverController, 90);
 
         a_button.onTrue(m_turret.shoot());
+        b_button.whileTrue(
+                new ParallelCommandGroup(
+                        m_intake.driveIntake(),
+                        new StartEndCommand(
+                                () -> m_driveStateMachine.setDriveCommand(DriveState.SNAKE),
+                                () -> m_driveStateMachine.setDriveCommand(DriveState.MANUAL),
+                                m_driveStateMachine
+                        )));
 
         x_button.onTrue(m_intake.intakeOut(IntakeSide.LEFT));
         y_button.onTrue(m_intake.intakeOut(IntakeSide.RIGHT));
 
-        // Manual controls.
-        dpad_left.toggleOnTrue(
-                new ParallelCommandGroup(
-                        new InstantCommand(
-                                () -> m_coordinator.setControllerProfile(ControllerProfile.MANUAL)),
-                        new InstantCommand(
-                                () -> m_coordinator.setRobotGoal(
-                                        RobotState.MANUAL)))); // Manual
+        dpad_left.onTrue(new InstantCommand(() -> m_driveStateMachine.setDriveCommand(DriveState.MANUAL), m_driveStateMachine));
+        dpad_left.onTrue(new InstantCommand(() -> m_driveStateMachine.setDriveCommand(DriveState.SNAKE), m_driveStateMachine));
 
-        dpad_up.toggleOnTrue(
-                new ParallelCommandGroup(
-                        new InstantCommand(() -> m_coordinator.setControllerProfile(ControllerProfile.MANUAL)),
-                        new InstantCommand(
-                                () -> m_coordinator.setRobotGoal(
-                                        RobotState.SHOOT)))); // Algae profile with safe travel goal.
+        // Manual controls.
+        // dpad_left.toggleOnTrue(
+        //         new ParallelCommandGroup(
+        //                 new InstantCommand(
+        //                         () -> m_coordinator.setControllerProfile(ControllerProfile.MANUAL)),
+        //                 new InstantCommand(
+        //                         () -> m_coordinator.setRobotGoal(
+        //                                 RobotState.MANUAL)))); // Manual
+
+        // dpad_up.toggleOnTrue(
+        //         new ParallelCommandGroup(
+        //                 new InstantCommand(() -> m_coordinator.setControllerProfile(ControllerProfile.MANUAL)),
+        //                 new InstantCommand(
+        //                         () -> m_coordinator.setRobotGoal(
+        //                                 RobotState.SHOOT)))); // Algae profile with safe travel goal.
 
         // TODO: FIX THIS
         // Other controls.

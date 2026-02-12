@@ -82,4 +82,8 @@ public class DriveStateMachine extends SubsystemBase {
     public DriveState getCurrentState() {
         return driveState;
     }
+
+    public Command changeState(DriveState driveState) {
+        return runOnce(() -> setDriveCommand(driveState));
+    }
 }
