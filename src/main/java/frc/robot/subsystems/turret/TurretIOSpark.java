@@ -167,6 +167,7 @@ public class TurretIOSpark implements TurretIO {
                 flywheel2Spark.configure(
                     flywheelConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
 
+        // this is very important line that checks turrets position through absalute encoders then sets relative encoder to same pose + whataever offset we want
         turnRelEncoder.setPosition(getTurretPosAtStart() + encoderOffset);
     }
 
@@ -187,16 +188,16 @@ public class TurretIOSpark implements TurretIO {
         }
 
 
+    /**
+     * Get turret pose
+     * @return
+     */
     private double getTurretPos(){
         return turnRelEncoder.getPosition();
     }
     private double getTurretVel(){
         return turnRelEncoder.getVelocity();
     }
-
-
-
-
 
     // I think this is used for logger pro to keep track of things?
     @Override
@@ -227,8 +228,10 @@ public class TurretIOSpark implements TurretIO {
     @Override
     public void setShooterSpeed(double speed) {
         flywheelController1.setSetpoint(speed, ControlType.kMAXMotionVelocityControl, ClosedLoopSlot.kSlot0, shooterff);
+        flywheelController2.setSetpoint(speed, ControlType.kMAXMotionVelocityControl, ClosedLoopSlot.kSlot0, shooterff);
         turretSpeed = speed;
     };
+
 
     @Override
     public void shootFuel() {
