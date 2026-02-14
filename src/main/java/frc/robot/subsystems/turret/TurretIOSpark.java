@@ -62,7 +62,7 @@ public class TurretIOSpark implements TurretIO {
         flywheel2Spark = new SparkFlex(flywheel2CanId, MotorType.kBrushless);
         
         // Setup encoders
-        flywheel2Encoder = flywheel1Spark.getEncoder();
+        flywheel1Encoder = flywheel1Spark.getEncoder();
         flywheel2Encoder = flywheel2Spark.getEncoder();
         turnRelEncoder = turretSpark.getEncoder(); 
         hoodEncoder = hoodSpark.getAbsoluteEncoder();
