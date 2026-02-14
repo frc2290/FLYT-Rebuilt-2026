@@ -102,13 +102,18 @@ public class RobotContainer {
 
         if (Robot.isSimulation()) {
             FuelSim instance = FuelSim.getInstance();
-            // instance.spawnStartingFuel();
+            instance.spawnStartingFuel();
             instance.registerRobot(inchesToMeters(30.0), inchesToMeters(30.0), inchesToMeters(5.0), _poseEstimator::getCurrentPose, _drive::getChassisSpeeds);
             instance.start();
         }
     }
 
     private void configureButtonBindings() {
+        Trigger leftNotIn = new Trigger(() -> !m_intake.isIn(IntakeSide.LEFT));
+        Trigger rightNotIn = new Trigger(() -> !m_intake.isIn(IntakeSide.RIGHT));
+        leftNotIn.onTrue(m_driveStateMachine.changeSnakeDirection(IntakeSide.LEFT));
+        rightNotIn.onTrue(m_driveStateMachine.changeSnakeDirection(IntakeSide.RIGHT));
+
         // Button definitions.
         // Map the raw controller buttons to descriptive names for readability.
         JoystickButton start_button = new JoystickButton(m_driverController, Button.kStart.value);
@@ -145,7 +150,7 @@ public class RobotContainer {
         y_button.onTrue(m_intake.intakeOut(IntakeSide.RIGHT));
 
         dpad_left.onTrue(new InstantCommand(() -> m_driveStateMachine.setDriveCommand(DriveState.MANUAL), m_driveStateMachine));
-        dpad_left.onTrue(new InstantCommand(() -> m_driveStateMachine.setDriveCommand(DriveState.SNAKE), m_driveStateMachine));
+        dpad_up.onTrue(new InstantCommand(() -> m_driveStateMachine.setDriveCommand(DriveState.SNAKE), m_driveStateMachine));
 
         // Manual controls.
         // dpad_left.toggleOnTrue(

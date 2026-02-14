@@ -3,12 +3,15 @@ package frc.robot.subsystems.intake;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.rlog.RLOGServer;
 
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 import static edu.wpi.first.math.util.Units.degreesToRadians;
+import static edu.wpi.first.math.util.Units.feetToMeters;
 import static frc.robot.subsystems.intake.IntakeConstants.*;
 
 public class Intake extends SubsystemBase {
@@ -32,6 +35,9 @@ public class Intake extends SubsystemBase {
         Logger.recordOutput("Intake/LeftOut", isOut(IntakeSide.LEFT));
         Logger.recordOutput("Intake/RightIn", isIn(IntakeSide.RIGHT));
         Logger.recordOutput("Intake/RightOut", isOut(IntakeSide.RIGHT));
+
+        Logger.recordOutput("Intake/Components", new Pose3d[] {new Pose3d(0, getPosition(IntakeSide.LEFT) / outPosition * feetToMeters(1), 0, new Rotation3d()),
+                                                                   new Pose3d(0, getPosition(IntakeSide.RIGHT) / outPosition * -feetToMeters(1), 0, new Rotation3d())});
     }
 
     private IntakeIO getIntake(IntakeSide side) {

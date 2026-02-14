@@ -36,7 +36,7 @@ public class IntakeConstants {
     public static final double driveMotorReduction = 7 / 1;
     public static final double deployMotorReduction = 90 / 1;
 
-    public static final double deployKp = 4.0;
+    public static final double deployKp = 8.0;
     public static final double deployKi = 0.0;
     public static final double deployKd = 1.0;
 }

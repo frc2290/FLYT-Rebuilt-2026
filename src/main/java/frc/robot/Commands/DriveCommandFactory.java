@@ -63,7 +63,8 @@ public final class DriveCommandFactory {
     // this.rotPid = drive.getRotPidController();
     // this.xPid = drive.getXPidController();
     // this.yPid = drive.getYPidController();
-    this.rotPid = new PIDController(0.015, 0.0, 0.0); // 0.015 0 0
+    this.rotPid = new PIDController(0.05, 0.0, 0.0); // 0.015 0 0
+    this.rotPid.enableContinuousInput(0, 360);
     this.xPid = new PIDController(1, 0.0, 0.085); // 2 0.0 0.5
     this.yPid = new PIDController(1, 0.0, 0.085); // 2 0.0 0.5
 
