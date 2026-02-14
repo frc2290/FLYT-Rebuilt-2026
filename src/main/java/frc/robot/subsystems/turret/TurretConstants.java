@@ -47,8 +47,9 @@ public class TurretConstants {
     // Turret config
     public static final boolean turretIsInverted = false;
     public static final int turretMotorCurrent = 40;
-    public static final double turretEncoderPositionFactor = 1;
-    public static final double turretEncoderVelocityFactor = 1;
+    public static final double turretEncoderPositionFactor = (240.0/22.0)*360;
+    public static final double turretEncoderVelocityFactor = (240.0/22.0)*360;
+    public static final double encoderOffset = 0;
     public static final double turretKp = 0.001;
     public static final double turretKi = 0.0;
     public static final double turretKd = 0.0;
