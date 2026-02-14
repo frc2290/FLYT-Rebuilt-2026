@@ -9,6 +9,8 @@ public interface DyeRotorIO {
     @AutoLog
     public static class DyeRotorIOInputs {
         public double dyeRotorVel = 0;
+        public double feedRate = 0;
+        public boolean isRotorRunning = false;
 
     }
 
@@ -16,8 +18,8 @@ public interface DyeRotorIO {
     public default void updateInputs(DyeRotorIOInputs inputs) {}
 
     //turrent control functions
-    public default void setTurnPosition(Rotation2d rotation) {}
-    public default void shootFuel() {}
-    public default void setHoodAngle(double angle) {}
-    public default void setShooterSpeed(double speed) {}
+    public default void runDyeRotor(boolean run) {}
+    public default void setDyeRotorSpeed(double speed) {}
+    public default void setFeedRate(double feedRate) {}
+
 }
