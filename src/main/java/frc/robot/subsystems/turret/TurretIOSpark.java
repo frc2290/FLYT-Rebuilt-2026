@@ -64,12 +64,14 @@ public class TurretIOSpark implements TurretIO {
         // Setup encoders
         flywheel2Encoder = flywheel1Spark.getEncoder();
         flywheel2Encoder = flywheel2Spark.getEncoder();
-        //turnRelEncoder = turretSpark.getEncoder(); EXPERIMENTAL HYBRID
+        turnRelEncoder = turretSpark.getEncoder(); 
         hoodEncoder = hoodSpark.getAbsoluteEncoder();
 
         // Setup RoboRio Absalute encoders
         // Gets if the encoder is connected, IMPLEMENT LATER
-        //m_encoder.isConnected();
+        turnEncoder1.isConnected();
+        turnEncoder2.isConnected();
+
          // Initializes a duty cycle encoder on DIO pins 0 to return a value of 4 for
         // a full rotation, with the encoder reporting 0 half way through rotation (2
         // out of 4)
@@ -165,6 +167,7 @@ public class TurretIOSpark implements TurretIO {
                 flywheel2Spark.configure(
                     flywheelConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
 
+        turnRelEncoder.setPosition(getTurretPosAtStart() + encoderOffset);
     }
 
 
@@ -172,8 +175,16 @@ public class TurretIOSpark implements TurretIO {
     // Absolute dual encoder position of turret estimator master piece
     // Also I think this function should be run only once to set position for rerlative encoder
     private double getTurretPosAtStart(){
-        return turnEncoder1.get()+turnEncoder1.get();
-    }
+
+        double Enc1PosTeeth = (turnEncoder1.get()/360)*22;
+        double Enc2PosTeeth = (turnEncoder2.get()/360)*23;
+        double teeth_difference = (Enc1PosTeeth - Enc2PosTeeth) % 22;
+        // if we imagine our turret to have a big gian gear with 506 teeht (22*23) following var will save that tooth count
+        double global_tooth = (teeth_difference*22) + Enc1PosTeeth;
+        // say thanks for creating absurd amount of variables and not putting all this into return statment:)
+        return (global_tooth/240)*360;
+
+        }
 
 
     private double getTurretPos(){
@@ -182,6 +193,8 @@ public class TurretIOSpark implements TurretIO {
     private double getTurretVel(){
         return turnRelEncoder.getVelocity();
     }
+
+
 
 
 
