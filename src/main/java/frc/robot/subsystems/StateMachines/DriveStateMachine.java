@@ -21,6 +21,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.subsystems.drive.Drive;
+import frc.robot.subsystems.intake.IntakeConstants.IntakeSide;
 import frc.robot.Commands.DriveCommandFactory;
 import frc.utils.FlytDashboard;
 import frc.utils.PoseEstimatorSubsystem;
@@ -42,6 +43,7 @@ public class DriveStateMachine extends SubsystemBase {
 
     private DriveState driveState = DriveState.CANCELLED;
     private Command currentCommand = null;
+    private IntakeSide snakeDirection = IntakeSide.LEFT;
 
     public DriveStateMachine(
             Drive m_drive, PoseEstimatorSubsystem m_pose, XboxController m_driverController) {
@@ -69,8 +71,11 @@ public class DriveStateMachine extends SubsystemBase {
             case SNAKE          -> driveCommandFactory.createHeadingLockCommand(() -> {
                 double forward = driveCommandFactory.sampleForwardInput();
                 double strafe = -driveCommandFactory.sampleStrafeInput();
-                if (forward != 0 || strafe != 0)
-                    return Math.toDegrees(Math.atan2(forward, strafe));
+                if (forward != 0 || strafe != 0) {
+                    // s stands for sign
+                    float s = snakeDirection == IntakeSide.LEFT ? -1 : 1;
+                    return Math.toDegrees(Math.atan2(s * forward, s * strafe)) % 360;
+                }
                 return pose.getDegrees();
             });
             case CLIMB_RELATIVE -> driveCommandFactory.createHeadingLockCommand(() -> 0.0);
@@ -85,5 +90,9 @@ public class DriveStateMachine extends SubsystemBase {
 
     public Command changeState(DriveState driveState) {
         return runOnce(() -> setDriveCommand(driveState));
+    }
+
+    public Command changeSnakeDirection(IntakeSide snakeDirection) {
+        return runOnce(() -> this.snakeDirection = snakeDirection);
     }
 }

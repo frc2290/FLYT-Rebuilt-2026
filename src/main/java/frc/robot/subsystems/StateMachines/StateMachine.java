@@ -15,6 +15,7 @@ import frc.robot.subsystems.hopper.DyeRotor;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.IntakeConstants.IntakeSide;
 import frc.robot.subsystems.turret.Turret;
+import frc.utils.FieldConstants;
 import frc.utils.FieldConstants.*;
 
 public class StateMachine extends SubsystemBase {
@@ -31,6 +32,7 @@ public class StateMachine extends SubsystemBase {
     }
 
     private boolean isHubActive = false;
+    private boolean isOnLeftSide = false; // left = high x, right = low x
     private FieldZone fieldZone = FieldZone.ALLIANCE;
     private SpecialZone specialZone = SpecialZone.NONE;
 
@@ -61,7 +63,9 @@ public class StateMachine extends SubsystemBase {
     private void updateZones() {
         Translation2d currentTranslation = poseSupplier.get().getTranslation();
         double x = currentTranslation.getX();
-        // double y = currentTranslation.getY();
+        double y = currentTranslation.getY();
+
+        isOnLeftSide = y > FieldConstants.fieldWidth / 2;
 
         if (x < LinesVertical.allianceZone) {
             fieldZone = FieldZone.ALLIANCE;
@@ -91,7 +95,13 @@ public class StateMachine extends SubsystemBase {
                         break;
                     case NEUTRAL:
                         // point at one side of the alliance zone, shoot if magic
-                        m_turret.setTargetTranslation(new Translation2d());
+                        double y = FieldConstants.fieldWidth;
+                        if (isOnLeftSide) {
+                            y *= 6.0 / 7.0;
+                        } else {
+                            y *= 1.0 / 7.0;
+                        }
+                        m_turret.setTargetTranslation(new Translation2d(LinesVertical.allianceZone * 3 / 4, y));
                         break;
                     case ANTI_ALLIANCE:
                         // point at one side of neutral zone, shoot if uhh more magic

@@ -22,6 +22,7 @@ import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import frc.utils.PoseUtils.Heading;
 import java.util.List;
@@ -69,9 +70,12 @@ public class PhotonRunnable implements Runnable {
         layout = FieldConstants.AprilTagLayoutType.OFFICIAL.getLayout();
         // PV estimates will always be blue, they'll get flipped by robot thread
         layout.setOrigin(OriginPosition.kBlueAllianceWallRightSide);
-        // if (DriverStation.getAlliance().get() == Alliance.Red) {
-        //     layout.setOrigin(OriginPosition.kRedAllianceWallRightSide);
-        // }
+        // if you're doing a sim and don't have the DS, the alliance getter crashes
+        if (RobotBase.isReal()) {
+            if (DriverStation.getAlliance().get() == Alliance.Red) {
+                layout.setOrigin(OriginPosition.kRedAllianceWallRightSide);
+            }
+        }
         if (photonCamera != null) {
             photonPoseEstimator = new PhotonPoseEstimator(layout, PoseStrategy.CONSTRAINED_SOLVEPNP, cameraToRobot);
         }
