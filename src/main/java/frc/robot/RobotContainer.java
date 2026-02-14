@@ -4,52 +4,35 @@
 
 package frc.robot;
 
-import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.controller.ProfiledPIDController;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.trajectory.Trajectory;
-import edu.wpi.first.math.trajectory.TrajectoryConfig;
-import edu.wpi.first.math.trajectory.TrajectoryGenerator;
-import edu.wpi.first.wpilibj.XboxController;
-// import frc.robot.Commands.Intake;
-import frc.robot.Commands.Shoot;
-import frc.robot.Constants.AutoConstants;
+import frc.robot.subsystems.drive.Drive;
+import frc.utils.PoseEstimatorSubsystem;
 import frc.robot.Constants.DriveConstants;
-import frc.robot.Constants.OIConstants;
-import frc.robot.subsystems.Coordinator;
-import frc.robot.subsystems.Coordinator.ControllerProfile;
-import frc.robot.subsystems.Coordinator.RobotState;
 import frc.robot.subsystems.StateMachines.DriveStateMachine;
 import frc.robot.subsystems.StateMachines.StateMachine;
 import frc.robot.subsystems.StateMachines.DriveStateMachine.DriveState;
-import frc.robot.subsystems.drive.Drive;
+
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.IntakeConstants.IntakeSide;
+import frc.robot.subsystems.dyerotor.DyeRotor;
 import frc.robot.subsystems.turret.Turret;
-import frc.robot.subsystems.DriveSubsystem;
-import frc.robot.subsystems.IntakeShooter;
-import frc.utils.FuelSim;
-import frc.utils.PoseEstimatorSubsystem;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
-import edu.wpi.first.wpilibj2.command.RunCommand;
-import edu.wpi.first.wpilibj2.command.StartEndCommand;
-import edu.wpi.first.wpilibj2.command.SwerveControllerCommand;
+
+import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.POVButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.XboxController.Button;
+
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.InstantCommand;
+import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
+import edu.wpi.first.wpilibj2.command.StartEndCommand;
+
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 
-import static edu.wpi.first.math.util.Units.inchesToMeters;
+import frc.utils.FuelSim;
 
-import java.util.List;
+import static edu.wpi.first.math.util.Units.inchesToMeters;
 
 /*
  * This class is where the bulk of the robot should be declared.  Since Command-based is a
@@ -57,14 +40,15 @@ import java.util.List;
  * periodic methods (other than the scheduler calls).  Instead, the structure of the robot
  * (including subsystems, commands, and button mappings) should be declared here.
  */
+@SuppressWarnings("unused")
 public class RobotContainer {
     // The robot's subsystems
-    private final Drive m_robotDrive;
-    private final Intake m_intake;
-    private final PoseEstimatorSubsystem m_PoseEstimator;
+    private final Drive m_drive;
+    private final PoseEstimatorSubsystem m_poseEstimator;
     private final StateMachine m_stateMachine;
     private final DriveStateMachine m_driveStateMachine;
-    private final Coordinator m_coordinator;
+    private final Intake m_intake;
+    private final DyeRotor m_dyeRotor;
     private final Turret m_turret;
 
     // The driver's controller
@@ -77,20 +61,20 @@ public class RobotContainer {
      */
     public RobotContainer(
             Drive _drive,
-            Intake _intake,
             PoseEstimatorSubsystem _poseEstimator,
             StateMachine _stateMachine,
             DriveStateMachine _driveStateMachine,
-            Coordinator _coordinator,
+            Intake _intake,
+            DyeRotor _dyeRotor,
             Turret _turret,
             XboxController _driverController) {
 
-        m_robotDrive = _drive;
-        m_intake = _intake;
-        m_PoseEstimator = _poseEstimator;
+        m_drive = _drive;
+        m_poseEstimator = _poseEstimator;
         m_stateMachine = _stateMachine;
         m_driveStateMachine = _driveStateMachine;
-        m_coordinator = _coordinator;
+        m_intake = _intake;
+        m_dyeRotor = _dyeRotor;
         m_turret = _turret;
         m_driverController = _driverController;
 
@@ -103,7 +87,7 @@ public class RobotContainer {
         if (Robot.isSimulation()) {
             FuelSim instance = FuelSim.getInstance();
             instance.spawnStartingFuel();
-            instance.registerRobot(inchesToMeters(30.0), inchesToMeters(30.0), inchesToMeters(5.0), _poseEstimator::getCurrentPose, _drive::getChassisSpeeds);
+            instance.registerRobot(inchesToMeters(30), inchesToMeters(37), inchesToMeters(5.0), _poseEstimator::getCurrentPose, _drive::getChassisSpeeds);
             instance.start();
         }
     }

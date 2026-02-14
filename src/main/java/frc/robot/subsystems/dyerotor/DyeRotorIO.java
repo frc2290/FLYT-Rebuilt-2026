@@ -9,13 +9,13 @@ public interface DyeRotorIO {
         public double rotorAppliedVolts = 0.0;
         public double rotorCurrentAmps = 0.0;
         
-        public double rollerSpeed = 0;
-        public double rollerAppliedVolts = 0.0;
-        public double rollerCurrentAmps = 0.0;
+        public double feederSpeed = 0;
+        public double feederAppliedVolts = 0.0;
+        public double feederCurrentAmps = 0.0;
     }
 
     public default void updateInputs(DyeRotorIOInputs inputs) {}
 
     public default void setRotorSpeed(double speed) {}
-    public default void setRollerSpeed(double speed) {}
+    public default void setFeederSpeed(double speed) {}
 }

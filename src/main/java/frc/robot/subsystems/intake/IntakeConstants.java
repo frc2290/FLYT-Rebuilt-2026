@@ -1,7 +1,5 @@
 package frc.robot.subsystems.intake;
 
-import static edu.wpi.first.math.util.Units.degreesToRadians;
-
 public class IntakeConstants {
     public enum IntakeSide {
         LEFT,
@@ -23,8 +21,8 @@ public class IntakeConstants {
     // tbd
     public static final int leftDriveCanId = -1;
     public static final int rightDriveCanId = -1;
-    public static final int leftDeployCanId = -1;
-    public static final int rightDeployCanId = -1;
+    public static final int leftDeployCanId = 51;
+    public static final int rightDeployCanId = 50;
 
     public static final int driveMotorCurrentLimit = 40;
 

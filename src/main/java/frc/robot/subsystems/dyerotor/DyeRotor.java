@@ -1,7 +1,9 @@
 package frc.robot.subsystems.dyerotor;
 
+import static frc.robot.subsystems.dyerotor.DyeRotorConstants.feederRunSpeed;
+import static frc.robot.subsystems.dyerotor.DyeRotorConstants.rotorRunSpeed;
+
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.subsystems.dyerotor.DyeRotorIOInputsAutoLogged;
 
 public class DyeRotor extends SubsystemBase {
     private final DyeRotorIO io;
@@ -16,11 +18,22 @@ public class DyeRotor extends SubsystemBase {
         io.updateInputs(inputs);
     }
 
+    // ♿︎
+    public void runDyeRotor(boolean run) {
+        if (run) {
+            io.setRotorSpeed(rotorRunSpeed);
+            io.setFeederSpeed(feederRunSpeed);
+        } else {
+            io.setRotorSpeed(0);
+            io.setFeederSpeed(0);
+        }
+    }
+
     public void driveRotor(double speed) {
         io.setRotorSpeed(speed);
     }
 
-    public void driveRoller(double speed) {
-        io.setRollerSpeed(speed);
+    public void driveFeeder(double speed) {
+        io.setFeederSpeed(speed);
     }
 }

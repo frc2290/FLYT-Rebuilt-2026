@@ -18,24 +18,32 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import frc.robot.subsystems.Coordinator;
-import frc.robot.subsystems.Coordinator.RobotState;
+
 import frc.robot.subsystems.StateMachines.DriveStateMachine;
 import frc.robot.subsystems.StateMachines.StateMachine;
-// import frc.robot.subsystems.IntakeShooter;
+
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
 import frc.robot.subsystems.drive.GyroIONavX;
 import frc.robot.subsystems.drive.ModuleIO;
 import frc.robot.subsystems.drive.ModuleIOSim;
 import frc.robot.subsystems.drive.ModuleIOSpark;
+
+import frc.robot.subsystems.dyerotor.DyeRotor;
+import frc.robot.subsystems.dyerotor.DyeRotorIO;
+import frc.robot.subsystems.dyerotor.DyeRotorIOSim;
+import frc.robot.subsystems.dyerotor.DyeRotorIOSpark;
+
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.IntakeIO;
 import frc.robot.subsystems.intake.IntakeIOSim;
+import frc.robot.subsystems.intake.IntakeIOSpark;
 import frc.robot.subsystems.intake.IntakeConstants.IntakeSide;
+
 import frc.robot.subsystems.turret.Turret;
 import frc.robot.subsystems.turret.TurretIO;
 import frc.robot.subsystems.turret.TurretIOSim;
+
 import frc.utils.FuelSim;
 import frc.utils.PoseEstimatorSubsystem;
 
@@ -66,21 +74,15 @@ public class Robot extends LoggedRobot {
 
     // The robot's subsystems.
     /** Owns all hardware for swerve driving and exposes the drive commands. */
-    // private final DriveSubsystem m_robotDrive = new DriveSubsystem();
     private final Drive m_robotDrive;
-    private final Intake m_intake;
-    // private final IntakeShooter m_intakeShooter = new IntakeShooter();
     private final PoseEstimatorSubsystem m_poseEstimator;
+    private final Intake m_intake;
+    private final DyeRotor m_dyeRotor;
     private final Turret m_turret;
 
     /** Coordinates all autonomous and teleop driving modes. */
     private final StateMachine m_stateMachine;
     private final DriveStateMachine m_driveStateMachine;
-
-    /**
-     * Central coordinator that keeps drive and manipulator state machines in sync.
-     */
-    private final Coordinator m_coordinator;
 
     public Robot() {
         Logger.recordMetadata("GitSHA", BuildConstants.GIT_SHA);
@@ -120,14 +122,14 @@ public class Robot extends LoggedRobot {
                                new ModuleIOSpark(1),
                                new ModuleIOSpark(2),
                                new ModuleIOSpark(3));
-                m_intake = new Intake(new IntakeIO() {}, new IntakeIO() {});
                 m_poseEstimator = new PoseEstimatorSubsystem(m_robotDrive);
+                m_intake = new Intake(new IntakeIOSpark(IntakeSide.LEFT), new IntakeIOSpark(IntakeSide.RIGHT));
+                m_dyeRotor = new DyeRotor(new DyeRotorIOSpark());
                 m_turret = new Turret(new TurretIOSim(m_poseEstimator::getCurrentPose,
                                       m_poseEstimator::getChassisSpeeds),
                                       m_poseEstimator::getCurrentPose,
                                       m_robotDrive::getChassisSpeeds);
                 break;
-
             case SIM:
                 // Sim robot, instantiate physics sim IO implementations
                 m_robotDrive = new Drive(
@@ -140,11 +142,11 @@ public class Robot extends LoggedRobot {
                 var turretIO = new TurretIOSim(m_poseEstimator::getCurrentPose,
                                       m_poseEstimator::getChassisSpeeds);
                 m_intake = new Intake(new IntakeIOSim(IntakeSide.LEFT, turretIO), new IntakeIOSim(IntakeSide.RIGHT, turretIO));
+                m_dyeRotor = new DyeRotor(new DyeRotorIOSim());
                 m_turret = new Turret(turretIO,
                                       m_poseEstimator::getCurrentPose,
                                       m_robotDrive::getChassisSpeeds);
                 break;
-
             default:
                 // Replayed robot, disable IO implementations
                 m_robotDrive = new Drive(
@@ -153,8 +155,9 @@ public class Robot extends LoggedRobot {
                                new ModuleIO() {},
                                new ModuleIO() {},
                                new ModuleIO() {});
-                m_intake = new Intake(new IntakeIO() {}, new IntakeIO() {});
                 m_poseEstimator = new PoseEstimatorSubsystem(m_robotDrive);
+                m_intake = new Intake(new IntakeIO() {}, new IntakeIO() {});
+                m_dyeRotor = new DyeRotor(new DyeRotorIO() {});
                 m_turret = new Turret(new TurretIO() {},
                                         m_poseEstimator::getCurrentPose,
                                         m_robotDrive::getChassisSpeeds);
@@ -164,7 +167,6 @@ public class Robot extends LoggedRobot {
         m_stateMachine = new StateMachine(m_poseEstimator::getCurrentPose, m_intake, m_turret, null);
         m_driveStateMachine = new DriveStateMachine(m_robotDrive, m_poseEstimator,
             m_driver);
-        m_coordinator = new Coordinator(m_driveStateMachine);
     }
 
     /**
@@ -179,12 +181,11 @@ public class Robot extends LoggedRobot {
         // autonomous chooser on the dashboard.
         m_robotContainer = new RobotContainer(
                 m_robotDrive,
-                m_intake,
-                // m_intakeShooter,
                 m_poseEstimator,
                 m_stateMachine,
                 m_driveStateMachine,
-                m_coordinator,
+                m_intake,
+                m_dyeRotor,
                 m_turret,
                 m_driver);
 
@@ -230,7 +231,6 @@ public class Robot extends LoggedRobot {
 
     @Override
     public void disabledInit() {
-        // m_coordinator.robotDisabled(true);
     }
 
     @Override
@@ -243,9 +243,6 @@ public class Robot extends LoggedRobot {
      */
     @Override
     public void autonomousInit() {
-
-        m_coordinator.robotAuto(true);
-        m_coordinator.robotDisabled(false);
         m_autonomousCommand = m_robotContainer.getAutonomousCommand();
 
         /*
@@ -268,12 +265,6 @@ public class Robot extends LoggedRobot {
 
     @Override
     public void teleopInit() {
-
-        m_coordinator.robotAuto(false);
-        m_coordinator.robotDisabled(false);
-
-        m_coordinator.setRobotGoal(RobotState.START_POSITION);
-
         // This makes sure that the autonomous stops running when
         // teleop starts running. If you want the autonomous to
         // continue until interrupted by another command, remove
