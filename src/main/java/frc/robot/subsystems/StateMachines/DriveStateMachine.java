@@ -30,6 +30,8 @@ public class DriveStateMachine extends SubsystemBase {
         CANCELLED,      // drive system cancelled
         MANUAL,         // field oriented
         SNAKE,          // point towards heading
+        TRENCH,         // turns to the closest 90deg
+        BUMP,           // turns to the closest 45deg
         CLIMB_RELATIVE, // align with tower
         FOLLOW_PATH,    // auto path following
     }
@@ -41,8 +43,9 @@ public class DriveStateMachine extends SubsystemBase {
     private final DriveCommandFactory driveCommandFactory;
 
     private DriveState driveState = DriveState.CANCELLED;
-    private Command currentCommand = null;
+    private DriveState prevDriveState = DriveState.CANCELLED;
     private IntakeSide snakeDirection = IntakeSide.LEFT;
+    private Command currentCommand = null;
 
     public DriveStateMachine(
             Drive m_drive, PoseEstimatorSubsystem m_pose, XboxController m_driverController) {
@@ -61,7 +64,13 @@ public class DriveStateMachine extends SubsystemBase {
         dashboard.putString("Current State", getCurrentState().toString());
     }
 
+    /**
+     * sets the drivestate. if it is null, it reverts to the previous one
+     * @param driveState the drivestate to change to
+     */
     public void setDriveCommand(DriveState driveState) {
+        if (driveState == null) driveState = prevDriveState;
+        prevDriveState = this.driveState;
         this.driveState = driveState;
         if (currentCommand != null) currentCommand.cancel();
         currentCommand = switch (driveState) {
@@ -77,6 +86,8 @@ public class DriveStateMachine extends SubsystemBase {
                 }
                 return pose.getDegrees();
             });
+            case TRENCH         -> driveCommandFactory.createHeadingLockCommand(() -> Math.round(pose.getDegrees() / 90.0) * 90.0);
+            case BUMP           -> driveCommandFactory.createHeadingLockCommand(() -> (Math.round(pose.getDegrees() / 90.0 - 0.5) * 90.0 + 45) % 360);
             case CLIMB_RELATIVE -> driveCommandFactory.createHeadingLockCommand(() -> 0.0);
             case FOLLOW_PATH    -> driveCommandFactory.createFollowPathCommand();
         };
@@ -87,8 +98,23 @@ public class DriveStateMachine extends SubsystemBase {
         return driveState;
     }
 
+    /**
+     * makes a command to change the state
+     * @param driveState the drivestate to change to
+     * @return the command
+     */
     public Command changeState(DriveState driveState) {
         return runOnce(() -> setDriveCommand(driveState));
+    }
+
+    /**
+     * temporarily changes state while true and reverts back once ended
+     * @param driveState the drivestate to change to
+     * @return the command
+     */
+    public Command tempChangeState(DriveState driveState) {
+        return startEnd(() -> setDriveCommand(driveState),
+                        () -> setDriveCommand(null));
     }
 
     public Command changeSnakeDirection(IntakeSide snakeDirection) {
