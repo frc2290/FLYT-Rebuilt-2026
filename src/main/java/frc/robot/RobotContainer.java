@@ -10,7 +10,7 @@ import frc.robot.Constants.DriveConstants;
 import frc.robot.subsystems.StateMachines.DriveStateMachine;
 import frc.robot.subsystems.StateMachines.StateMachine;
 import frc.robot.subsystems.StateMachines.DriveStateMachine.DriveState;
-
+import frc.robot.subsystems.StateMachines.StateMachine.SpecialZone;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.IntakeConstants.IntakeSide;
 import frc.robot.subsystems.dyerotor.DyeRotor;
@@ -93,6 +93,11 @@ public class RobotContainer {
     }
 
     private void configureButtonBindings() {
+        Trigger isOnBump = new Trigger(() -> m_stateMachine.getSpecialZone() == SpecialZone.BUMP);
+        Trigger isUnderTrench = new Trigger(() -> m_stateMachine.getSpecialZone() == SpecialZone.TRENCH);
+        isOnBump.whileTrue(m_driveStateMachine.tempChangeState(DriveState.BUMP));
+        isUnderTrench.whileTrue(m_driveStateMachine.tempChangeState(DriveState.TRENCH));
+
         Trigger leftNotIn = new Trigger(() -> !m_intake.isIn(IntakeSide.LEFT));
         Trigger rightNotIn = new Trigger(() -> !m_intake.isIn(IntakeSide.RIGHT));
         leftNotIn.onTrue(m_driveStateMachine.changeSnakeDirection(IntakeSide.LEFT));
@@ -124,17 +129,13 @@ public class RobotContainer {
         b_button.whileTrue(
                 new ParallelCommandGroup(
                         m_intake.driveIntake(),
-                        new StartEndCommand(
-                                () -> m_driveStateMachine.setDriveCommand(DriveState.SNAKE),
-                                () -> m_driveStateMachine.setDriveCommand(DriveState.MANUAL),
-                                m_driveStateMachine
-                        )));
+                        m_driveStateMachine.tempChangeState(DriveState.SNAKE)));
 
         x_button.onTrue(m_intake.intakeOut(IntakeSide.LEFT));
         y_button.onTrue(m_intake.intakeOut(IntakeSide.RIGHT));
 
-        dpad_left.onTrue(new InstantCommand(() -> m_driveStateMachine.setDriveCommand(DriveState.MANUAL), m_driveStateMachine));
-        dpad_up.onTrue(new InstantCommand(() -> m_driveStateMachine.setDriveCommand(DriveState.SNAKE), m_driveStateMachine));
+        dpad_left.onTrue(m_driveStateMachine.changeState(DriveState.MANUAL));
+        dpad_up.onTrue(m_driveStateMachine.changeState(DriveState.SNAKE));
 
         // Manual controls.
         // dpad_left.toggleOnTrue(
@@ -152,7 +153,7 @@ public class RobotContainer {
         //                         () -> m_coordinator.setRobotGoal(
         //                                 RobotState.SHOOT)))); // Algae profile with safe travel goal.
 
-        // TODO: FIX THIS
+        // maybe fix this perhaps
         // Other controls.
         // right_stick
         //         .and(dpad_right)

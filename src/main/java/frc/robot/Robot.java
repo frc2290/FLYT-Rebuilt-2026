@@ -231,11 +231,11 @@ public class Robot extends LoggedRobot {
 
     @Override
     public void disabledInit() {
+        m_stateMachine.stopHubTimer();
     }
 
     @Override
-    public void disabledPeriodic() {
-    }
+    public void disabledPeriodic() {}
 
     /**
      * This autonomous runs the autonomous command selected by your
@@ -265,6 +265,8 @@ public class Robot extends LoggedRobot {
 
     @Override
     public void teleopInit() {
+        m_stateMachine.startHubTimer();
+
         // This makes sure that the autonomous stops running when
         // teleop starts running. If you want the autonomous to
         // continue until interrupted by another command, remove

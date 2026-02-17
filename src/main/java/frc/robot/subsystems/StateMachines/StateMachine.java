@@ -1,20 +1,29 @@
 package frc.robot.subsystems.StateMachines;
 
-import static frc.robot.Constants.*;
+import static edu.wpi.first.math.util.Units.inchesToMeters;
+import static frc.robot.Constants.boundBuffer;
+import static frc.robot.Constants.bumpBuffer;
 
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.dyerotor.DyeRotor;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.IntakeConstants.IntakeSide;
 import frc.robot.subsystems.turret.Turret;
 import frc.utils.FieldConstants;
-import frc.utils.FieldConstants.*;
+import frc.utils.FieldConstants.Hub;
+import frc.utils.FieldConstants.LinesHorizontal;
+import frc.utils.FieldConstants.LinesVertical;
+import frc.utils.FieldConstants.Tower;
 
 public class StateMachine extends SubsystemBase {
     public enum FieldZone {
@@ -27,15 +36,15 @@ public class StateMachine extends SubsystemBase {
         NONE,   // no special zone
         TOWER,  // we don't really want to shoot here
         TRENCH, // we want to put the hood down under here
+        BUMP,   // we want to be at a 45 deg angle here
     }
 
-    private boolean isHubActive = false;
+    private boolean hubActive = true;
+    private Timer hubTimer = new Timer();
+
     private boolean isOnLeftSide = false; // left = high x, right = low x
     private FieldZone fieldZone = FieldZone.ALLIANCE;
     private SpecialZone specialZone = SpecialZone.NONE;
-
-    private boolean isIntaking = false;
-    private IntakeSide intakeSide = IntakeSide.LEFT;
 
     private Supplier<Pose2d> poseSupplier;
     private Intake m_intake;
@@ -51,11 +60,59 @@ public class StateMachine extends SubsystemBase {
 
     @Override
     public void periodic() {
+        updateTime();
         updateZones();
         updateSubsystems();
 
+        Logger.recordOutput("StateMachine/HubActive", hubActive);
         Logger.recordOutput("StateMachine/Zone/Field", fieldZone);
         Logger.recordOutput("StateMachine/Zone/Special", specialZone);
+    }
+
+    public void startHubTimer() {
+        hubTimer.restart();
+    }
+
+    public void stopHubTimer() {
+        hubTimer.stop();
+    }
+
+    private void updateTime() {
+        String gameData = DriverStation.getGameSpecificMessage();
+        double time = hubTimer.get();
+        Logger.recordOutput("StateMachine/HubTimer", time);
+        if (gameData.length() <= 0) {return;}
+
+        boolean evenShift;
+        // transition shift or endgame
+        if (time < 10.0 || time >= 110.0) {
+            hubActive = true;
+            return;
+        } else if ((time >= 10.0 && time < 35.0) || (time >= 60.0 && time < 85.0)) {
+            evenShift = false;
+        } else if ((time >= 35.0 && time < 60.0) || (time >= 85.0 && time < 110.0)) {
+            evenShift = true;
+        } else {
+            // in theory this will never happen but java complains about evenShift
+            // potentially not being initialized if i don't have this
+            return;
+        }
+
+        boolean blueActive;
+        switch (gameData.charAt(0)) {
+            case 'B':
+                blueActive = evenShift;
+                break;
+            case 'R':
+                blueActive = !evenShift;
+                break;
+            default:
+                return; // bad things have happened uhh panic i guess
+        }
+
+        // if we're red, hubActive = !blueActive. otherwise (if we're blue,
+        // or if there's no driverstation), hubActive = blueActive.
+        hubActive = blueActive ^ (!DriverStation.getAlliance().equals(Optional.of(Alliance.Red)));
     }
 
     private void updateZones() {
@@ -63,7 +120,7 @@ public class StateMachine extends SubsystemBase {
         double x = currentTranslation.getX();
         double y = currentTranslation.getY();
 
-        isOnLeftSide = y > FieldConstants.fieldWidth / 2;
+        isOnLeftSide = y > LinesHorizontal.center;
 
         if (x < LinesVertical.allianceZone) {
             fieldZone = FieldZone.ALLIANCE;
@@ -76,9 +133,13 @@ public class StateMachine extends SubsystemBase {
         specialZone = SpecialZone.NONE;
         if (translationInBound(currentTranslation, Tower.rightBackCorner, Tower.leftUpright)) {
             specialZone = SpecialZone.TOWER;
-        } else if (x >= LinesVertical.allianceZone - boundBuffer &&
-                   x <= LinesVertical.neutralZoneNear + boundBuffer) {
-            specialZone = SpecialZone.TRENCH;
+        } else if (x >= LinesVertical.allianceZone - bumpBuffer &&
+                   x <= LinesVertical.neutralZoneNear + bumpBuffer) {
+            if (y < LinesHorizontal.rightTrenchOpenStart + inchesToMeters(6.0) || y > LinesHorizontal.leftTrenchOpenEnd - inchesToMeters(6.0)) {
+                specialZone = SpecialZone.TRENCH;
+            } else {
+                specialZone = SpecialZone.BUMP;
+            }
         }
     }
 
@@ -99,7 +160,7 @@ public class StateMachine extends SubsystemBase {
                         } else {
                             y *= 1.0 / 7.0;
                         }
-                        m_turret.setTargetTranslation(new Translation2d(LinesVertical.allianceZone * 3 / 4, y));
+                        m_turret.setTargetTranslation(new Translation2d(LinesVertical.allianceZone * 3.0 / 4.0, y));
                         break;
                     case ANTI_ALLIANCE:
                         // point at one side of neutral zone, shoot if uhh more magic
@@ -112,8 +173,10 @@ public class StateMachine extends SubsystemBase {
             case TRENCH:
                 // stop shooting (dye rotor & turret) & hood down (turret)
                 m_turret.setStopShoot(true);
-                m_turret.setHoodAngle(0);
+                m_turret.setHoodAngle(0.0);
                 break;
+            case BUMP:
+                break; // do nothing ig?
         }
     }
 
