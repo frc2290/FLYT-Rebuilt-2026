@@ -164,7 +164,7 @@ public class Robot extends LoggedRobot {
                 break;
         }
 
-        m_stateMachine = new StateMachine(m_poseEstimator::getCurrentPose, m_intake, m_turret, null);
+        m_stateMachine = new StateMachine(m_poseEstimator::getCurrentPose, m_poseEstimator::getChassisSpeeds, m_intake, m_turret, null);
         m_driveStateMachine = new DriveStateMachine(m_robotDrive, m_poseEstimator,
             m_driver);
     }

@@ -1,8 +1,8 @@
 package frc.robot.subsystems.StateMachines;
 
 import static edu.wpi.first.math.util.Units.inchesToMeters;
+import static frc.robot.Constants.baseBumpBuffer;
 import static frc.robot.Constants.boundBuffer;
-import static frc.robot.Constants.bumpBuffer;
 
 import java.util.Optional;
 import java.util.function.Supplier;
@@ -10,14 +10,15 @@ import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.dyerotor.DyeRotor;
 import frc.robot.subsystems.intake.Intake;
-import frc.robot.subsystems.intake.IntakeConstants.IntakeSide;
 import frc.robot.subsystems.turret.Turret;
 import frc.utils.FieldConstants;
 import frc.utils.FieldConstants.Hub;
@@ -47,12 +48,14 @@ public class StateMachine extends SubsystemBase {
     private SpecialZone specialZone = SpecialZone.NONE;
 
     private Supplier<Pose2d> poseSupplier;
+    private Supplier<ChassisSpeeds> speedSupplier;
     private Intake m_intake;
     private Turret m_turret;
     private DyeRotor m_dyeRotor;
 
-    public StateMachine(Supplier<Pose2d> poseSupplier, Intake intake, Turret turret, DyeRotor dyeRotor) {
+    public StateMachine(Supplier<Pose2d> poseSupplier, Supplier<ChassisSpeeds> speedSupplier, Intake intake, Turret turret, DyeRotor dyeRotor) {
         this.poseSupplier = poseSupplier;
+        this.speedSupplier = speedSupplier;
         m_intake = intake;
         m_turret = turret;
         m_dyeRotor = dyeRotor;
@@ -80,7 +83,9 @@ public class StateMachine extends SubsystemBase {
     private void updateTime() {
         String gameData = DriverStation.getGameSpecificMessage();
         double time = hubTimer.get();
+        Logger.recordOutput("StateMachine/GameData", gameData);
         Logger.recordOutput("StateMachine/HubTimer", time);
+        Logger.recordOutput("StateMachine/MatchTime", DriverStation.getMatchTime());
         if (gameData.length() <= 0) {return;}
 
         boolean evenShift;
@@ -112,13 +117,21 @@ public class StateMachine extends SubsystemBase {
 
         // if we're red, hubActive = !blueActive. otherwise (if we're blue,
         // or if there's no driverstation), hubActive = blueActive.
-        hubActive = blueActive ^ (!DriverStation.getAlliance().equals(Optional.of(Alliance.Red)));
+        hubActive = blueActive ^ DriverStation.getAlliance().equals(Optional.of(Alliance.Red));
     }
 
     private void updateZones() {
-        Translation2d currentTranslation = poseSupplier.get().getTranslation();
-        double x = currentTranslation.getX();
-        double y = currentTranslation.getY();
+        Pose2d currentPose = poseSupplier.get();
+        ChassisSpeeds currentSpeeds = speedSupplier.get();
+        Translation2d fieldVelocity = new Translation2d(currentSpeeds.vxMetersPerSecond, currentSpeeds.vyMetersPerSecond).rotateBy(currentPose.getRotation());
+        double x = currentPose.getX();
+        double y = currentPose.getY();
+        
+        double coeff = 0.2 * fieldVelocity.getX();
+        double bumpBoundNear = LinesVertical.allianceZone - baseBumpBuffer - Math.max(0, coeff);
+        double bumpBoundFar = LinesVertical.neutralZoneNear + baseBumpBuffer - Math.min(0, coeff);
+        Logger.recordOutput("StateMachine/BoundNear", new Pose2d(bumpBoundNear, 0, new Rotation2d()));
+        Logger.recordOutput("StateMachine/BoundFar", new Pose2d(bumpBoundFar, 0, new Rotation2d()));
 
         isOnLeftSide = y > LinesHorizontal.center;
 
@@ -131,10 +144,9 @@ public class StateMachine extends SubsystemBase {
         }
 
         specialZone = SpecialZone.NONE;
-        if (translationInBound(currentTranslation, Tower.rightBackCorner, Tower.leftUpright)) {
+        if (translationInBound(currentPose.getTranslation(), Tower.rightBackCorner, Tower.leftUpright)) {
             specialZone = SpecialZone.TOWER;
-        } else if (x >= LinesVertical.allianceZone - bumpBuffer &&
-                   x <= LinesVertical.neutralZoneNear + bumpBuffer) {
+        } else if (x >= bumpBoundNear && x <= bumpBoundFar) {
             if (y < LinesHorizontal.rightTrenchOpenStart + inchesToMeters(6.0) || y > LinesHorizontal.leftTrenchOpenEnd - inchesToMeters(6.0)) {
                 specialZone = SpecialZone.TRENCH;
             } else {
