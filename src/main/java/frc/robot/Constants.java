@@ -38,9 +38,8 @@ public final class Constants {
     public static final Mode simMode = Mode.SIM;
     public static final Mode currentMode = RobotBase.isReal() ? Mode.REAL : simMode;
 
-    // slightly larger buffer for the bump/trench so we have time to move
-    public static final double bumpBuffer = inchesToMeters(30);
-    public static final double boundBuffer = inchesToMeters(15);
+    public static final double boundBuffer = inchesToMeters(15.0);
+    public static final double baseBumpBuffer = inchesToMeters(20.0);
 
     public static enum Mode {
         /** Running on a real robot. */
