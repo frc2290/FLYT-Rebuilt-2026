@@ -13,12 +13,10 @@ public interface TurretIO {
         public double turretAngleSetpoint = 0;
     }
 
+    public default void updateInputs(TurretIOInputs inputs) {};
 
-    public default void updateInputs(TurretIOInputs inputs) {}
-
-    //turrent control functions
-    public default void setTurnPosition(Rotation2d rotation) {}
-    public default void shootFuel() {}
-    public default void setHoodAngle(double angle) {}
-    public default void setShooterSpeed(double speed) {}
+    public default void setTurnPosition(Rotation2d rotation) {};
+    public default void shootFuel() {};
+    public default void setHoodAngle(double angle) {};
+    public default void setShooterSpeed(double speed) {};
 }
