@@ -73,6 +73,7 @@ public class ShootOnTheFly {
 
         FullShooterParams params = null;
         double distance = ballGoal.getNorm();
+        double k = 0.5; // linear drag constant, tune with testing, K can not equal 0!!
 
         // the reason this is done is because when you want to apply the velocity
         // corrections, you also need to know how long the ball will be in the air for.
@@ -81,10 +82,12 @@ public class ShootOnTheFly {
         // the distance of for the LUT
         for (int i = 0; i < 5; i++) {
             params = SHOOTER_MAP.get(distance);
+            double tof = params.timeOfFlight;
+            double alphaTof = (1.0 - Math.exp(-k * tof)) / k;
             // the reason the TOF is negative isn't for the TOF, but rather the velocity.
             // here, instead of wanting field-relative robot velocity, we want the
             // robot-relative goal velocity, which will be the opposite.
-            ballGoal = toGoal.plus(robotVelocity.times(-params.timeOfFlight));
+            ballGoal = toGoal.plus(robotVelocity.times(-alphaTof));
             distance = ballGoal.getNorm();
         }
 
