@@ -17,6 +17,7 @@ import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.subsystems.dyerotor.DyeRotor;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.turret.Turret;
@@ -46,6 +47,7 @@ public class StateMachine extends SubsystemBase {
     private boolean isOnLeftSide = false; // left = high x, right = low x
     private FieldZone fieldZone = FieldZone.ALLIANCE;
     private SpecialZone specialZone = SpecialZone.NONE;
+    private boolean isAuto = false;
 
     private Supplier<Pose2d> poseSupplier;
     private Supplier<ChassisSpeeds> speedSupplier;
@@ -202,6 +204,18 @@ public class StateMachine extends SubsystemBase {
 
     public void setfieldZone(FieldZone fieldZone) {
         this.fieldZone = fieldZone;
+    }
+
+    public boolean isAuto() {
+        return isAuto;
+    }
+
+    public Trigger isAutoTrigger() {
+        return new Trigger(() -> isAuto);
+    }
+
+    public void setIsAuto(boolean isAuto) {
+        this.isAuto = isAuto;
     }
 
     /**

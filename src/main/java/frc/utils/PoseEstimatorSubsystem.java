@@ -49,6 +49,7 @@ import frc.utils.PoseUtils.Heading;
 import java.util.function.Supplier;
 
 import org.littletonrobotics.junction.AutoLogOutput;
+import org.littletonrobotics.junction.Logger;
 
 /** Pose estimator that uses odometry and AprilTags with PhotonVision. */
 public class PoseEstimatorSubsystem extends SubsystemBase {
@@ -78,16 +79,16 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
     private static final Vector<N3> visionMeasurementStdDevs = VecBuilder.fill(0.25, 0.25, 0.1); // VecBuilder.fill(1.0,
                                                                                                  // 1.0, 1.0).
 
-    /** Supplier for the current gyro heading. */
-    private final Supplier<Rotation2d> rotationSupplier;
+    // /** Supplier for the current gyro heading. */
+    // private final Supplier<Rotation2d> rotationSupplier;
 
-    /** Supplier for the swerve module positions used in odometry updates. */
-    private final Supplier<SwerveModulePosition[]> modulePositionSupplier;
+    // /** Supplier for the swerve module positions used in odometry updates. */
+    // private final Supplier<SwerveModulePosition[]> modulePositionSupplier;
 
-    /** Supplier for module states so commands can query current wheel speeds. */
-    private final Supplier<SwerveModuleState[]> moduleStateSupplier;
+    // /** Supplier for module states so commands can query current wheel speeds. */
+    // private final Supplier<SwerveModuleState[]> moduleStateSupplier;
 
-    private final SwerveDrivePoseEstimator poseEstimator;
+    //private final SwerveDrivePoseEstimator poseEstimator;
 
     /** Field visualization that displays the robot pose in AdvantageScope. */
     private final Field2d field2d = new Field2d();
@@ -111,6 +112,8 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
 
     private RobotConfig config;
 
+    private Drive drive;
+
     /**
      * Pose that the drivetrain should aim toward (used by auto alignment commands).
      */
@@ -120,6 +123,8 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
     private FlytLogger poseDash = new FlytLogger("Pose");
 
     public PoseEstimatorSubsystem(Drive m_drive) {
+        this.drive = m_drive;
+
         photonEstimator = new PhotonRunnable(
                 "FrontCamera", VisionConstants.APRILTAG_CAMERA_TO_ROBOT, () -> getHeading());
         photonEstimator2 = new PhotonRunnable(
@@ -127,18 +132,6 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
 
         photonNotifier = new Notifier(photonEstimator);
         photonNotifier2 = new Notifier(photonEstimator2);
-
-        this.rotationSupplier = m_drive::newHeading;
-        this.modulePositionSupplier = m_drive::getModulePositions;
-        this.moduleStateSupplier = m_drive::getModuleStates;
-
-        poseEstimator = new SwerveDrivePoseEstimator(
-                DriveConstants.kDriveKinematics,
-                rotationSupplier.get(),
-                modulePositionSupplier.get(),
-                new Pose2d(),
-                stateStdDevs,
-                visionMeasurementStdDevs);
 
         // Start PhotonVision thread.
         photonNotifier.setName("PhotonRunnable");
@@ -153,20 +146,21 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
             e.printStackTrace();
         }
 
-        poseDash.addStringPublisher("Pose", false, () -> getCurrentPose().toString());
-        poseDash.addBoolPublisher("At Target Pose", false, () -> atTargetPose());
-        poseDash.addDoublePublisher(
-                "Relative To X",
-                true,
-                () -> poseEstimator.getEstimatedPosition().relativeTo(targetPose).getX());
-        poseDash.addDoublePublisher(
-                "Relative To Y",
-                true,
-                () -> poseEstimator.getEstimatedPosition().relativeTo(targetPose).getY());
-        poseDash.addDoublePublisher(
-                "Relative To T",
-                true,
-                () -> poseEstimator.getEstimatedPosition().relativeTo(targetPose).getRotation().getDegrees());
+        // poseDash.addStringPublisher("Pose", false, () -> getCurrentPose().toString());
+        // Logger.recordOutput("PoseEstimator/Pose", getCurrentPose());
+        // poseDash.addBoolPublisher("At Target Pose", false, () -> atTargetPose());
+        // poseDash.addDoublePublisher(
+        //         "Relative To X",
+        //         true,
+        //         () -> drive.getPose().relativeTo(targetPose).getX());
+        // poseDash.addDoublePublisher(
+        //         "Relative To Y",
+        //         true,
+        //         () -> drive.getPose().relativeTo(targetPose).getY());
+        // poseDash.addDoublePublisher(
+        //         "Relative To T",
+        //         true,
+        //         () -> drive.getPose().relativeTo(targetPose).getRotation().getDegrees());
     }
 
     /** Updates the AprilTag origin based on the current alliance color. */
@@ -190,14 +184,14 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
             // Since a tag was seen, and the tags are all relative to the coordinate system,
             // the estimated pose needs to be transformed to the new coordinate system.
             var newPose = flipAlliance(getCurrentPose());
-            poseEstimator.resetPosition(rotationSupplier.get(), modulePositionSupplier.get(), newPose);
+            drive.setPose(newPose);
         }
     }
 
     @Override
     public void periodic() {
         // Update pose estimator with drivetrain sensors.
-        poseEstimator.update(rotationSupplier.get(), modulePositionSupplier.get());
+        //poseEstimator.update(rotationSupplier.get(), modulePositionSupplier.get());
 
         var maybeTargetYaw = photonEstimator2.getTargetYaw();
         if (maybeTargetYaw != null) {
@@ -213,9 +207,9 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
                 pose2d = flipAlliance(pose2d);
             }
             // if (!DriverStation.isAutonomous() ||
-            // (poseEstimator.getEstimatedPosition().getTranslation().getDistance(VisionConstants.reefCenter)
+            // (drive.getPose().getTranslation().getDistance(VisionConstants.reefCenter)
             // < 3)) {
-            poseEstimator.addVisionMeasurement(pose2d, visionPose.timestampSeconds);
+            drive.addVisionMeasurement(pose2d, visionPose.timestampSeconds, visionMeasurementStdDevs);
             // }
         }
 
@@ -235,19 +229,19 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
         }*/
 
         // Set the pose on the dashboard.
-        var dashboardPose = poseEstimator.getEstimatedPosition();
-        if (originPosition == kRedAllianceWallRightSide) {
-            // Flip the pose when red, since the dashboard field photo cannot be rotated.
-            dashboardPose = flipAlliance(dashboardPose);
-        }
-        field2d.setRobotPose(dashboardPose);
-        target2d.setPose(targetPose);
-        SmartDashboard.putData("Field", field2d);
-        poseDash.update(Constants.debugMode);
+        //var dashboardPose = drive.getPose();
+        //if (originPosition == kRedAllianceWallRightSide) {
+        //    // Flip the pose when red, since the dashboard field photo cannot be rotated.
+        //    dashboardPose = flipAlliance(dashboardPose);
+        //}
+        //field2d.setRobotPose(dashboardPose);
+        //target2d.setPose(targetPose);
+        //SmartDashboard.putData("Field", field2d);
+        //poseDash.update(Constants.debugMode);
     }
 
     public boolean isClosestStationRight() {
-        if (poseEstimator.getEstimatedPosition().getY() > VisionConstants.halfwayAcrossFieldY) {
+        if (drive.getPose().getY() > VisionConstants.halfwayAcrossFieldY) {
             return false;
         } else {
             return true;
@@ -256,34 +250,34 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
 
     public Pose2d getClosestBranch(boolean right) {
         if (right) {
-            return poseEstimator.getEstimatedPosition().nearest(VisionConstants.rightBranches);
+            return drive.getPose().nearest(VisionConstants.rightBranches);
         } else {
-            return poseEstimator.getEstimatedPosition().nearest(VisionConstants.leftBranches);
+            return drive.getPose().nearest(VisionConstants.leftBranches);
         }
     }
 
     public double getAlignX(Translation2d target) {
-        return target.getX() - poseEstimator.getEstimatedPosition().getX();
+        return target.getX() - drive.getPose().getX();
     }
 
     public double getAlignY(Translation2d target) {
-        return target.getY() - poseEstimator.getEstimatedPosition().getY();
+        return target.getY() - drive.getPose().getY();
     }
 
     public double turnToTarget(Translation2d target) {
-        double offsetX = target.getX() - poseEstimator.getEstimatedPosition().getX();
-        double offsetY = target.getY() - poseEstimator.getEstimatedPosition().getY();
+        double offsetX = target.getX() - drive.getPose().getX();
+        double offsetY = target.getY() - drive.getPose().getY();
         // return (360 - Math.toDegrees(Math.atan2(offsetY, offsetX)) % 360);
         return (Math.toDegrees(Math.atan2(offsetY, offsetX)) % 360);
     }
 
     public double getDegrees() {
-        return poseEstimator.getEstimatedPosition().getRotation().getDegrees();
+        return drive.getPose().getRotation().getDegrees();
     }
 
     @AutoLogOutput(key = "Odometry/Robot")
     public Pose2d getCurrentPose() {
-        return poseEstimator.getEstimatedPosition();
+        return drive.getPose();
     }
 
     /*public PhotonPipelineResult getLatestTag() {
@@ -291,11 +285,11 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
     }*/
 
     public ChassisSpeeds getChassisSpeeds() {
-        return DriveConstants.kDriveKinematics.toChassisSpeeds(moduleStateSupplier.get());
+        return drive.getChassisSpeeds();
     }
 
     public Rotation2d getCurrentRotation() {
-        return poseEstimator.getEstimatedPosition().getRotation();
+        return drive.getPose().getRotation();
     }
 
     public RobotConfig getRobotConfig() {
@@ -389,8 +383,12 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
      * @param newPose new pose
      */
     public void setCurrentPose(Pose2d newPose) {
-        poseEstimator.resetPosition(rotationSupplier.get(), modulePositionSupplier.get(), newPose);
+        drive.setPose(newPose);
         // drive.setGyroAdjustment(newPose.getRotation().getDegrees());
+    }
+
+    public Command setCurrentPoseCommand(Pose2d newPose) {
+        return runOnce(() -> setCurrentPose(newPose));
     }
 
     /**

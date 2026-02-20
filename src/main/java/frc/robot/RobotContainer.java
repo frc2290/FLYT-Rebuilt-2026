@@ -6,6 +6,7 @@ package frc.robot;
 
 import frc.robot.subsystems.drive.Drive;
 import frc.utils.PoseEstimatorSubsystem;
+import frc.robot.Commands.Autos.AutoBuilder;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.subsystems.StateMachines.DriveStateMachine;
 import frc.robot.subsystems.StateMachines.StateMachine;
@@ -34,6 +35,8 @@ import frc.utils.FuelSim;
 
 import static edu.wpi.first.math.util.Units.inchesToMeters;
 
+import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
+
 /*
  * This class is where the bulk of the robot should be declared.  Since Command-based is a
  * "declarative" paradigm, very little robot logic should actually be handled in the {@link Robot}
@@ -55,6 +58,8 @@ public class RobotContainer {
     XboxController m_driverController;
 
     SendableChooser<Command> auto_chooser = new SendableChooser<>();
+    LoggedDashboardChooser<String> auto_start_pos = new LoggedDashboardChooser<>("Auto Start Pos");
+    LoggedDashboardChooser<String> auto_end_pos = new LoggedDashboardChooser<>("Auto End Pos");
 
     /**
      * The container for the robot. Contains subsystems, OI devices, and commands.
@@ -83,6 +88,10 @@ public class RobotContainer {
 
         // Auto poses place here
         SmartDashboard.putData(auto_chooser);
+        auto_start_pos.addDefaultOption("Trench", "Trench");
+        auto_start_pos.addOption("Bump", "Bump");
+        auto_end_pos.addDefaultOption("Depot", "Depot");
+        auto_end_pos.addOption("Outpost", "Outpost");
 
         if (Robot.isSimulation()) {
             FuelSim instance = FuelSim.getInstance();
@@ -93,10 +102,12 @@ public class RobotContainer {
     }
 
     private void configureButtonBindings() {
+        Trigger isAuto = m_stateMachine.isAutoTrigger();
+        Trigger notAuto = isAuto.negate();
         Trigger isOnBump = new Trigger(() -> m_stateMachine.getSpecialZone() == SpecialZone.BUMP);
         Trigger isUnderTrench = new Trigger(() -> m_stateMachine.getSpecialZone() == SpecialZone.TRENCH);
-        isOnBump.whileTrue(m_driveStateMachine.tempChangeState(DriveState.BUMP));
-        isUnderTrench.whileTrue(m_driveStateMachine.tempChangeState(DriveState.TRENCH));
+        isOnBump.and(notAuto).whileTrue(m_driveStateMachine.tempChangeState(DriveState.BUMP));
+        isUnderTrench.and(notAuto).whileTrue(m_driveStateMachine.tempChangeState(DriveState.TRENCH));
 
         Trigger leftNotIn = new Trigger(() -> !m_intake.isIn(IntakeSide.LEFT));
         Trigger rightNotIn = new Trigger(() -> !m_intake.isIn(IntakeSide.RIGHT));
@@ -169,6 +180,6 @@ public class RobotContainer {
      * @return the command to run in autonomous
      */
     public Command getAutonomousCommand() {
-        return auto_chooser.getSelected();
+        return new AutoBuilder(auto_start_pos.get(), auto_end_pos.get(), m_driveStateMachine, m_poseEstimator);
     }
 }

@@ -23,7 +23,7 @@ import edu.wpi.first.wpilibj2.command.CommandScheduler;
 
 import frc.robot.subsystems.StateMachines.DriveStateMachine;
 import frc.robot.subsystems.StateMachines.StateMachine;
-
+import frc.robot.subsystems.StateMachines.DriveStateMachine.DriveState;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.GyroIO;
 import frc.robot.subsystems.drive.GyroIONavX;
@@ -245,8 +245,10 @@ public class Robot extends LoggedRobot {
      */
     @Override
     public void autonomousInit() {
-        // m_autonomousCommand = m_robotContainer.getAutonomousCommand();
-        m_autonomousCommand = new PathPlannerAuto("New Auto");
+        m_autonomousCommand = m_robotContainer.getAutonomousCommand();
+        m_stateMachine.setIsAuto(true);
+        m_driveStateMachine.setDriveCommand(DriveState.FOLLOW_PATH);
+        //m_autonomousCommand = new PathPlannerAuto("New Auto");
 
         /*
          * String autoSelected = SmartDashboard.getString("Auto Selector",
@@ -264,6 +266,12 @@ public class Robot extends LoggedRobot {
     /** This function is called periodically during autonomous. */
     @Override
     public void autonomousPeriodic() {
+    }
+
+    @Override
+    public void autonomousExit() {
+        m_driveStateMachine.setDriveCommand(DriveState.CANCELLED);
+        m_stateMachine.setIsAuto(false);
     }
 
     @Override

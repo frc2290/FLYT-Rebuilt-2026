@@ -16,6 +16,8 @@
 //
 package frc.robot.subsystems.StateMachines;
 
+import org.littletonrobotics.junction.Logger;
+
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -61,7 +63,9 @@ public class DriveStateMachine extends SubsystemBase {
     @Override
     public void periodic() {
         // Update dashboard
-        dashboard.putString("Current State", getCurrentState().toString());
+        Logger.recordOutput("DriveStateMachine/CurrentState", driveState);
+        Logger.recordOutput("DriveStateMachine/PrevState", prevDriveState);
+        Logger.recordOutput("DriveStateMachine/SnakeDirection", snakeDirection);
     }
 
     /**
