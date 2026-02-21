@@ -232,9 +232,7 @@ public class Robot extends LoggedRobot {
     }
 
     @Override
-    public void disabledInit() {
-        m_stateMachine.stopHubTimer();
-    }
+    public void disabledInit() {}
 
     @Override
     public void disabledPeriodic() {}
@@ -291,7 +289,11 @@ public class Robot extends LoggedRobot {
 
     /** This function is called periodically during operator control. */
     @Override
-    public void teleopPeriodic() {
+    public void teleopPeriodic() {}
+
+    @Override
+    public void teleopExit() {
+        m_stateMachine.stopHubTimer();
     }
 
     @Override
