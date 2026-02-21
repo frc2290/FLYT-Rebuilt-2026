@@ -5,32 +5,48 @@
 package frc.robot.Commands.Autos;
 
 import com.pathplanner.lib.path.PathPlannerPath;
-import com.pathplanner.lib.util.FlippingUtil;
 
-import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import frc.robot.Commands.SwerveAutoStep;
 import frc.robot.subsystems.StateMachines.DriveStateMachine;
-import frc.robot.subsystems.StateMachines.DriveStateMachine.DriveState;
 import frc.utils.PoseEstimatorSubsystem;
 
 // NOTE:  Consider using this command inline, rather than writing a subclass.  For more
 // information, see:
 // https://docs.wpilib.org/en/stable/docs/software/commandbased/convenience-features.html
 public class AutoBuilder extends SequentialCommandGroup {
-    /** Creates a new AutoBuilder. */
-    public AutoBuilder(String start_pos, String end_pos, DriveStateMachine drive, PoseEstimatorSubsystem pose) {
-        try {
-            PathPlannerPath start_path = PathPlannerPath.fromPathFile(start_pos + " " + "Neutral" + " " + "Intake");
-            PathPlannerPath end_path = PathPlannerPath.fromPathFile("Neutral" + " " + end_pos);
+    enum StartPos {
+        TrenchLeft,
+        TrenchRight,
+        BumpLeft,
+        BumpRight,
+    }
 
-            // if (DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red) {
-            //     start_path = start_path.mirrorPath();
-            //     end_path = end_path.mirrorPath();
-            // }
+    // bad name?
+    enum Activity {
+        ShuttleNeutral,
+        CollectDepot,
+    }
+
+    enum EndPos {
+        Left,
+        Right,
+        Climb,
+    }
+
+    /** Creates a new AutoBuilder. */
+    public AutoBuilder(StartPos startPos, Activity activity, EndPos endPos, DriveStateMachine drive, PoseEstimatorSubsystem pose) {
+        try {
+            PathPlannerPath start_path = PathPlannerPath.fromPathFile(startPos.name() + " to " + activity.name());
+            PathPlannerPath end_path = PathPlannerPath.fromPathFile(activity.name() + " to " + endPos.name());
+
+            if (DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red) {
+                // start_path = start_path.flipPath();
+                // end_path = end_path.flipPath();
+            }
 
             // Add your commands in the addCommands() call, e.g.
             // addCommands(new FooCommand(), new BarCommand());
