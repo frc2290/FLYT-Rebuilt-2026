@@ -7,6 +7,7 @@ import com.revrobotics.spark.*;
 import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
+import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
 import static frc.robot.subsystems.dyerotor.DyeRotorConstants.*;
@@ -44,7 +45,7 @@ public class DyeRotorIOSpark implements DyeRotorIO {
         feederController = feeder.getClosedLoopController();
         rotorController = rotor.getClosedLoopController();
 
-        var rotorConfig = new SparkMaxConfig();
+        var rotorConfig = new SparkFlexConfig();
         rotorConfig
                 .inverted(rotorIsInverted)
                 .idleMode(IdleMode.kCoast)
@@ -57,8 +58,8 @@ public class DyeRotorIOSpark implements DyeRotorIO {
         rotorConfig.closedLoop
                 .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
                 .pid(rotorKp, rotorKi, rotorKd);
-        tryUntilOk(feeder, 5,
-                () -> feeder.configure(rotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
+        tryUntilOk(rotor, 5,
+                () -> rotor.configure(rotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
 
         var feederConfig = new SparkMaxConfig();
         feederConfig
