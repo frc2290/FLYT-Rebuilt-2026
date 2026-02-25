@@ -325,7 +325,8 @@ public class Drive extends SubsystemBase {
 
   /** Returns the maximum angular speed in radians per sec. */
   public double getMaxAngularSpeedRadPerSec() {
-    return maxSpeedMetersPerSec / driveBaseRadius;
+    return maxAngularSpeed;
+    // return maxSpeedMetersPerSec / driveBaseRadius;
   }
 
   public double getAngle() {
@@ -343,9 +344,9 @@ public class Drive extends SubsystemBase {
    */
   public void drive(double xSpeed, double ySpeed, double rot, boolean fieldRelative) {
     // Convert the commanded speeds into the correct units for the drivetrain
-    double xSpeedDelivered = xSpeed * DriveConstants.maxSpeedMetersPerSec;
-    double ySpeedDelivered = ySpeed * DriveConstants.maxSpeedMetersPerSec;
-    double rotDelivered = rot * DriveConstants.maxAngularSpeed; // ?
+    double xSpeedDelivered = xSpeed * maxSpeedMetersPerSec * 0.5;
+    double ySpeedDelivered = ySpeed * maxSpeedMetersPerSec * 0.5;
+    double rotDelivered = rot * maxAngularSpeed * 0.5;
 
     var swerveModuleStates = kinematics.toSwerveModuleStates(
         fieldRelative

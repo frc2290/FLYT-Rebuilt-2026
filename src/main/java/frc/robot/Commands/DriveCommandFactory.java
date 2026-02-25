@@ -72,10 +72,10 @@ public final class DriveCommandFactory {
   }
 
   /** Small helper that bundles the driver stick inputs for a single loop of command execution. */
-  private static final class DriverInputs {
-    final double xSpeed;
-    final double ySpeed;
-    final double rotSpeed;
+  public static final class DriverInputs {
+    public final double xSpeed;
+    public final double ySpeed;
+    public final double rotSpeed;
 
     DriverInputs(double xSpeed, double ySpeed, double rotSpeed) {
       this.xSpeed = xSpeed;
@@ -106,7 +106,7 @@ public final class DriveCommandFactory {
   }
 
   /** Grabs a snapshot of the driver inputs so each command can reason about the same numbers. */
-  private DriverInputs sampleDriverInputs() {
+  public DriverInputs sampleDriverInputs() {
     return new DriverInputs(sampleForwardInput(), sampleStrafeInput(), sampleRotationInput());
   }
 
@@ -149,7 +149,7 @@ public final class DriveCommandFactory {
     return runDriveCommand(
         inputs ->
             // Pass the field-relative speeds straight to the drivetrain.
-            drive.drive(inputs.xSpeed*0.5, inputs.ySpeed*0.5, inputs.rotSpeed*0.5, true));
+            drive.drive(inputs.xSpeed, inputs.ySpeed, inputs.rotSpeed, true));
   }
 
   /**

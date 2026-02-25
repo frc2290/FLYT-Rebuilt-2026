@@ -7,6 +7,9 @@ package frc.robot;
 import frc.robot.subsystems.drive.Drive;
 import frc.utils.PoseEstimatorSubsystem;
 import frc.robot.Commands.Autos.AutoBuilder;
+import frc.robot.Commands.Autos.AutoBuilder.AutoActivity;
+import frc.robot.Commands.Autos.AutoBuilder.AutoEnd;
+import frc.robot.Commands.Autos.AutoBuilder.AutoStart;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.subsystems.StateMachines.DriveStateMachine;
 import frc.robot.subsystems.StateMachines.StateMachine;
@@ -16,7 +19,7 @@ import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.IntakeConstants.IntakeSide;
 import frc.robot.subsystems.dyerotor.DyeRotor;
 import frc.robot.subsystems.turret.Turret;
-
+import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.POVButton;
@@ -34,6 +37,11 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import frc.utils.FuelSim;
 
 import static edu.wpi.first.math.util.Units.inchesToMeters;
+
+import java.lang.runtime.ObjectMethods;
+import java.util.Objects;
+import java.util.function.BiConsumer;
+import java.util.function.Consumer;
 
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
@@ -58,8 +66,9 @@ public class RobotContainer {
     XboxController m_driverController;
 
     SendableChooser<Command> auto_chooser = new SendableChooser<>();
-    LoggedDashboardChooser<String> auto_start_pos = new LoggedDashboardChooser<>("Auto Start Pos");
-    LoggedDashboardChooser<String> auto_end_pos = new LoggedDashboardChooser<>("Auto End Pos");
+    LoggedDashboardChooser<AutoStart> auto_start = new LoggedDashboardChooser<>("Auto Start");
+    LoggedDashboardChooser<AutoActivity> auto_activity = new LoggedDashboardChooser<>("Auto Activity");
+    LoggedDashboardChooser<AutoEnd> auto_end = new LoggedDashboardChooser<>("Auto End");
 
     /**
      * The container for the robot. Contains subsystems, OI devices, and commands.
@@ -88,10 +97,21 @@ public class RobotContainer {
 
         // Auto poses place here
         SmartDashboard.putData(auto_chooser);
-        auto_start_pos.addDefaultOption("Trench", "Trench");
-        auto_start_pos.addOption("Bump", "Bump");
-        auto_end_pos.addDefaultOption("Depot", "Depot");
-        auto_end_pos.addOption("Outpost", "Outpost");
+        // this function is TERRIBLE but it's funny and it works so i am keeping it
+        BiConsumer<Object, Object[]> enum_chooser = (perhaps_chooser, values) -> {
+            LoggedDashboardChooser<Object> chooser = (LoggedDashboardChooser<Object>)perhaps_chooser;
+            chooser.addDefaultOption(values[0].toString(), values[0]);
+            for (Object value : values) {
+                chooser.addOption(value.toString(), value);
+            }
+        };
+        enum_chooser.accept(auto_start, AutoStart.values());
+        enum_chooser.accept(auto_activity, AutoActivity.values());
+        enum_chooser.accept(auto_end, AutoEnd.values());
+        // auto_start_pos.addDefaultOption("Trench", "Trench");
+        // auto_start_pos.addOption("Bump", "Bump");
+        // auto_end_pos.addDefaultOption("Depot", "Depot");
+        // auto_end_pos.addOption("Outpost", "Outpost");
 
         if (Robot.isSimulation()) {
             FuelSim instance = FuelSim.getInstance();
@@ -102,12 +122,16 @@ public class RobotContainer {
     }
 
     private void configureButtonBindings() {
-        Trigger isAuto = m_stateMachine.isAutoTrigger();
+        Trigger isAuto = new Trigger(() -> m_stateMachine.isAuto());
         Trigger notAuto = isAuto.negate();
         Trigger isOnBump = new Trigger(() -> m_stateMachine.getSpecialZone() == SpecialZone.BUMP);
         Trigger isUnderTrench = new Trigger(() -> m_stateMachine.getSpecialZone() == SpecialZone.TRENCH);
-        isOnBump.and(notAuto).whileTrue(m_driveStateMachine.tempChangeState(DriveState.BUMP));
-        isUnderTrench.and(notAuto).whileTrue(m_driveStateMachine.tempChangeState(DriveState.TRENCH));
+        Trigger isLeft = new Trigger(() -> m_stateMachine.getLeftSide());
+
+        // isOnBump.and(notAuto).whileTrue(m_driveStateMachine.tempChangeState(DriveState.BUMP));
+        // isUnderTrench.and(notAuto).whileTrue(m_driveStateMachine.tempChangeState(DriveState.TRENCH));
+        isLeft.onFalse(m_driveStateMachine.changeFieldSide(false));
+        isLeft.onTrue(m_driveStateMachine.changeFieldSide(true));
 
         Trigger leftNotIn = new Trigger(() -> !m_intake.isIn(IntakeSide.LEFT));
         Trigger rightNotIn = new Trigger(() -> !m_intake.isIn(IntakeSide.RIGHT));
@@ -180,6 +204,6 @@ public class RobotContainer {
      * @return the command to run in autonomous
      */
     public Command getAutonomousCommand() {
-        return new AutoBuilder(auto_start_pos.get(), auto_end_pos.get(), m_driveStateMachine, m_poseEstimator);
+        return new AutoBuilder(auto_start.get(), auto_activity.get(), auto_end.get(), m_driveStateMachine, m_poseEstimator);
     }
 }
