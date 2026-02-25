@@ -23,33 +23,33 @@ import com.pathplanner.lib.config.RobotConfig;
 import edu.wpi.first.apriltag.AprilTagFieldLayout.OriginPosition;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.Vector;
-import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
+// import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.kinematics.SwerveModulePosition;
-import edu.wpi.first.math.kinematics.SwerveModuleState;
+// import edu.wpi.first.math.kinematics.SwerveModulePosition;
+// import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.numbers.N3;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj.smartdashboard.Field2d;
-import edu.wpi.first.wpilibj.smartdashboard.FieldObject2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+// import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+// import edu.wpi.first.wpilibj.smartdashboard.FieldObject2d;
+// import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Constants;
-import frc.robot.Constants.DriveConstants;
+// import frc.robot.Constants;
+// import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.subsystems.drive.Drive;
-import frc.utils.FLYTLib.FLYTDashboard.FlytLogger;
+// import frc.utils.FLYTLib.FLYTDashboard.FlytLogger;
 import frc.utils.PoseUtils.Heading;
-import java.util.function.Supplier;
+// import java.util.function.Supplier;
 
 import org.littletonrobotics.junction.AutoLogOutput;
-import org.littletonrobotics.junction.Logger;
+// import org.littletonrobotics.junction.Logger;
 
 /** Pose estimator that uses odometry and AprilTags with PhotonVision. */
 public class PoseEstimatorSubsystem extends SubsystemBase {
@@ -67,7 +67,7 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
      * meters and radians,
      * then meters.
      */
-    private static final Vector<N3> stateStdDevs = VecBuilder.fill(0.1, 0.1, 0.01); // VecBuilder.fill(0.1, 0.1, 0.1).
+    // private static final Vector<N3> stateStdDevs = VecBuilder.fill(0.1, 0.1, 0.01); // VecBuilder.fill(0.1, 0.1, 0.1).
 
     /**
      * Standard deviations of the vision measurements. Increase these numbers to
@@ -91,9 +91,9 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
     //private final SwerveDrivePoseEstimator poseEstimator;
 
     /** Field visualization that displays the robot pose in AdvantageScope. */
-    private final Field2d field2d = new Field2d();
+    // private final Field2d field2d = new Field2d();
 
-    private final FieldObject2d target2d = field2d.getObject("Target");
+    // private final FieldObject2d target2d = field2d.getObject("Target");
 
     /** target yaw for pointing */
     private double targetYaw = 0;
@@ -120,7 +120,7 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
     private Pose2d targetPose = new Pose2d();
 
     /** Logger that streams pose data for tuning and match review. */
-    private FlytLogger poseDash = new FlytLogger("Pose");
+    // private FlytLogger poseDash = new FlytLogger("Pose");
 
     public PoseEstimatorSubsystem(Drive m_drive) {
         this.drive = m_drive;

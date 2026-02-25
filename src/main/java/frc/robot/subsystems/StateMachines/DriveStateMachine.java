@@ -18,14 +18,21 @@ package frc.robot.subsystems.StateMachines;
 
 import org.littletonrobotics.junction.Logger;
 
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.intake.IntakeConstants.IntakeSide;
 import frc.robot.Commands.DriveCommandFactory;
+import frc.robot.Commands.DriveCommandFactory.DriverInputs;
 import frc.utils.FlytDashboard;
 import frc.utils.PoseEstimatorSubsystem;
+import frc.utils.FieldConstants.LinesHorizontal;
+import frc.utils.FieldConstants.LinesVertical;
 
 public class DriveStateMachine extends SubsystemBase {
     public enum DriveState {
@@ -48,6 +55,7 @@ public class DriveStateMachine extends SubsystemBase {
     private DriveState prevDriveState = DriveState.CANCELLED;
     private IntakeSide snakeDirection = IntakeSide.LEFT;
     private Command currentCommand = null;
+    private boolean isOnLeftSide = false;
 
     public DriveStateMachine(
             Drive m_drive, PoseEstimatorSubsystem m_pose, XboxController m_driverController) {
@@ -66,6 +74,42 @@ public class DriveStateMachine extends SubsystemBase {
         Logger.recordOutput("DriveStateMachine/CurrentState", driveState);
         Logger.recordOutput("DriveStateMachine/PrevState", prevDriveState);
         Logger.recordOutput("DriveStateMachine/SnakeDirection", snakeDirection);
+
+        updateVelocity();
+    }
+
+    private void updateVelocity() {
+        Pose2d currentPose = pose.getCurrentPose();
+        ChassisSpeeds speeds = drive.getChassisSpeeds();
+        Translation2d robotVelocity = new Translation2d(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond);
+        Translation2d velocity = robotVelocity.rotateBy(currentPose.getRotation());
+
+        Translation2d target = new Translation2d(LinesVertical.allianceZone, LinesHorizontal.rightTrenchOpenStart / 2.0);
+        Translation2d error = target.minus(currentPose.getTranslation());
+        double errorAngle = error.getAngle().getRadians();
+        double errorDist = error.getNorm();
+        
+        DriverInputs inputs = driveCommandFactory.sampleDriverInputs();
+        double inputAngle = Math.atan2(inputs.ySpeed, inputs.xSpeed);
+        double magnitude = Math.hypot(inputs.xSpeed, inputs.ySpeed);
+
+        double weight = 1.0 / (0.5 * errorDist + 1.0);
+        // double weight = 0.5;
+        Logger.recordOutput("DriveStateMachine/errorDist", errorDist);
+        Logger.recordOutput("DriveStateMachine/weight", weight);
+
+        double driveAngle;
+        if (Math.abs(inputAngle - errorAngle) < Math.PI / 2.0) {
+            driveAngle = errorAngle * weight + inputAngle * (1.0 - weight);
+        } else {
+            driveAngle = inputAngle;
+        }
+
+        drive.drive(Math.cos(driveAngle) * magnitude, Math.sin(driveAngle) * magnitude, inputs.rotSpeed, true);
+        
+        // position 0.25 seconds in the future
+        Translation2d soon = currentPose.getTranslation().plus(velocity.times(0.25));
+        Logger.recordOutput("DriveStateMachine/Soon", soon);
     }
 
     /**
@@ -119,6 +163,15 @@ public class DriveStateMachine extends SubsystemBase {
     public Command tempChangeState(DriveState driveState) {
         return startEnd(() -> setDriveCommand(driveState),
                         () -> setDriveCommand(null));
+    }
+
+    /**
+     * tells the drivestatemachine what side of the field the robot is on
+     * @param isOnLeftSide true if it's on the left side
+     * @return the command
+     */
+    public Command changeFieldSide(boolean isOnLeftSide) {
+        return runOnce(() -> this.isOnLeftSide = isOnLeftSide);
     }
 
     public Command changeSnakeDirection(IntakeSide snakeDirection) {

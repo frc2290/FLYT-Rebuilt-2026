@@ -202,16 +202,16 @@ public class StateMachine extends SubsystemBase {
         return specialZone;
     }
 
+    public boolean getLeftSide() {
+        return isOnLeftSide;
+    }
+
     public void setfieldZone(FieldZone fieldZone) {
         this.fieldZone = fieldZone;
     }
 
     public boolean isAuto() {
         return isAuto;
-    }
-
-    public Trigger isAutoTrigger() {
-        return new Trigger(() -> isAuto);
     }
 
     public void setIsAuto(boolean isAuto) {

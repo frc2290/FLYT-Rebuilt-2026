@@ -12,8 +12,6 @@ import org.littletonrobotics.junction.wpilog.WPILOGReader;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 import org.littletonrobotics.urcl.URCL;
 
-import com.pathplanner.lib.commands.PathPlannerAuto;
-
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.XboxController;
@@ -34,7 +32,6 @@ import frc.robot.subsystems.drive.ModuleIOSpark;
 import frc.robot.subsystems.dyerotor.DyeRotor;
 import frc.robot.subsystems.dyerotor.DyeRotorIO;
 import frc.robot.subsystems.dyerotor.DyeRotorIOSim;
-import frc.robot.subsystems.dyerotor.DyeRotorIOSpark;
 
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.IntakeIO;
@@ -126,7 +123,8 @@ public class Robot extends LoggedRobot {
                                new ModuleIOSpark(3));
                 m_poseEstimator = new PoseEstimatorSubsystem(m_robotDrive);
                 m_intake = new Intake(new IntakeIOSpark(IntakeSide.LEFT), new IntakeIOSpark(IntakeSide.RIGHT));
-                m_dyeRotor = new DyeRotor(new DyeRotorIOSpark());
+                // m_dyeRotor = new DyeRotor(new DyeRotorIOSpark());
+                m_dyeRotor = new DyeRotor(new DyeRotorIOSim());
                 m_turret = new Turret(new TurretIOSim(m_poseEstimator::getCurrentPose,
                                       m_poseEstimator::getChassisSpeeds),
                                       m_poseEstimator::getCurrentPose,

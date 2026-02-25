@@ -18,30 +18,30 @@ import frc.utils.PoseEstimatorSubsystem;
 // information, see:
 // https://docs.wpilib.org/en/stable/docs/software/commandbased/convenience-features.html
 public class AutoBuilder extends SequentialCommandGroup {
-    enum StartPos {
+    public enum AutoStart {
         TrenchLeft,
         TrenchRight,
         BumpLeft,
         BumpRight,
     }
 
-    // bad name?
-    enum Activity {
+    public enum AutoActivity {
+        CollectShootNeutral,
         ShuttleNeutral,
-        CollectDepot,
+        Chaos, // chaos :)
     }
 
-    enum EndPos {
-        Left,
-        Right,
+    public enum AutoEnd {
+        Outpost,
+        Depot,
         Climb,
     }
 
     /** Creates a new AutoBuilder. */
-    public AutoBuilder(StartPos startPos, Activity activity, EndPos endPos, DriveStateMachine drive, PoseEstimatorSubsystem pose) {
+    public AutoBuilder(AutoStart startPos, AutoActivity activity, AutoEnd endPos, DriveStateMachine drive, PoseEstimatorSubsystem pose) {
         try {
-            PathPlannerPath start_path = PathPlannerPath.fromPathFile(startPos.name() + " to " + activity.name());
-            PathPlannerPath end_path = PathPlannerPath.fromPathFile(activity.name() + " to " + endPos.name());
+            PathPlannerPath start_path = PathPlannerPath.fromPathFile(startPos.name() + "/" + activity.name());
+            PathPlannerPath end_path = PathPlannerPath.fromPathFile(activity.name() + "/" + endPos.name());
 
             if (DriverStation.getAlliance().orElse(Alliance.Blue) == Alliance.Red) {
                 // start_path = start_path.flipPath();
