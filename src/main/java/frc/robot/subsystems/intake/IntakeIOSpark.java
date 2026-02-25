@@ -16,6 +16,7 @@ import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.config.AbsoluteEncoderConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
@@ -70,7 +71,8 @@ public class IntakeIOSpark implements IntakeIO {
                 .smartCurrentLimit(deployMotorCurrentLimit)
                 .voltageCompensation(12.0);
         deployConfig.absoluteEncoder
-                .inverted(deployEncoderInverted);
+                .inverted(deployEncoderInverted)
+                .apply(AbsoluteEncoderConfig.Presets.REV_ThroughBoreEncoderV2);
         // position and velocity conversion factors? idk what they should be tho
         deployConfig.closedLoop
                 .feedbackSensor(FeedbackSensor.kAbsoluteEncoder)

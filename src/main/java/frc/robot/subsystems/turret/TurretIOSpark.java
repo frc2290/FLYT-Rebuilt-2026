@@ -13,7 +13,9 @@ import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.spark.config.AbsoluteEncoderConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
+import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkBase.ControlType;
@@ -43,7 +45,6 @@ public class TurretIOSpark implements TurretIO {
     private final SparkClosedLoopController turretController; 
     private final SparkClosedLoopController hoodController;
     private final SparkClosedLoopController flywheelController1; 
-    private final SparkClosedLoopController flywheelController2; 
 
     //
 
@@ -56,7 +57,7 @@ public class TurretIOSpark implements TurretIO {
     public TurretIOSpark() {
 
         // Create motor controllers
-        turretSpark = new SparkMax(turretCanId, MotorType.kBrushless);
+        turretSpark = new SparkFlex(turretCanId, MotorType.kBrushless);
         hoodSpark = new SparkMax(hoodCanId, MotorType.kBrushless);
         flywheel1Spark = new SparkFlex(flywheel1CanId, MotorType.kBrushless);
         flywheel2Spark = new SparkFlex(flywheel2CanId, MotorType.kBrushless);
@@ -67,7 +68,7 @@ public class TurretIOSpark implements TurretIO {
         turnRelEncoder = turretSpark.getEncoder(); 
         hoodEncoder = hoodSpark.getAbsoluteEncoder();
 
-        // Setup RoboRio Absalute encoders
+        // Setup RoboRio Absolute encoders
         // Gets if the encoder is connected, IMPLEMENT LATER
         turnEncoder1.isConnected();
         turnEncoder2.isConnected();
@@ -87,10 +88,9 @@ public class TurretIOSpark implements TurretIO {
         turretController = turretSpark.getClosedLoopController();
         hoodController = hoodSpark.getClosedLoopController();
         flywheelController1 = flywheel1Spark.getClosedLoopController();
-        flywheelController2 = flywheel2Spark.getClosedLoopController();
 
         // Turret parameters
-        var turretConfig = new SparkMaxConfig();
+        var turretConfig = new SparkFlexConfig();
         turretConfig
             .inverted(turretIsInverted)
             .idleMode(IdleMode.kCoast)
@@ -103,7 +103,7 @@ public class TurretIOSpark implements TurretIO {
             .uvwAverageDepth(2);
         turretConfig
             .closedLoop
-            .feedbackSensor(FeedbackSensor.kAlternateOrExternalEncoder)
+            .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
             .pid(turretKp, turretKi, turretKd);
         tryUntilOk(
             turretSpark,
@@ -124,7 +124,8 @@ public class TurretIOSpark implements TurretIO {
             .inverted(hoodEncoderInverted)
             .positionConversionFactor(hoodEncoderPositionFactor)
             .velocityConversionFactor(hoodEncoderVelocityFactor)
-            .averageDepth(2);
+            .averageDepth(2)
+            .apply(AbsoluteEncoderConfig.Presets.REV_ThroughBoreEncoderV2);
         hoodConfig
             .closedLoop
             .feedbackSensor(FeedbackSensor.kAbsoluteEncoder)
@@ -137,35 +138,40 @@ public class TurretIOSpark implements TurretIO {
                     hoodConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
 
 
-        // Flywheel config
-        var flywheelConfig = new SparkMaxConfig();
-        flywheelConfig
+        // Flywheel leader config
+        var flywheelLeaderConfig = new SparkFlexConfig();
+        flywheelLeaderConfig
             .inverted(flywheelIsInverted)
             .idleMode(IdleMode.kCoast)
             .smartCurrentLimit(flywheelMotorCurrent)
             .voltageCompensation(12.0);
-        flywheelConfig
+        flywheelLeaderConfig
             .encoder
             .positionConversionFactor(flywheelEncoderPositionFactor)
             .velocityConversionFactor(flywheelEncoderVelocityFactor)
             .uvwMeasurementPeriod(10)
             .uvwAverageDepth(2);
-        flywheelConfig
+        flywheelLeaderConfig
             .closedLoop
             .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
             .pid(flywheelKp, flywheelKi, flywheelKd);
+
+        // Flywheel follower config
+        var flywheelFollowerConfig = new SparkFlexConfig();
+        flywheelFollowerConfig.apply(flywheelLeaderConfig);
+        flywheelFollowerConfig.follow(flywheel1Spark, false);
         tryUntilOk(
             flywheel1Spark,
         5,
             () ->
                 flywheel1Spark.configure(
-                    flywheelConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
+                    flywheelLeaderConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
         tryUntilOk(
             flywheel2Spark,
         5,
             () ->
                 flywheel2Spark.configure(
-                    flywheelConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
+                    flywheelFollowerConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
 
         // this is very important line that checks turrets position through absalute encoders then sets relative encoder to same pose + whataever offset we want
         turnRelEncoder.setPosition(getTurretPosAtStart() + encoderOffset);
@@ -180,7 +186,7 @@ public class TurretIOSpark implements TurretIO {
         double Enc1PosTeeth = (turnEncoder1.get()/360)*22;
         double Enc2PosTeeth = (turnEncoder2.get()/360)*23;
         double teeth_difference = (Enc1PosTeeth - Enc2PosTeeth) % 22;
-        // if we imagine our turret to have a big gian gear with 506 teeht (22*23) following var will save that tooth count
+        // if we imagine our turret to have a big gian gear with 506 teeth (22*23) following var will save that tooth count
         double global_tooth = (teeth_difference*22) + Enc1PosTeeth;
         // say thanks for creating absurd amount of variables and not putting all this into return statment:)
         return (global_tooth/240)*360;
@@ -228,7 +234,6 @@ public class TurretIOSpark implements TurretIO {
     @Override
     public void setShooterSpeed(double speed) {
         flywheelController1.setSetpoint(speed, ControlType.kMAXMotionVelocityControl, ClosedLoopSlot.kSlot0, shooterff);
-        flywheelController2.setSetpoint(speed, ControlType.kMAXMotionVelocityControl, ClosedLoopSlot.kSlot0, shooterff);
         turretSpeed = speed;
     };
 
