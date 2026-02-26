@@ -20,17 +20,27 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.interpolation.Interpolator;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import frc.robot.Constants.OIConstants;
 import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.subsystems.drive.Drive;
+import frc.utils.FieldConstants.LinesHorizontal;
+import frc.utils.FieldConstants.LinesVertical;
+import frc.utils.FieldConstants;
 import frc.utils.PoseEstimatorSubsystem;
+
+import java.lang.reflect.Field;
 import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
+
+import org.littletonrobotics.junction.Logger;
 
 /**
  * Factory for building the common drive commands used throughout the robot code.
@@ -283,6 +293,90 @@ public final class DriveCommandFactory {
 
           double rotSpeed = rotPid.calculate(poseEstimator.getDegrees(), headingTarget);
           drive.drive(inputs.xSpeed, inputs.ySpeed, rotSpeed, true);
+        });
+  }
+
+  public Command createYAssistCommand() {
+    return runDriveCommand(
+        inputs -> {
+          /*{
+            Translation2d trenchBumpDivide = new Translation2d(
+              isNear ?
+                LinesVertical.allianceZone : LinesVertical.neutralZoneNear,
+              isOnLeft ?
+                LinesHorizontal.leftMiddle : LinesHorizontal.rightMiddle);
+            Translation2d error = trenchBumpDivide.minus(currentTranslation);
+            Rotation2d errorAngle = error.getAngle();
+            
+            double targetY;
+            Logger.recordOutput("DriveAssist/Rel", inputAngle.relativeTo(errorAngle));
+            if ((inputAngle.relativeTo(errorAngle).getRadians() > 0) ^ isOnLeft ^ !isNear) {
+              targetY = (LinesHorizontal.rightBumpStart + LinesHorizontal.rightBumpEnd) / 2.0;
+            } else {
+              targetY = LinesHorizontal.rightTrenchOpenStart / 2.0;
+            }
+            target = new Translation2d(LinesVertical.trenchCenter, isOnLeft ? FieldConstants.fieldWidth - targetY : targetY);
+            Logger.recordOutput("DriveAssist/Target", target);
+          }*/
+          Pose2d pose = poseEstimator.getCurrentPose();
+
+          double weight = 1.0 / (4.0 * Math.abs(LinesVertical.allianceZone - pose.getX()) + 1.0);
+          double ySpeed = yPid.calculate(pose.getY(), 0);
+          double rotSpeed = rotPid.calculate(poseEstimator.getDegrees(), 0);
+          drive.drive(inputs.xSpeed, MathUtil.interpolate(inputs.ySpeed, ySpeed, weight), MathUtil.interpolate(inputs.rotSpeed, rotSpeed, weight), true);
+        }
+    );
+  }
+
+  public Command createDriveAssistCommand() {
+    return runDriveCommand(
+        inputs -> {
+          // input stuff
+          Rotation2d inputAngle = new Rotation2d(inputs.xSpeed, inputs.ySpeed);
+          double inputMagnitude = Math.hypot(inputs.xSpeed, inputs.ySpeed);
+          Logger.recordOutput("DriveAssist/InputAngle", inputAngle);
+
+          // position and velocity
+          Pose2d currentPose = poseEstimator.getCurrentPose();
+          Translation2d currentTranslation = currentPose.getTranslation();
+
+          boolean isNear = currentPose.getX() < LinesVertical.trenchCenter;
+          boolean isOnLeft = currentPose.getY() > FieldConstants.fieldWidth / 2.0;
+          Logger.recordOutput("DriveAssist/IsNear", isNear);
+          Logger.recordOutput("DriveAssist/IsOnLeft", isOnLeft);
+
+          ChassisSpeeds speeds = drive.getChassisSpeeds();
+          Translation2d robotVelocity = new Translation2d(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond);
+          Translation2d velocity = robotVelocity.rotateBy(currentPose.getRotation());
+          Logger.recordOutput("DriveAssist/Velocity", velocity);
+          
+          Translation2d soon = currentTranslation.plus(velocity.times(0.25));
+          Logger.recordOutput("DriveAssist/Soon", soon);
+
+          // target calculation
+          Translation2d target = new Translation2d();
+
+          // positive corrective steering
+          Translation2d error = target.minus(currentTranslation);
+          Rotation2d errorAngle = error.getAngle();
+          double errorDist = error.getNorm();
+          Logger.recordOutput("DriveAssist/ErrorAngle", errorAngle);
+          Logger.recordOutput("DriveAssist/ErrorDist", errorDist);
+
+          // double weight = 1.0 / (errorDist / 4.0 + 1.0);
+          double weight = 1.0;
+          Logger.recordOutput("DriveAssist/PositiveCorrectiveWeight", weight);
+
+          Rotation2d driveAngle;
+          double relativeAngle = inputAngle.relativeTo(errorAngle).getDegrees();
+          if (relativeAngle > -30 && relativeAngle < 30) {
+              driveAngle = inputAngle.interpolate(errorAngle, weight);
+          } else {
+              driveAngle = inputAngle;
+          }
+
+          // the driving
+          drive.drive(driveAngle.getCos() * inputMagnitude, driveAngle.getSin() * inputMagnitude, inputs.rotSpeed, true);
         });
   }
 }
