@@ -56,6 +56,8 @@ public class FieldConstants {
                 + Hub.width / 2.0;
         public static final double oppAllianceZone = AprilTagLayoutType.OFFICIAL.getLayout().getTagPose(10).get()
                 .getX();
+
+        public static final double trenchCenter = (allianceZone + neutralZoneNear) / 2.0;
     }
 
     /**
@@ -76,12 +78,14 @@ public class FieldConstants {
         public static final double rightBumpEnd = rightBumpStart - RightBump.width;
         public static final double rightTrenchOpenStart = rightBumpEnd - Units.inchesToMeters(12.0);
         public static final double rightTrenchOpenEnd = 0;
+        public static final double rightMiddle = (rightBumpEnd + rightTrenchOpenStart) / 2.0; // in between trench & bump
 
         // Left of hub
         public static final double leftBumpEnd = Hub.nearLeftCorner.getY();
         public static final double leftBumpStart = leftBumpEnd + LeftBump.width;
         public static final double leftTrenchOpenEnd = leftBumpStart + Units.inchesToMeters(12.0);
         public static final double leftTrenchOpenStart = fieldWidth;
+        public static final double leftMiddle = (leftBumpStart + leftTrenchOpenEnd) / 2.0; // in between trench & bump
     }
 
     /** Hub related constants */

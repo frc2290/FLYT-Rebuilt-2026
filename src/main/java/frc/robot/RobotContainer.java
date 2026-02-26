@@ -130,8 +130,6 @@ public class RobotContainer {
 
         // isOnBump.and(notAuto).whileTrue(m_driveStateMachine.tempChangeState(DriveState.BUMP));
         // isUnderTrench.and(notAuto).whileTrue(m_driveStateMachine.tempChangeState(DriveState.TRENCH));
-        isLeft.onFalse(m_driveStateMachine.changeFieldSide(false));
-        isLeft.onTrue(m_driveStateMachine.changeFieldSide(true));
 
         Trigger leftNotIn = new Trigger(() -> !m_intake.isIn(IntakeSide.LEFT));
         Trigger rightNotIn = new Trigger(() -> !m_intake.isIn(IntakeSide.RIGHT));
@@ -170,23 +168,7 @@ public class RobotContainer {
         y_button.onTrue(m_intake.intakeOut(IntakeSide.RIGHT));
 
         dpad_left.onTrue(m_driveStateMachine.changeState(DriveState.MANUAL));
-        dpad_up.onTrue(m_driveStateMachine.changeState(DriveState.SNAKE));
-
-        // Manual controls.
-        // dpad_left.toggleOnTrue(
-        //         new ParallelCommandGroup(
-        //                 new InstantCommand(
-        //                         () -> m_coordinator.setControllerProfile(ControllerProfile.MANUAL)),
-        //                 new InstantCommand(
-        //                         () -> m_coordinator.setRobotGoal(
-        //                                 RobotState.MANUAL)))); // Manual
-
-        // dpad_up.toggleOnTrue(
-        //         new ParallelCommandGroup(
-        //                 new InstantCommand(() -> m_coordinator.setControllerProfile(ControllerProfile.MANUAL)),
-        //                 new InstantCommand(
-        //                         () -> m_coordinator.setRobotGoal(
-        //                                 RobotState.SHOOT)))); // Algae profile with safe travel goal.
+        dpad_up.onTrue(m_driveStateMachine.changeState(DriveState.ASSIST));
 
         // maybe fix this perhaps
         // Other controls.
