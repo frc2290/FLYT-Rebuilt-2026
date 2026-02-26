@@ -37,4 +37,8 @@ public class IntakeConstants {
     public static final double deployKp = 0.05;
     public static final double deployKi = 0.0;
     public static final double deployKd = 0.0;
+
+    public static final double deploySimKp = 8.0;
+    public static final double deploySimKi = 0.0;
+    public static final double deploySimKd = 1.0;
 }

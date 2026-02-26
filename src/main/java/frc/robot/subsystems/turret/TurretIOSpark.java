@@ -159,7 +159,7 @@ public class TurretIOSpark implements TurretIO {
         // Flywheel follower config
         var flywheelFollowerConfig = new SparkFlexConfig();
         flywheelFollowerConfig.apply(flywheelLeaderConfig);
-        flywheelFollowerConfig.follow(flywheel1Spark, false);
+        flywheelFollowerConfig.follow(flywheel1Spark, true);
         tryUntilOk(
             flywheel1Spark,
         5,

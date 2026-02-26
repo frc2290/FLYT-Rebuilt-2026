@@ -14,6 +14,7 @@ import frc.robot.Constants.DriveConstants;
 import frc.robot.subsystems.StateMachines.DriveStateMachine;
 import frc.robot.subsystems.StateMachines.StateMachine;
 import frc.robot.subsystems.StateMachines.DriveStateMachine.DriveState;
+import frc.robot.subsystems.StateMachines.StateMachine.FieldZone;
 import frc.robot.subsystems.StateMachines.StateMachine.SpecialZone;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.IntakeConstants.IntakeSide;
@@ -64,6 +65,7 @@ public class RobotContainer {
 
     // The driver's controller
     XboxController m_driverController;
+    XboxController m_operatorController = new XboxController(1);
 
     SendableChooser<Command> auto_chooser = new SendableChooser<>();
     LoggedDashboardChooser<AutoStart> auto_start = new LoggedDashboardChooser<>("Auto Start");
@@ -122,10 +124,12 @@ public class RobotContainer {
     }
 
     private void configureButtonBindings() {
+        // TRIGGERS
         Trigger isAuto = new Trigger(() -> m_stateMachine.isAuto());
         Trigger notAuto = isAuto.negate();
         Trigger isOnBump = new Trigger(() -> m_stateMachine.getSpecialZone() == SpecialZone.BUMP);
         Trigger isUnderTrench = new Trigger(() -> m_stateMachine.getSpecialZone() == SpecialZone.TRENCH);
+        Trigger isInNeutral = new Trigger(() -> m_stateMachine.getFieldZone() == FieldZone.NEUTRAL);
         Trigger isLeft = new Trigger(() -> m_stateMachine.getLeftSide());
 
         // isOnBump.and(notAuto).whileTrue(m_driveStateMachine.tempChangeState(DriveState.BUMP));
@@ -136,39 +140,46 @@ public class RobotContainer {
         leftNotIn.onTrue(m_driveStateMachine.changeSnakeDirection(IntakeSide.LEFT));
         rightNotIn.onTrue(m_driveStateMachine.changeSnakeDirection(IntakeSide.RIGHT));
 
-        // Button definitions.
+        // END TRIGGERS
+
+        // DRIVER Button definitions.
         // Map the raw controller buttons to descriptive names for readability.
-        JoystickButton start_button = new JoystickButton(m_driverController, Button.kStart.value);
+        JoystickButton start_button_driver = new JoystickButton(m_driverController, Button.kStart.value);
 
-        JoystickButton a_button = new JoystickButton(m_driverController, Button.kA.value);
-        JoystickButton b_button = new JoystickButton(m_driverController, Button.kB.value);
-        JoystickButton x_button = new JoystickButton(m_driverController, Button.kX.value);
-        JoystickButton y_button = new JoystickButton(m_driverController, Button.kY.value);
+        JoystickButton a_button_driver = new JoystickButton(m_driverController, Button.kA.value);
+        JoystickButton b_button_driver = new JoystickButton(m_driverController, Button.kB.value);
+        JoystickButton x_button_driver = new JoystickButton(m_driverController, Button.kX.value);
+        JoystickButton y_button_driver = new JoystickButton(m_driverController, Button.kY.value);
 
-        JoystickButton left_stick = new JoystickButton(m_driverController, Button.kLeftStick.value);
-        JoystickButton right_stick = new JoystickButton(m_driverController, Button.kRightStick.value);
+        JoystickButton left_stick_driver = new JoystickButton(m_driverController, Button.kLeftStick.value);
+        JoystickButton right_stick_driver = new JoystickButton(m_driverController, Button.kRightStick.value);
 
-        JoystickButton left_bumper = new JoystickButton(m_driverController, Button.kLeftBumper.value);
-        JoystickButton right_bumper = new JoystickButton(m_driverController, Button.kRightBumper.value);
-        Trigger left_trigger = new Trigger(() -> m_driverController.getLeftTriggerAxis() > 0.5);
-        Trigger right_trigger = new Trigger(() -> m_driverController.getRightTriggerAxis() > 0.5);
+        JoystickButton left_bumper_driver = new JoystickButton(m_driverController, Button.kLeftBumper.value);
+        JoystickButton right_bumper_driver = new JoystickButton(m_driverController, Button.kRightBumper.value);
+        Trigger left_trigger_driver = new Trigger(() -> m_driverController.getLeftTriggerAxis() > 0.5);
+        Trigger right_trigger_driver = new Trigger(() -> m_driverController.getRightTriggerAxis() > 0.5);
 
-        POVButton dpad_up = new POVButton(m_driverController, 0);
-        POVButton dpad_down = new POVButton(m_driverController, 180);
-        POVButton dpad_left = new POVButton(m_driverController, 270);
-        POVButton dpad_right = new POVButton(m_driverController, 90);
+        POVButton dpad_up_driver = new POVButton(m_driverController, 0);
+        POVButton dpad_down_driver = new POVButton(m_driverController, 180);
+        POVButton dpad_left_driver = new POVButton(m_driverController, 270);
+        POVButton dpad_right_driver = new POVButton(m_driverController, 90);
 
-        a_button.onTrue(m_turret.shoot());
-        b_button.whileTrue(
+        a_button_driver.onTrue(m_turret.shoot());
+        b_button_driver.whileTrue(
                 new ParallelCommandGroup(
                         m_intake.driveIntake(),
                         m_driveStateMachine.tempChangeState(DriveState.SNAKE)));
 
-        x_button.onTrue(m_intake.intakeOut(IntakeSide.LEFT));
-        y_button.onTrue(m_intake.intakeOut(IntakeSide.RIGHT));
+        x_button_driver.onTrue(m_intake.intakeOut(IntakeSide.LEFT));
+        y_button_driver.onTrue(m_intake.intakeOut(IntakeSide.RIGHT));
 
-        dpad_left.onTrue(m_driveStateMachine.changeState(DriveState.MANUAL));
-        dpad_up.onTrue(m_driveStateMachine.changeState(DriveState.ASSIST));
+        right_trigger_driver.whileTrue(
+                                new ParallelCommandGroup(
+                                    m_intake.driveIntake(),
+                                    m_driveStateMachine.tempChangeState(DriveState.SNAKE)));
+
+        dpad_left_driver.onTrue(m_driveStateMachine.changeState(DriveState.MANUAL));
+        dpad_up_driver.onTrue(m_driveStateMachine.changeState(DriveState.ASSIST));
 
         // maybe fix this perhaps
         // Other controls.
@@ -178,6 +189,17 @@ public class RobotContainer {
 
         // left_trigger.whileTrue(new Intake(m_intakeShooter));
         // right_trigger.whileTrue(new Shoot(m_intakeShooter, 1));
+
+        // END DRIVER BUTTONS
+
+        // OPERATOR BUTTONS
+
+        JoystickButton a_button_operator = new JoystickButton(m_operatorController, Button.kA.value);
+
+        a_button_operator.onTrue(m_stateMachine.setShooterOverrideCommand(true))
+                        .onFalse(m_stateMachine.setShooterOverrideCommand(false));
+
+        // END OPERATOR BUTTONS
     }
 
     /**

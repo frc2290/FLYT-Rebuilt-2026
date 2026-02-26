@@ -3,6 +3,8 @@ package frc.robot.subsystems.dyerotor;
 import static frc.robot.subsystems.dyerotor.DyeRotorConstants.feederRunSpeed;
 import static frc.robot.subsystems.dyerotor.DyeRotorConstants.rotorRunSpeed;
 
+import org.littletonrobotics.junction.Logger;
+
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class DyeRotor extends SubsystemBase {
@@ -16,6 +18,7 @@ public class DyeRotor extends SubsystemBase {
     @Override
     public void periodic() {
         io.updateInputs(inputs);
+        Logger.processInputs("DyeRotor", inputs);
     }
 
     // ♿︎

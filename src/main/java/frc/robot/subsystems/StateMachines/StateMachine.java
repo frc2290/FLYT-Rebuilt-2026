@@ -16,6 +16,7 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.subsystems.dyerotor.DyeRotor;
@@ -48,6 +49,7 @@ public class StateMachine extends SubsystemBase {
     private FieldZone fieldZone = FieldZone.ALLIANCE;
     private SpecialZone specialZone = SpecialZone.NONE;
     private boolean isAuto = false;
+    private boolean shootOverride = false;
 
     private Supplier<Pose2d> poseSupplier;
     private Supplier<ChassisSpeeds> speedSupplier;
@@ -72,6 +74,7 @@ public class StateMachine extends SubsystemBase {
         Logger.recordOutput("StateMachine/HubActive", hubActive);
         Logger.recordOutput("StateMachine/Zone/Field", fieldZone);
         Logger.recordOutput("StateMachine/Zone/Special", specialZone);
+        Logger.recordOutput("StateMachine/ShootOverride", shootOverride);
     }
 
     public void startHubTimer() {
@@ -162,11 +165,22 @@ public class StateMachine extends SubsystemBase {
             case NONE:
                 m_turret.setStopShoot(false);
                 switch (fieldZone) {
+                    case ANTI_ALLIANCE:
                     case ALLIANCE:
                         // point at the hub, but only shoot if hub is active
                         m_turret.setTargetTranslation(Hub.topCenterPoint.toTranslation2d());
+                        if (!shootOverride) {
+                            m_dyeRotor.runDyeRotor(true);
+                        } else {
+                            m_dyeRotor.runDyeRotor(false);
+                        }
                         break;
                     case NEUTRAL:
+                        if (shootOverride) {
+                            m_dyeRotor.runDyeRotor(true);
+                        } else {
+                            m_dyeRotor.runDyeRotor(false);
+                        }
                         // point at one side of the alliance zone, shoot if magic
                         double y = FieldConstants.fieldWidth;
                         if (isOnLeftSide) {
@@ -176,21 +190,16 @@ public class StateMachine extends SubsystemBase {
                         }
                         m_turret.setTargetTranslation(new Translation2d(LinesVertical.allianceZone * 3.0 / 4.0, y));
                         break;
-                    case ANTI_ALLIANCE:
-                        // point at one side of neutral zone, shoot if uhh more magic
-                        // or just do nothing
-                        break;
                 }
                 break;
             // this case is for both tower & trench
             case TOWER:
             case TRENCH:
+            case BUMP:
                 // stop shooting (dye rotor & turret) & hood down (turret)
                 m_turret.setStopShoot(true);
-                m_turret.setHoodAngle(0.0);
+                m_dyeRotor.runDyeRotor(false);
                 break;
-            case BUMP:
-                break; // do nothing ig?
         }
     }
 
@@ -216,6 +225,18 @@ public class StateMachine extends SubsystemBase {
 
     public void setIsAuto(boolean isAuto) {
         this.isAuto = isAuto;
+    }
+
+    public boolean isShootOverride() {
+        return shootOverride;
+    }
+
+    public void setShootOverride(boolean shootOverride) {
+        this.shootOverride = shootOverride;
+    }
+
+    public Command setShooterOverrideCommand(boolean shootOverride) {
+        return runOnce(() -> setShootOverride(shootOverride));
     }
 
     /**
