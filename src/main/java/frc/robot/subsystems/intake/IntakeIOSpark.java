@@ -95,6 +95,15 @@ public class IntakeIOSpark implements IntakeIO {
 
     @Override
     public void updateInputs(IntakeIOInputs inputs) {
+        inputs.driveAppliedVolts = driveSpark.getAppliedOutput();
+        inputs.driveCurrentAmps = driveSpark.getOutputCurrent();
+
+        // Update turn inputs
+        inputs.deployPosition = new Rotation2d(getPosition());
+        inputs.deployVelocityRadPerSec = deployEncoder.getVelocity();
+        inputs.deployAppliedVolts = deploySpark.getAppliedOutput();
+        inputs.deployCurrentAmps = deploySpark.getOutputCurrent();
+
         ifOk(
                 driveSpark,
                 new DoubleSupplier[] { driveSpark::getAppliedOutput, driveSpark::getBusVoltage },
@@ -121,5 +130,9 @@ public class IntakeIOSpark implements IntakeIO {
     @Override
     public void setDeployPosition(Rotation2d rotation) {
         deployController.setSetpoint(rotation.getRadians(), ControlType.kPosition);
+    }
+
+    public double getPosition() {
+        return deployEncoder.getPosition();
     }
 }

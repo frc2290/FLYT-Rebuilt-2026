@@ -20,7 +20,7 @@ public class IntakeIOSim implements IntakeIO {
     private final DCMotorSim deploySim;
     private final DCMotor deployGearbox = DCMotor.getNEO(1);
 
-    private PIDController deployController = new PIDController(deployKp, deployKi, deployKd);
+    private PIDController deployController = new PIDController(deploySimKp, deploySimKi, deploySimKd);
     private double deployAppliedVolts = 0.0;
     private double driveSpeed = 0.0;
 

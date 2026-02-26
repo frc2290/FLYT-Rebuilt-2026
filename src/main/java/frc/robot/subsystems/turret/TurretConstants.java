@@ -69,9 +69,9 @@ public class TurretConstants {
     public static final int flywheelMotorCurrent = 40;
     public static final double flywheelEncoderPositionFactor = 1;
     public static final double flywheelEncoderVelocityFactor = 1;
-    public static final double flywheelKp = 0.001;
+    public static final double flywheelKp = 0.00025;
     public static final double flywheelKi = 0.0;
-    public static final double flywheelKd = 0.0;
+    public static final double flywheelKd = 0.00016;
 
 
     public static final InterpolatingTreeMap<Double, FullShooterParams> SHOOTER_MAP = new InterpolatingTreeMap<>(

@@ -28,8 +28,8 @@ public class DyeRotorConstants {
     public static final double feederKi = 0;
     public static final double feederKd = 0;
 
-    public static final double rotorRunSpeed = 0;
-    public static final double feederRunSpeed = 0;
+    public static final double rotorRunSpeed = 1;
+    public static final double feederRunSpeed = 1;
 
     // no clue what these should be tbh
     public static final double rotorMotorReduction = 7 / 1;
