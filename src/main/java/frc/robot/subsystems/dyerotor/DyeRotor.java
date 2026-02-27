@@ -1,7 +1,6 @@
 package frc.robot.subsystems.dyerotor;
 
-import static frc.robot.subsystems.dyerotor.DyeRotorConstants.feederRunSpeed;
-import static frc.robot.subsystems.dyerotor.DyeRotorConstants.rotorRunSpeed;
+import static frc.robot.subsystems.dyerotor.DyeRotorConstants.*;
 
 import org.littletonrobotics.junction.Logger;
 
@@ -24,12 +23,32 @@ public class DyeRotor extends SubsystemBase {
     // ♿︎
     public void runDyeRotor(boolean run) {
         if (run) {
-            io.setRotorSpeed(rotorRunSpeed);
-            io.setFeederSpeed(feederRunSpeed);
+            setTargetBPS(defaultTargetBps);
         } else {
             io.setRotorSpeed(0);
             io.setFeederSpeed(0);
         }
+    }
+
+    /**
+     * Calculates and commands the motor speeds required to hit a target throughput.
+     *
+     * @param targetBPS target balls per second
+     */
+    public void setTargetBPS(double targetBPS) {
+        // 1) DYE ROTOR KINEMATICS
+        double rotorSpeed = (targetBPS * 60.0) / ballsPerRotation;
+
+        // 2) FEED WHEEL KINEMATICS (PURE ROLLING + OVERFEED)
+        double feedMultiplier =
+                (ballsPerRotation * fuelDiameterInches * overfeedRatio) / (Math.PI * feedWheelRadiusInches);
+        double feedSpeedAbs = rotorSpeed * feedMultiplier;
+        double feedSpeed = feedSpeedAbs - rotorSpeed;
+
+        // 3) COMMAND MECHANISM RPM DIRECTLY
+        // Spark encoder conversion factors apply motor->mechanism gear ratio scaling.
+        io.setRotorSpeed(rotorSpeed);
+        io.setFeederSpeed(feedSpeed);
     }
 
     public void driveRotor(double speed) {

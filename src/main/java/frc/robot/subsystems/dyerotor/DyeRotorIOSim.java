@@ -17,18 +17,20 @@ public class DyeRotorIOSim implements DyeRotorIO {
 
     public DyeRotorIOSim() {
         rotorSim = new DCMotorSim(
-            LinearSystemId.createDCMotorSystem(rotorGearbox, 0.025, rotorMotorReduction),
+            LinearSystemId.createDCMotorSystem(rotorGearbox, 0.025, rotorGearRatio),
             rotorGearbox);
 
         feederSim = new DCMotorSim(
-            LinearSystemId.createDCMotorSystem(feederGearbox, 0.025, rollerMotorReduction),
+            LinearSystemId.createDCMotorSystem(feederGearbox, 0.025, feedGearRatio),
             feederGearbox);
     }
 
     @Override
     public void updateInputs(DyeRotorIOInputs inputs) {
-        rotorSim.setInputVoltage(rotorSpeed * 12.0);
-        feederSim.setInputVoltage(feederSpeed * 12.0);
+// Sim receives mechanism speed targets. 
+// Multiply by kFF to get the required duty cycle (0.0 - 1.0), then scale to 12 Volts.
+        rotorSim.setInputVoltage((rotorSpeed * rotorKff) * 12.0);
+        feederSim.setInputVoltage((feederSpeed * feederKff) * 12.0);
         rotorSim.update(0.02);
         feederSim.update(0.02);
 
