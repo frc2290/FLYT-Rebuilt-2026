@@ -69,15 +69,15 @@ public class TurretIOSpark implements TurretIO {
         hoodEncoder = hoodSpark.getAbsoluteEncoder();
 
         // Setup RoboRio Absolute encoders
-        // Gets if the encoder is connected, IMPLEMENT LATER
-        turnEncoder1.isConnected();
-        turnEncoder2.isConnected();
-
-         // Initializes a duty cycle encoder on DIO pins 0 to return a value of 4 for
+        // Initializes duty cycle encoders on DIO pins 0 and 1 to return 360 for
         // a full rotation, with the encoder reporting 0 half way through rotation (2
         // out of 4)
         turnEncoder1 = new DutyCycleEncoder(0, 360, 0);
-        turnEncoder2 = new DutyCycleEncoder(0, 360, 0);
+        turnEncoder2 = new DutyCycleEncoder(1, 360, 0);
+
+        // Gets if the encoders are connected, IMPLEMENT LATER
+        turnEncoder1.isConnected();
+        turnEncoder2.isConnected();
 
         /*In 2025 the API changed to remove rollover detection as rollover 
         detection did not work. The get() method returns the value within a
@@ -100,7 +100,7 @@ public class TurretIOSpark implements TurretIO {
             .encoder
             .positionConversionFactor(turretEncoderPositionFactor)
             .velocityConversionFactor(turretEncoderVelocityFactor)
-            .uvwAverageDepth(2);
+            .quadratureAverageDepth(2);
         turretConfig
             .closedLoop
             .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
@@ -149,8 +149,8 @@ public class TurretIOSpark implements TurretIO {
             .encoder
             .positionConversionFactor(flywheelEncoderPositionFactor)
             .velocityConversionFactor(flywheelEncoderVelocityFactor)
-            .uvwMeasurementPeriod(10)
-            .uvwAverageDepth(2);
+            .quadratureMeasurementPeriod(10)
+            .quadratureAverageDepth(2);
         flywheelLeaderConfig
             .closedLoop
             .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
