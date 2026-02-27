@@ -104,8 +104,8 @@ public class ModuleIOSpark implements ModuleIO {
         .encoder
         .positionConversionFactor(driveEncoderPositionFactor)
         .velocityConversionFactor(driveEncoderVelocityFactor)
-        .uvwMeasurementPeriod(10)
-        .uvwAverageDepth(2);
+        .quadratureMeasurementPeriod(10)
+        .quadratureAverageDepth(2);
     driveConfig
         .closedLoop
         .feedbackSensor(FeedbackSensor.kPrimaryEncoder)

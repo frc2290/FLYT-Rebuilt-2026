@@ -29,8 +29,8 @@ public class DyeRotorIOSim implements DyeRotorIO {
     public void updateInputs(DyeRotorIOInputs inputs) {
 // Sim receives mechanism speed targets. 
 // Multiply by kFF to get the required duty cycle (0.0 - 1.0), then scale to 12 Volts.
-        rotorSim.setInputVoltage((rotorSpeed * rotorKff) * 12.0);
-        feederSim.setInputVoltage((feederSpeed * feederKff) * 12.0);
+        rotorSim.setInputVoltage((rotorSpeed * rotorKv));
+        feederSim.setInputVoltage((feederSpeed * feederKv));
         rotorSim.update(0.02);
         feederSim.update(0.02);
 

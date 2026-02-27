@@ -48,10 +48,10 @@ public class DyeRotorConstants {
 public static final double vortexFreeSpeedRpm = 6784.0;
 public static final double neoFreeSpeedRpm = 5676.0;
 
-// kFF converts a target RPM into a 0.0 to 1.0 motor output.
-// Formula: 1.0 / (MotorFreeSpeed / GearRatio)
-// This ensures that commanding the theoretical max mechanism RPM outputs exactly 1.0 (full power).
-public static final double rotorKff = 1.0 / (vortexFreeSpeedRpm / rotorGearRatio);
-public static final double feederKff = 1.0 / (neoFreeSpeedRpm / feedGearRatio);
+// kV converts a target RPM into a 0.0 to 12.0 motor voltage command.
+// Formula: 12 volts / (MotorFreeSpeed / GearRatio)
+// This ensures that commanding the theoretical max mechanism RPM outputs exactly 12.0 (Max Voltage).
+public static final double rotorKv = 12.0 / (vortexFreeSpeedRpm / rotorGearRatio);
+public static final double feederKv = 12.0 / (neoFreeSpeedRpm / feedGearRatio);
 
 }
