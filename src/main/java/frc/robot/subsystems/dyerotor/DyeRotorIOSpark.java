@@ -57,7 +57,8 @@ public class DyeRotorIOSpark implements DyeRotorIO {
                 .uvwAverageDepth(2);
         rotorConfig.closedLoop
                 .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-                .pid(rotorKp, rotorKi, rotorKd);
+                .pid(rotorKp, rotorKi, rotorKd)
+                .velocityFF(rotorKff);
         tryUntilOk(rotor, 5,
                 () -> rotor.configure(rotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
 
@@ -73,7 +74,8 @@ public class DyeRotorIOSpark implements DyeRotorIO {
                 .uvwAverageDepth(2);
         feederConfig.closedLoop
                 .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-                .pid(feederKp, feederKi, feederKd);
+                .pid(feederKp, feederKi, feederKd)
+                .velocityFF(feederKff);
         tryUntilOk(feeder, 5,
                 () -> feeder.configure(feederConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
     }
@@ -88,8 +90,8 @@ public class DyeRotorIOSpark implements DyeRotorIO {
 
     @Override
     public void updateInputs(DyeRotorIOInputs inputs) {
-        rotor.set(rotorSpeed);
-        feeder.set(feederSpeed);
+        rotorController.setReference(rotorSpeed, ControlType.kVelocity);
+        feederController.setReference(feederSpeed, ControlType.kVelocity);
 
         inputs.rotorSpeed = rotorSpeed;
         ifOk(
