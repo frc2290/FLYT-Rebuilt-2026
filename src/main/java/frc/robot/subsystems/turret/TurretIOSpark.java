@@ -22,6 +22,7 @@ import com.revrobotics.spark.SparkBase.ControlType;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
+import frc.utils.DualEncoderUnwrapper;
 
 public class TurretIOSpark implements TurretIO {
 
@@ -69,11 +70,10 @@ public class TurretIOSpark implements TurretIO {
         hoodEncoder = hoodSpark.getAbsoluteEncoder();
 
         // Setup RoboRio Absolute encoders
-        // Initializes duty cycle encoders on DIO pins 0 and 1 to return 360 for
-        // a full rotation, with the encoder reporting 0 half way through rotation (2
-        // out of 4)
-        turnEncoder1 = new DutyCycleEncoder(0, 360, 0);
-        turnEncoder2 = new DutyCycleEncoder(1, 360, 0);
+        // Initializes duty cycle encoders on DIO pins 0 and 1.
+        // get() returns position in rotations [0, 1].
+        turnEncoder1 = new DutyCycleEncoder(0);
+        turnEncoder2 = new DutyCycleEncoder(1);
 
         // Gets if the encoders are connected, IMPLEMENT LATER
         turnEncoder1.isConnected();
@@ -178,20 +178,31 @@ public class TurretIOSpark implements TurretIO {
     }
 
 
-    // Right now it is stupid but here we going to put
     // Absolute dual encoder position of turret estimator master piece
-    // Also I think this function should be run only once to set position for rerlative encoder
-    private double getTurretPosAtStart(){
+    // Also I think this function should be run only once to set position for relative encoder
+    private double getTurretPosAtStart() {
+        // Ratios: Turn mechanism gear / encoder pulleys.
+        // Limits: Assumes the turret starts within +/- rangeTurret/2 rotations of mechanism travel.
+        DualEncoderUnwrapper unwrapper = new DualEncoderUnwrapper(
+            numTeethTurret / numTeethPulley1,
+            numTeethTurret / numTeethPulley2,
+            -rangeTurret / 2.0,
+            rangeTurret / 2.0);
 
-        double Enc1PosTeeth = (turnEncoder1.get()/360)*22;
-        double Enc2PosTeeth = (turnEncoder2.get()/360)*23;
-        double teeth_difference = (Enc1PosTeeth - Enc2PosTeeth) % 22;
-        // if we imagine our turret to have a big gian gear with 506 teeth (22*23) following var will save that tooth count
-        double global_tooth = (teeth_difference*22) + Enc1PosTeeth;
-        // say thanks for creating absurd amount of variables and not putting all this into return statment:)
-        return (global_tooth/240)*360;
+        // DutyCycleEncoder get() already returns rotations in [0, 1).
+        double abs1 = turnEncoder1.get();
+        double abs2 = turnEncoder2.get();
 
+        DualEncoderUnwrapper.UnwrapResult result = unwrapper.unwrap(abs1, abs2);
+
+        if (result.status == DualEncoderUnwrapper.Status.OK) {
+            return result.position * 360.0; // Convert mechanism rotations to degrees
+        } else {
+            System.err.println(
+                "Turret Unwrap Failed. Status: " + result.status + " | Error: " + result.error);
+            return 0.0;
         }
+    }
 
 
     /**

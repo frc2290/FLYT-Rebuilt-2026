@@ -10,6 +10,12 @@ import frc.utils.ShootOnTheFly.FullShooterParams;
 public class TurretConstants {
     public static final double turretHeight = inchesToMeters(24);
 
+    public static final double numTeethTurret = 240.0;
+    public static final double numTeethPulley1 = 22.0;
+    public static final double numTeethPulley2 = 23.0;
+    public static final double numTeethMotor = 11.0;
+    public static final double rangeTurret = 2.0;
+
     public static final int turretTurnMotor = 50;
     public static final double turretTurnReduction = 7 / 1;
     public static final int turretShootMotor = 51;
@@ -47,8 +53,11 @@ public class TurretConstants {
     // Turret config
     public static final boolean turretIsInverted = false;
     public static final int turretMotorCurrent = 40;
-    public static final double turretEncoderPositionFactor = (240.0/22.0)*360;
-    public static final double turretEncoderVelocityFactor = (240.0/22.0)*360;
+    // Spark relative encoder is on the turret turn motor.
+    // Position factor: motor rotations -> turret mechanism degrees.
+    public static final double turretEncoderPositionFactor = (numTeethMotor / numTeethTurret) * 360.0;
+    // Velocity factor: motor RPM -> turret mechanism deg/s.
+    public static final double turretEncoderVelocityFactor = turretEncoderPositionFactor / 60.0;
     public static final double encoderOffset = 0;
     public static final double turretKp = 0.001;
     public static final double turretKi = 0.0;
