@@ -15,9 +15,32 @@ import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 
 public class DriveConstants {
+  public enum MAXSwerveRatio {
+    LOW(12.0, 22.0), // 5.50:1
+    MEDIUM(13.0, 22.0), // 5.08:1
+    HIGH(14.0, 22.0), // 4.71:1
+    EXTRA_HIGH_1(15.0, 22.0), // 4.40:1
+    EXTRA_HIGH_2(16.0, 22.0), // 4.125:1
+    EXTRA_HIGH_3(16.0, 21.0), // 3.94:1
+    EXTRA_HIGH_4(16.0, 20.0), // 3.75:1
+    EXTRA_HIGH_5(16.0, 19.0); // 3.56:1
+
+    private final double pinion;
+    private final double spur;
+
+    MAXSwerveRatio(double pinion, double spur) {
+      this.pinion = pinion;
+      this.spur = spur;
+    }
+
+    public double getReduction() {
+      // (BevelDriven * SpurDriven) / (PinionDriving * BevelDriving)
+      return (45.0 * spur) / (pinion * 15.0);
+    }
+  }
+
   public static final boolean gyroReversed = true;
 
-  public static final double maxSpeedMetersPerSec = 7.6;
   public static final double maxAngularSpeed = 2 * Math.PI;
   public static final double odometryFrequency = 100.0; // Hz
   public static final double trackWidth = Units.inchesToMeters(27);//20.5
@@ -51,10 +74,12 @@ public class DriveConstants {
   // Drive motor configuration
   public static final int driveMotorCurrentLimit = 50;
   public static final double wheelRadiusMeters = 0.0736 / 2.0;
-  public static final double driveMotorReduction =
-      (45.0 * 22.0) / (16 * 15.0); // MAXSwerve with ~~14~~ 16 pinion teeth
-  // and 22 spur teeth
+  // Select your active MAXSwerve ratio here.
+  public static final MAXSwerveRatio activeDriveRatio = MAXSwerveRatio.EXTRA_HIGH_5;
+  public static final double driveMotorReduction = activeDriveRatio.getReduction();
   public static final DCMotor driveGearbox = DCMotor.getNeoVortex(1);
+  public static final double driveFreeSpeedRPM =
+      Units.radiansPerSecondToRotationsPerMinute(driveGearbox.freeSpeedRadPerSec);
 
   // Drive encoder configuration
   public static final double driveEncoderPositionFactor =
@@ -63,16 +88,18 @@ public class DriveConstants {
   public static final double driveEncoderVelocityFactor =
       (2 * Math.PI) / 60.0 / driveMotorReduction; // Rotor RPM ->
   // Wheel Rad/Sec
+  public static final double maxSpeedMetersPerSec =
+      driveFreeSpeedRPM * driveEncoderVelocityFactor * wheelRadiusMeters;
 
   // Drive PID configuration
   public static final double driveKp = 0.0;
   public static final double driveKd = 0.0;
   public static final double driveKs = 0.0;
-  public static final double driveKv = 0.1;
+  public static final double driveKv = 12.0 / (driveFreeSpeedRPM * driveEncoderVelocityFactor);
   public static final double driveSimP = 0.05;
   public static final double driveSimD = 0.0;
   public static final double driveSimKs = 0.0;
-  public static final double driveSimKv = 0.0789;
+  public static final double driveSimKv = 12.0 / (driveGearbox.freeSpeedRadPerSec / driveMotorReduction);
 
   // Turn motor configuration
   public static final boolean turnInverted = false;

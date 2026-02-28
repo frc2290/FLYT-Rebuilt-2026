@@ -16,7 +16,7 @@ import frc.utils.FuelSim;
 
 public class IntakeIOSim implements IntakeIO {
     private final DCMotorSim driveSim;
-    private final DCMotor driveGearbox = DCMotor.getNeoVortex(1);
+    private final DCMotor driveGearbox = DCMotor.getNEO(1);
     private final DCMotorSim deploySim;
     private final DCMotor deployGearbox = DCMotor.getNEO(1);
 
@@ -57,13 +57,12 @@ public class IntakeIOSim implements IntakeIO {
     public void updateInputs(IntakeIOInputs inputs) {
         deployAppliedVolts = deployController.calculate(deploySim.getAngularPositionRad());
 
-        // driveSim.setInputVoltage(MathUtil.clamp(driveAppliedVolts, -12.0, 12.0));
-        driveSim.setInputVoltage(driveSpeed * 12.0); // i think this is right(?)
+        driveSim.setInputVoltage(MathUtil.clamp(driveSpeed * rollerKv, -12.0, 12.0));
         deploySim.setInputVoltage(MathUtil.clamp(deployAppliedVolts, -12.0, 12.0));
         driveSim.update(0.02);
         deploySim.update(0.02);
 
-        inputs.driveSpeed = driveSpeed;
+        inputs.driveSpeed = driveSim.getAngularVelocityRPM() * rollerEncoderVelocityFactor;
         inputs.driveAppliedVolts = driveSim.getInputVoltage();
         inputs.driveCurrentAmps = Math.abs(driveSim.getCurrentDrawAmps());
 
