@@ -22,6 +22,7 @@ import frc.robot.subsystems.dyerotor.DyeRotor;
 import frc.robot.subsystems.turret.Turret;
 import edu.wpi.first.epilogue.Logged;
 import edu.wpi.first.wpilibj.XboxController;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
 import edu.wpi.first.wpilibj2.command.button.POVButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -65,7 +66,7 @@ public class RobotContainer {
 
     // The driver's controller
     XboxController m_driverController;
-    XboxController m_operatorController = new XboxController(1);
+    CommandXboxController m_operatorController = new CommandXboxController(1);
 
     SendableChooser<Command> auto_chooser = new SendableChooser<>();
     LoggedDashboardChooser<AutoStart> auto_start = new LoggedDashboardChooser<>("Auto Start");
@@ -164,7 +165,8 @@ public class RobotContainer {
         POVButton dpad_left_driver = new POVButton(m_driverController, 270);
         POVButton dpad_right_driver = new POVButton(m_driverController, 90);
 
-        a_button_driver.onTrue(m_turret.shoot());
+        //a_button_driver.onTrue(m_turret.shoot());
+        a_button_driver.onTrue(m_dyeRotor.runDyeRotorCommand(true)).onFalse(m_dyeRotor.runDyeRotorCommand(false));
         b_button_driver.whileTrue(
                 new ParallelCommandGroup(
                         m_intake.driveIntake(),
@@ -194,9 +196,9 @@ public class RobotContainer {
 
         // OPERATOR BUTTONS
 
-        JoystickButton a_button_operator = new JoystickButton(m_operatorController, Button.kA.value);
+        //JoystickButton a_button_operator = new JoystickButton(m_operatorController, Button.kA.value);
 
-        a_button_operator.onTrue(m_stateMachine.setShooterOverrideCommand(true))
+        m_operatorController.a().onTrue(m_stateMachine.setShooterOverrideCommand(true))
                         .onFalse(m_stateMachine.setShooterOverrideCommand(false));
 
         // END OPERATOR BUTTONS

@@ -163,23 +163,23 @@ public class StateMachine extends SubsystemBase {
     private void updateSubsystems() {
         switch (specialZone) {
             case NONE:
-                m_turret.setStopShoot(false);
+                //m_turret.setStopShoot(false);
                 switch (fieldZone) {
                     case ANTI_ALLIANCE:
                     case ALLIANCE:
                         // point at the hub, but only shoot if hub is active
-                        m_turret.setTargetTranslation(Hub.topCenterPoint.toTranslation2d());
+                        //m_turret.setTargetTranslation(Hub.topCenterPoint.toTranslation2d());
                         if (!shootOverride) {
-                            m_dyeRotor.runDyeRotor(true);
+                            //m_dyeRotor.runDyeRotor(true);
                         } else {
-                            m_dyeRotor.runDyeRotor(false);
+                            //m_dyeRotor.runDyeRotor(false);
                         }
                         break;
                     case NEUTRAL:
                         if (shootOverride) {
-                            m_dyeRotor.runDyeRotor(true);
+                            //m_dyeRotor.runDyeRotor(true);
                         } else {
-                            m_dyeRotor.runDyeRotor(false);
+                            //m_dyeRotor.runDyeRotor(false);
                         }
                         // point at one side of the alliance zone, shoot if magic
                         double y = FieldConstants.fieldWidth;
@@ -188,7 +188,7 @@ public class StateMachine extends SubsystemBase {
                         } else {
                             y *= 1.0 / 7.0;
                         }
-                        m_turret.setTargetTranslation(new Translation2d(LinesVertical.allianceZone * 3.0 / 4.0, y));
+                        //m_turret.setTargetTranslation(new Translation2d(LinesVertical.allianceZone * 3.0 / 4.0, y));
                         break;
                 }
                 break;
@@ -197,8 +197,8 @@ public class StateMachine extends SubsystemBase {
             case TRENCH:
             case BUMP:
                 // stop shooting (dye rotor & turret) & hood down (turret)
-                m_turret.setStopShoot(true);
-                m_dyeRotor.runDyeRotor(false);
+                //m_turret.setStopShoot(true);
+                //m_dyeRotor.runDyeRotor(false);
                 break;
         }
     }
