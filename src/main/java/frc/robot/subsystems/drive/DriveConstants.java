@@ -92,7 +92,7 @@ public class DriveConstants {
       driveFreeSpeedRPM * driveEncoderVelocityFactor * wheelRadiusMeters;
 
   // Drive PID configuration
-  public static final double driveKp = 0.0;
+  public static final double driveKp = 0.017;
   public static final double driveKd = 0.0;
   public static final double driveKs = 0.0;
   public static final double driveKv = 12.0 / (driveFreeSpeedRPM * driveEncoderVelocityFactor);
