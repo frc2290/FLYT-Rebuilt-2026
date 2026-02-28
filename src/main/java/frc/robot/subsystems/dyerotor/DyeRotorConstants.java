@@ -3,11 +3,11 @@ package frc.robot.subsystems.dyerotor;
 public class DyeRotorConstants {
     // Can Id
     public static final int rotorCanId = 29;
-    public static final int feederCanId = 39;
+    public static final int feederCanId = 28;
 
     // Motor direction
     public static final boolean rotorIsInverted = false;
-    public static final boolean feederIsInverted = false;
+    public static final boolean feederIsInverted = true;
 
     // Current
     public static final int rotorMotorCurrent = 40;
@@ -35,7 +35,7 @@ public class DyeRotorConstants {
     public static final double feederKd = 0;
 
     // Throughput target used by runDyeRotor(true)
-    public static final double defaultTargetBps = 10;
+    public static final double defaultTargetBps = 16;
 
     // --- Physical Dimensions ---
     public static final double ballsPerRotation = 8.0;

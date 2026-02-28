@@ -4,6 +4,8 @@ import static frc.robot.subsystems.dyerotor.DyeRotorConstants.*;
 
 import org.littletonrobotics.junction.Logger;
 
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 
 public class DyeRotor extends SubsystemBase {
@@ -28,6 +30,10 @@ public class DyeRotor extends SubsystemBase {
             io.setRotorSpeed(0);
             io.setFeederSpeed(0);
         }
+    }
+
+    public Command runDyeRotorCommand(boolean run) {
+        return Commands.run(() -> runDyeRotor(run), this);
     }
 
     /**

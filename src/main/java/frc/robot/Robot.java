@@ -32,7 +32,7 @@ import frc.robot.subsystems.drive.ModuleIOSpark;
 import frc.robot.subsystems.dyerotor.DyeRotor;
 import frc.robot.subsystems.dyerotor.DyeRotorIO;
 import frc.robot.subsystems.dyerotor.DyeRotorIOSim;
-
+import frc.robot.subsystems.dyerotor.DyeRotorIOSpark;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.IntakeIO;
 import frc.robot.subsystems.intake.IntakeIOSim;
@@ -124,7 +124,7 @@ public class Robot extends LoggedRobot {
                 m_poseEstimator = new PoseEstimatorSubsystem(m_robotDrive);
                 m_intake = new Intake(new IntakeIOSpark(IntakeSide.LEFT), new IntakeIOSpark(IntakeSide.RIGHT));
                 // m_dyeRotor = new DyeRotor(new DyeRotorIOSpark());
-                m_dyeRotor = new DyeRotor(new DyeRotorIOSim());
+                m_dyeRotor = new DyeRotor(new DyeRotorIOSpark());
                 m_turret = new Turret(new TurretIOSim(m_poseEstimator::getCurrentPose,
                                       m_poseEstimator::getChassisSpeeds),
                                       m_poseEstimator::getCurrentPose,

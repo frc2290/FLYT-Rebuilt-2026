@@ -94,6 +94,7 @@ public class DyeRotorIOSpark implements DyeRotorIO {
         feederController.setSetpoint(feederSpeed, ControlType.kVelocity);
 
         inputs.rotorSpeed = rotorSpeed;
+        inputs.rotorEncoderRPM = rotorEnc.getVelocity();
         ifOk(
                 rotor,
                 new DoubleSupplier[] { rotor::getAppliedOutput, rotor::getBusVoltage },
@@ -101,6 +102,7 @@ public class DyeRotorIOSpark implements DyeRotorIO {
         ifOk(rotor, rotor::getOutputCurrent, (value) -> inputs.rotorCurrentAmps = value);
 
         inputs.feederSpeed = feederSpeed;
+        inputs.feederEncoderRPM = feederEnc.getVelocity();
         ifOk(
                 feeder,
                 new DoubleSupplier[] { feeder::getAppliedOutput, feeder::getBusVoltage },
