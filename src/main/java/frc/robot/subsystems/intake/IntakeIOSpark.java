@@ -1,5 +1,6 @@
 package frc.robot.subsystems.intake;
 
+import static edu.wpi.first.math.util.Units.degreesToRadians;
 import static frc.robot.subsystems.intake.IntakeConstants.*;
 import static frc.utils.SparkUtil.ifOk;
 import static frc.utils.SparkUtil.tryUntilOk;
@@ -85,8 +86,9 @@ public class IntakeIOSpark implements IntakeIO {
                 .voltageCompensation(12.0);
         deployConfig.absoluteEncoder
                 .inverted(deployEncoderInverted)
+                .positionConversionFactor(deployEncoderPositionFactor)
+                .velocityConversionFactor(deployEncoderVelocityFactor)
                 .apply(AbsoluteEncoderConfig.Presets.REV_ThroughBoreEncoderV2);
-        // position and velocity conversion factors? idk what they should be tho
         deployConfig.closedLoop
                 .feedbackSensor(FeedbackSensor.kAbsoluteEncoder)
                 .pid(deployKp, deployKi, deployKd);
@@ -117,8 +119,14 @@ public class IntakeIOSpark implements IntakeIO {
         ifOk(driveSpark, driveSpark::getOutputCurrent, (value) -> inputs.driveCurrentAmps = value);
 
         // Update deploy inputs
-        ifOk(deploySpark, deployEncoder::getPosition, (value) -> inputs.deployPosition = new Rotation2d(value));
-        ifOk(deploySpark, deployEncoder::getVelocity, (value) -> inputs.deployVelocityRadPerSec = value);
+        ifOk(
+                deploySpark,
+                deployEncoder::getPosition,
+                (value) -> inputs.deployPosition = Rotation2d.fromDegrees(value));
+        ifOk(
+                deploySpark,
+                deployEncoder::getVelocity,
+                (value) -> inputs.deployVelocityRadPerSec = degreesToRadians(value));
         ifOk(
                 deploySpark,
                 new DoubleSupplier[] { deploySpark::getAppliedOutput, deploySpark::getBusVoltage },
@@ -133,7 +141,7 @@ public class IntakeIOSpark implements IntakeIO {
 
     @Override
     public void setDeployPosition(Rotation2d rotation) {
-        deployController.setSetpoint(rotation.getRadians(), ControlType.kPosition);
+        deployController.setSetpoint(rotation.getDegrees(), ControlType.kPosition);
     }
 
     public double getPosition() {

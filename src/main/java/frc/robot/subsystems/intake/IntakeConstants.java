@@ -27,11 +27,17 @@ public class IntakeConstants {
 
     // --- Physical Dimensions & Mechanics ---
     public static final double driveMotorReduction = (11.0 / 29.0) * (18.0 / 20.0);
-    public static final double deployMotorReduction = 90 / 1;
+    public static final double deployMotorToEncoderReduction = 84.0 / 7.0;
+    public static final double deployEncoderToLinkageReduction = 48.0 / 16.0;
+    public static final double deployMotorReduction =
+            deployMotorToEncoderReduction * deployEncoderToLinkageReduction;
     public static final double rollerDiameterMeters = 1.25 * 0.0254;
 
     // --- Encoder & Conversion Factors ---
     public static final boolean deployEncoderInverted = false;
+    public static final double deployEncoderPositionFactor =
+            (1.0 / deployEncoderToLinkageReduction) * 360.0;
+    public static final double deployEncoderVelocityFactor = deployEncoderPositionFactor / 60.0;
     public static final double rollerEncoderPositionFactor = driveMotorReduction * (Math.PI * rollerDiameterMeters);
     public static final double rollerEncoderVelocityFactor = rollerEncoderPositionFactor / 60.0;
 
@@ -46,6 +52,11 @@ public class IntakeConstants {
     public static final double deployKp = 0.05;
     public static final double deployKi = 0.0;
     public static final double deployKd = 0.0;
+    public static final DCMotor deployGearbox = DCMotor.getNeoVortex(1);
+    public static final double deployFreeSpeedRPM =
+            Units.radiansPerSecondToRotationsPerMinute(deployGearbox.freeSpeedRadPerSec);
+    public static final double deployKv = 12.0
+            / ((deployFreeSpeedRPM / deployMotorToEncoderReduction) * deployEncoderVelocityFactor);
 
     // --- Simulation Constants ---
     public static final double deploySimKp = 8.0;
