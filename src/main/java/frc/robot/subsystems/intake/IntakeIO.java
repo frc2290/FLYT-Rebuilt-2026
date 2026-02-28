@@ -7,6 +7,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 public interface IntakeIO {
     @AutoLog
     public static class IntakeIOInputs {
+        // Roller surface speed in m/s.
         public double driveSpeed = 0.0;
         public double driveAppliedVolts = 0.0;
         public double driveCurrentAmps = 0.0;

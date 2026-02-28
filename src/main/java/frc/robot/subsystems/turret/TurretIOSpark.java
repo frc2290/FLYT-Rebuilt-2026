@@ -155,6 +155,7 @@ public class TurretIOSpark implements TurretIO {
             .closedLoop
             .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
             .pid(flywheelKp, flywheelKi, flywheelKd);
+        flywheelLeaderConfig.closedLoop.feedForward.kV(flywheelKv);
 
         // Flywheel follower config
         var flywheelFollowerConfig = new SparkFlexConfig();

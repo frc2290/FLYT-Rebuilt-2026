@@ -4,84 +4,101 @@ import static edu.wpi.first.math.util.Units.inchesToMeters;
 
 import edu.wpi.first.math.interpolation.InterpolatingTreeMap;
 import edu.wpi.first.math.interpolation.InverseInterpolator;
+import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.util.Units;
 import frc.utils.ShootOnTheFly;
 import frc.utils.ShootOnTheFly.FullShooterParams;
 
 public class TurretConstants {
-    public static final double turretHeight = inchesToMeters(24);
-
-    public static final double numTeethTurret = 240.0;
-    public static final double numTeethPulley1 = 22.0;
-    public static final double numTeethPulley2 = 23.0;
-    public static final double numTeethMotor = 11.0;
-    public static final double rangeTurret = 2.0;
-
-    public static final int turretTurnMotor = 50;
-    public static final double turretTurnReduction = 7 / 1;
-    public static final int turretShootMotor = 51;
-    public static final double turretShootReduction = 7 / 1;
-    public static final int turretHoodMotor = 52;
-    public static final double turretHoodReduction = 90 / 1;
-
-    public static final int turretCurrentLimit = 50;
-
-    public static final double turretTurnSimP = 1.0;
-    public static final double turretTurnSimI = 0.0;
-    public static final double turretTurnSimD = 0.0;
-    public static final double turretTurnP = 1.0;
-    public static final double turretTurnI = 0.0;
-    public static final double turretTurnD = 0.0;
-    public static final double turretff = 0;
-    public static final double hoodff = 0;
-    public static final double shooterff = 0;
-
-
-    public static final double turretShootSimP = 1.0;
-    public static final double turretShootSimI = 0.0;
-    public static final double turretShootSimD = 0.0;
-
-    public static final double turretHoodSimP = 1.0;
-    public static final double turretHoodSimI = 0.0;
-    public static final double turretHoodSimD = 0.0;
-
-    // Device CAN ID(s)
+    // --- CAN IDs ---
     public static final int turretCanId = 20;
     public static final int hoodCanId = 21;
     public static final int flywheel1CanId = 22;
     public static final int flywheel2CanId = 23;
 
-    // Turret config
+    // --- Motor Configurations ---
     public static final boolean turretIsInverted = false;
+    public static final boolean hoodIsInverted = false;
+    public static final boolean flywheelIsInverted = false;
     public static final int turretMotorCurrent = 40;
+    public static final int hoodMotorCurrent = 40;
+    public static final int flywheelMotorCurrent = 40;
+    public static final int turretCurrentLimit = 50;
+
+    // --- Physical Dimensions & Mechanics ---
+    public static final double turretHeight = inchesToMeters(24);
+    public static final double shooterWheelDiameterMeters = 3.0 * 0.0254;
+    public static final double rangeTurret = 2.0;
+    public static final double numTeethTurret = 240.0;
+    public static final double numTeethPulley1 = 22.0;
+    public static final double numTeethPulley2 = 23.0;
+    public static final double numTeethMotor = 11.0;
+    public static final double turretTurnReduction = 7 / 1;
+    public static final double turretShootReduction = 24.0 / 35.0;
+    public static final double turretHoodReduction = 90 / 1;
+
+    // --- Encoder & Conversion Factors ---
+    public static final boolean hoodEncoderInverted = false;
+    public static final double encoderOffset = 0;
     // Spark relative encoder is on the turret turn motor.
     // Position factor: motor rotations -> turret mechanism degrees.
     public static final double turretEncoderPositionFactor = (numTeethMotor / numTeethTurret) * 360.0;
     // Velocity factor: motor RPM -> turret mechanism deg/s.
     public static final double turretEncoderVelocityFactor = turretEncoderPositionFactor / 60.0;
-    public static final double encoderOffset = 0;
+    public static final double hoodEncoderPositionFactor = 1;
+    public static final double hoodEncoderVelocityFactor = 1;
+    // Motor rotations -> ball travel meters (hooded shooter is 2:1 wheel-to-ball speed)
+    public static final double flywheelEncoderPositionFactor =
+            (1.0 / turretShootReduction) * (Math.PI * shooterWheelDiameterMeters) / 2.0;
+    // Motor RPM -> ball speed m/s
+    public static final double flywheelEncoderVelocityFactor = flywheelEncoderPositionFactor / 60.0;
+
+    // --- Control Loop Constants (PID & Feedforward) ---
+    public static final double turretTurnP = 1.0;
+    public static final double turretTurnI = 0.0;
+    public static final double turretTurnD = 0.0;
+    public static final double turretff = 0;
     public static final double turretKp = 0.001;
     public static final double turretKi = 0.0;
     public static final double turretKd = 0.0;
 
-    // Hood config
-    public static final boolean hoodIsInverted = false;
-    public static final int hoodMotorCurrent = 40;
-    public static final boolean hoodEncoderInverted = false;
-    public static final double hoodEncoderPositionFactor = 1;
-    public static final double hoodEncoderVelocityFactor = 1;
     public static final double hoodKp = 0.001;
     public static final double hoodKi = 0.0;
     public static final double hoodKd = 0.0;
+    public static final double hoodff = 0;
 
-    // Flywheel config
-    public static final boolean flywheelIsInverted = false;
-    public static final int flywheelMotorCurrent = 40;
-    public static final double flywheelEncoderPositionFactor = 1;
-    public static final double flywheelEncoderVelocityFactor = 1;
-    public static final double flywheelKp = 0.00025;
+    public static final double flywheelKp = 0;
     public static final double flywheelKi = 0.0;
-    public static final double flywheelKd = 0.00016;
+    public static final double flywheelKd = 0;
+    public static final double shooterff = 0;
+    public static final DCMotor flywheelGearbox = DCMotor.getNeoVortex(1);
+    public static final double flywheelFreeSpeedRPM =
+            Units.radiansPerSecondToRotationsPerMinute(flywheelGearbox.freeSpeedRadPerSec);
+    public static final double flywheelKv = 12.0 / (flywheelFreeSpeedRPM * flywheelEncoderVelocityFactor);
 
+    // --- Simulation Constants ---
+    public static final double turretTurnSimP = 1.0;
+    public static final double turretTurnSimI = 0.0;
+    public static final double turretTurnSimD = 0.0;
+    public static final double turretShootSimP = 1.0;
+    public static final double turretShootSimI = 0.0;
+    public static final double turretShootSimD = 0.0;
+    public static final double turretHoodSimP = 1.0;
+    public static final double turretHoodSimI = 0.0;
+    public static final double turretHoodSimD = 0.0;
+
+    // --- Subsystem Behaviors & Lookup Tables ---
+    public static final double[][] turretRPMData = {
+            { 1.5, 6.5 },
+            { 3, 7 },
+            { 5, 8 },
+    };
+
+    public static final double[][] turretHoodData = {
+            { 1.5, 80 },
+            { 3, 65 },
+            { 5, 50 },
+    };
 
     public static final InterpolatingTreeMap<Double, FullShooterParams> SHOOTER_MAP = new InterpolatingTreeMap<>(
             InverseInterpolator.forDouble(), ShootOnTheFly::interpolateParams);
@@ -111,17 +128,5 @@ public class TurretConstants {
         SHOOTER_MAP.put(6.5000, new FullShooterParams(8.695834, 49.180838, 1.180105));
         SHOOTER_MAP.put(6.7500, new FullShooterParams(8.834536, 48.554559, 1.189882));
         SHOOTER_MAP.put(7.0000, new FullShooterParams(8.973582, 47.758843, 1.194848));
-    };
-
-    public static final double[][] turretRPMData = {
-            { 1.5, 6.5 },
-            { 3, 7 },
-            { 5, 8 },
-    };
-
-    public static final double[][] turretHoodData = {
-            { 1.5, 80 },
-            { 3, 65 },
-            { 5, 50 },
     };
 }

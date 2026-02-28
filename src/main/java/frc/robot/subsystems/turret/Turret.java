@@ -85,7 +85,7 @@ public class Turret extends SubsystemBase {
 
     /**
      * manually set the shooter speed
-     * @param speed speed in rpm to set the shooter
+     * @param speed speed in m/s to set the shooter
      */
     public void setShooterSpeed(double speed) {
         io.setShooterSpeed(speed);

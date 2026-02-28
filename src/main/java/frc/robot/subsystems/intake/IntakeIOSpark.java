@@ -8,6 +8,7 @@ import java.util.function.DoubleSupplier;
 
 import com.revrobotics.AbsoluteEncoder;
 import com.revrobotics.PersistMode;
+import com.revrobotics.RelativeEncoder;
 import com.revrobotics.ResetMode;
 import com.revrobotics.spark.FeedbackSensor;
 import com.revrobotics.spark.SparkBase;
@@ -28,7 +29,9 @@ public class IntakeIOSpark implements IntakeIO {
     private final SparkBase driveSpark;
     private final SparkBase deploySpark;
 
+    private final RelativeEncoder driveEncoder;
     private final AbsoluteEncoder deployEncoder;
+    private final SparkClosedLoopController driveController;
     private final SparkClosedLoopController deployController;
 
     public IntakeIOSpark(IntakeSide side) {
@@ -44,7 +47,9 @@ public class IntakeIOSpark implements IntakeIO {
                     case RIGHT -> rightDeployCanId;
                 }, MotorType.kBrushless);
 
+        driveEncoder = driveSpark.getEncoder();
         deployEncoder = deploySpark.getAbsoluteEncoder();
+        driveController = driveSpark.getClosedLoopController();
         deployController = deploySpark.getClosedLoopController();
 
         var driveConfig = new SparkMaxConfig();
@@ -52,6 +57,14 @@ public class IntakeIOSpark implements IntakeIO {
                 .idleMode(IdleMode.kCoast)
                 .smartCurrentLimit(driveMotorCurrentLimit)
                 .voltageCompensation(12.0);
+        driveConfig.encoder
+                .positionConversionFactor(rollerEncoderPositionFactor)
+                .velocityConversionFactor(rollerEncoderVelocityFactor)
+                .uvwAverageDepth(2);
+        driveConfig.closedLoop
+                .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
+                .pid(rollerKp, rollerKi, rollerKd);
+        driveConfig.closedLoop.feedForward.kV(rollerKv);
         // driveConfig.signals
         // .appliedOutputPeriodMs(20)
         // .busVoltagePeriodMs(20)
@@ -95,25 +108,16 @@ public class IntakeIOSpark implements IntakeIO {
 
     @Override
     public void updateInputs(IntakeIOInputs inputs) {
-        inputs.driveAppliedVolts = driveSpark.getAppliedOutput();
-        inputs.driveCurrentAmps = driveSpark.getOutputCurrent();
-
-        // Update turn inputs
-        inputs.deployPosition = new Rotation2d(getPosition());
-        inputs.deployVelocityRadPerSec = deployEncoder.getVelocity();
-        inputs.deployAppliedVolts = deploySpark.getAppliedOutput();
-        inputs.deployCurrentAmps = deploySpark.getOutputCurrent();
-
+        // Update drive inputs
+        ifOk(driveSpark, driveEncoder::getVelocity, (value) -> inputs.driveSpeed = value);
         ifOk(
                 driveSpark,
                 new DoubleSupplier[] { driveSpark::getAppliedOutput, driveSpark::getBusVoltage },
                 (values) -> inputs.driveAppliedVolts = values[0] * values[1]);
         ifOk(driveSpark, driveSpark::getOutputCurrent, (value) -> inputs.driveCurrentAmps = value);
 
-        ifOk(
-                deploySpark,
-                deployEncoder::getPosition,
-                (value) -> inputs.deployPosition = new Rotation2d(value));
+        // Update deploy inputs
+        ifOk(deploySpark, deployEncoder::getPosition, (value) -> inputs.deployPosition = new Rotation2d(value));
         ifOk(deploySpark, deployEncoder::getVelocity, (value) -> inputs.deployVelocityRadPerSec = value);
         ifOk(
                 deploySpark,
@@ -124,7 +128,7 @@ public class IntakeIOSpark implements IntakeIO {
 
     @Override
     public void setIntakeSpeed(double speed) {
-        driveSpark.set(speed);
+        driveController.setSetpoint(speed, ControlType.kVelocity);
     }
 
     @Override
