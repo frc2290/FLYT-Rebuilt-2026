@@ -35,18 +35,22 @@ public class TurretConstants {
     public static final double numTeethMotor = 11.0;
     public static final double turretTurnReduction = 7 / 1;
     public static final double turretShootReduction = 24.0 / 35.0;
-    public static final double turretHoodReduction = 90 / 1;
+    public static final double hoodMotorToEncoderReduction = (23.0 / 1.0) * (32.0 / 15.0);
+    public static final double hoodEncoderToHoodReduction = 335.0 / 45.0;
+    public static final double turretHoodReduction = hoodMotorToEncoderReduction * hoodEncoderToHoodReduction;
 
     // --- Encoder & Conversion Factors ---
     public static final boolean hoodEncoderInverted = false;
     public static final double encoderOffset = 0;
+    public static final double hoodEncoderZeroOffset = 0.0;
+    public static final double hoodAngleOffset = 12.0;
     // Spark relative encoder is on the turret turn motor.
     // Position factor: motor rotations -> turret mechanism degrees.
     public static final double turretEncoderPositionFactor = (numTeethMotor / numTeethTurret) * 360.0;
     // Velocity factor: motor RPM -> turret mechanism deg/s.
     public static final double turretEncoderVelocityFactor = turretEncoderPositionFactor / 60.0;
-    public static final double hoodEncoderPositionFactor = 1;
-    public static final double hoodEncoderVelocityFactor = 1;
+    public static final double hoodEncoderPositionFactor = (1.0 / hoodEncoderToHoodReduction) * 360.0;
+    public static final double hoodEncoderVelocityFactor = hoodEncoderPositionFactor / 60.0;
     // Motor rotations -> ball travel meters (hooded shooter is 2:1 wheel-to-ball speed)
     public static final double flywheelEncoderPositionFactor =
             (1.0 / turretShootReduction) * (Math.PI * shooterWheelDiameterMeters) / 2.0;
@@ -61,11 +65,20 @@ public class TurretConstants {
     public static final double turretKp = 0.001;
     public static final double turretKi = 0.0;
     public static final double turretKd = 0.0;
+    public static final DCMotor turretGearbox = DCMotor.getNeoVortex(1);
+    public static final double turretFreeSpeedRPM =
+            Units.radiansPerSecondToRotationsPerMinute(turretGearbox.freeSpeedRadPerSec);
+    public static final double turretTheoreticalKv =
+            12.0 / (turretFreeSpeedRPM * turretEncoderVelocityFactor);
 
     public static final double hoodKp = 0.001;
     public static final double hoodKi = 0.0;
     public static final double hoodKd = 0.0;
     public static final double hoodff = 0;
+    public static final DCMotor hoodGearbox = DCMotor.getNEO(1);
+    public static final double hoodFreeSpeedRPM =
+            Units.radiansPerSecondToRotationsPerMinute(hoodGearbox.freeSpeedRadPerSec);
+    public static final double hoodKv = 12.0 / ((hoodFreeSpeedRPM / hoodMotorToEncoderReduction) * hoodEncoderVelocityFactor);
 
     public static final double flywheelKp = 0;
     public static final double flywheelKi = 0.0;

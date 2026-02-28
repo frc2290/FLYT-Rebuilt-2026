@@ -130,6 +130,7 @@ public class TurretIOSpark implements TurretIO {
             .closedLoop
             .feedbackSensor(FeedbackSensor.kAbsoluteEncoder)
             .pid(hoodKp, hoodKi, hoodKd);
+        hoodConfig.closedLoop.feedForward.kV(hoodKv);
         tryUntilOk(
             hoodSpark,
         5,
@@ -224,7 +225,7 @@ public class TurretIOSpark implements TurretIO {
         inputs.turretAngle = turretAngle;
         turretSpeed = getTurretVel();
         inputs.turretSpeed = turretSpeed;
-        turretHoodAngle = hoodEncoder.getPosition();
+        turretHoodAngle = (hoodEncoder.getPosition() - hoodEncoderZeroOffset) + hoodAngleOffset;
         inputs.turretHoodAngle = turretHoodAngle;
         inputs.turretAngleSetpoint = turretAngleSetpoint;
     }
@@ -239,7 +240,8 @@ public class TurretIOSpark implements TurretIO {
 
     @Override
     public void setHoodAngle(double angle) {
-        hoodController.setSetpoint(angle, ControlType.kMAXMotionPositionControl, ClosedLoopSlot.kSlot0, hoodff);
+        double targetEncoderAngle = (angle - hoodAngleOffset) + hoodEncoderZeroOffset;
+        hoodController.setSetpoint(targetEncoderAngle, ControlType.kMAXMotionPositionControl, ClosedLoopSlot.kSlot0, hoodff);
         turretHoodAngle = angle;
     };
 
