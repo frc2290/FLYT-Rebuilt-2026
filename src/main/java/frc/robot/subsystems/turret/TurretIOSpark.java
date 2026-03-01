@@ -171,7 +171,7 @@ public class TurretIOSpark implements TurretIO {
             .closedLoop
             .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
             .pid(flywheelKp, flywheelKi, flywheelKd);
-        //flywheelLeaderConfig.closedLoop.feedForward.kV(flywheelKv);
+        flywheelLeaderConfig.closedLoop.feedForward.kV(flywheelKv);
 
         // Flywheel follower config
         var flywheelFollowerConfig = new SparkFlexConfig();
@@ -247,7 +247,7 @@ public class TurretIOSpark implements TurretIO {
         inputs.turretAngle = turretAngle;
         //turretSpeed = getTurretVel();
         inputs.turretSpeed = turretSpeed;
-        turretHoodAngle = getHoodAngle();
+        //turretHoodAngle = getHoodAngle();
         inputs.turretHoodAngle = turretHoodAngle;
         inputs.turretAngleSetpoint = targetEncoderAngle;
 
