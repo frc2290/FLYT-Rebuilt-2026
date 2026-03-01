@@ -18,6 +18,7 @@ package frc.robot.subsystems.StateMachines;
 
 import org.littletonrobotics.junction.Logger;
 
+import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -25,6 +26,7 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.intake.IntakeConstants.IntakeSide;
 import frc.robot.Commands.DriveCommandFactory;
@@ -49,16 +51,17 @@ public class DriveStateMachine extends SubsystemBase {
     private FlytDashboard dashboard = new FlytDashboard("DriveStateMachine");
     private Drive drive;
     private PoseEstimatorSubsystem pose;
-    private XboxController driverController;
+    private CommandXboxController driverController;
     private final DriveCommandFactory driveCommandFactory;
 
     private DriveState driveState = DriveState.CANCELLED;
     private DriveState prevDriveState = DriveState.CANCELLED;
     private IntakeSide snakeDirection = IntakeSide.LEFT;
     private Command currentCommand = null;
+    private SlewRateLimiter snakeLimiter = new SlewRateLimiter(10);
 
     public DriveStateMachine(
-            Drive m_drive, PoseEstimatorSubsystem m_pose, XboxController m_driverController) {
+            Drive m_drive, PoseEstimatorSubsystem m_pose, CommandXboxController m_driverController) {
         drive = m_drive;
         pose = m_pose;
         driverController = m_driverController;
@@ -97,7 +100,7 @@ public class DriveStateMachine extends SubsystemBase {
                     float s = snakeDirection == IntakeSide.LEFT ? -1 : 1;
                     return Math.toDegrees(Math.atan2(s * forward, s * strafe)) % 360;
                 }
-                return pose.getDegrees();
+                return snakeLimiter.calculate(pose.getDegrees());
             });
             case TRENCH         -> driveCommandFactory.createHeadingLockCommand(() -> Math.round(pose.getDegrees() / 90.0) * 90.0);
             case BUMP           -> driveCommandFactory.createHeadingLockCommand(() -> (Math.round(pose.getDegrees() / 90.0 - 0.5) * 90.0 + 45) % 360);

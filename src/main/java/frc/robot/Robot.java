@@ -18,7 +18,7 @@ import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.subsystems.StateMachines.DriveStateMachine;
 import frc.robot.subsystems.StateMachines.StateMachine;
 import frc.robot.subsystems.StateMachines.DriveStateMachine.DriveState;
@@ -42,7 +42,7 @@ import frc.robot.subsystems.intake.IntakeConstants.IntakeSide;
 import frc.robot.subsystems.turret.Turret;
 import frc.robot.subsystems.turret.TurretIO;
 import frc.robot.subsystems.turret.TurretIOSim;
-
+import frc.robot.subsystems.turret.TurretIOSpark;
 import frc.utils.FuelSim;
 import frc.utils.PoseEstimatorSubsystem;
 
@@ -69,7 +69,7 @@ public class Robot extends LoggedRobot {
      * Cached reference to the primary driver controller so subsystems can read
      * axes.
      */
-    private XboxController m_driver = new XboxController(0);
+    private CommandXboxController m_driver = new CommandXboxController(0);
 
     // The robot's subsystems.
     /** Owns all hardware for swerve driving and exposes the drive commands. */
@@ -85,7 +85,7 @@ public class Robot extends LoggedRobot {
 
     public Robot() {
         Logger.recordMetadata("GitSHA", BuildConstants.GIT_SHA);
-        Logger.recordMetadata("ProjectName", "MyProject"); // Set a metadata value
+        Logger.recordMetadata("ProjectName", "FLYT-Rebuilt-2026"); // Set a metadata value
 
         // Set up data receivers & replay source
         switch (Constants.currentMode) {
@@ -122,11 +122,10 @@ public class Robot extends LoggedRobot {
                                new ModuleIOSpark(2),
                                new ModuleIOSpark(3));
                 m_poseEstimator = new PoseEstimatorSubsystem(m_robotDrive);
-                m_intake = new Intake(new IntakeIOSpark(IntakeSide.LEFT), new IntakeIOSpark(IntakeSide.RIGHT));
+                m_intake = new Intake(new IntakeIOSpark(IntakeSide.LEFT, false, 0.5), new IntakeIOSpark(IntakeSide.RIGHT, true, 0.25));
                 // m_dyeRotor = new DyeRotor(new DyeRotorIOSpark());
                 m_dyeRotor = new DyeRotor(new DyeRotorIOSpark());
-                m_turret = new Turret(new TurretIOSim(m_poseEstimator::getCurrentPose,
-                                      m_poseEstimator::getChassisSpeeds),
+                m_turret = new Turret(new TurretIOSpark(),
                                       m_poseEstimator::getCurrentPose,
                                       m_robotDrive::getChassisSpeeds);
                 break;
@@ -230,7 +229,9 @@ public class Robot extends LoggedRobot {
     }
 
     @Override
-    public void disabledInit() {}
+    public void disabledInit() {
+        m_driveStateMachine.setDriveCommand(DriveState.CANCELLED);
+    }
 
     @Override
     public void disabledPeriodic() {}

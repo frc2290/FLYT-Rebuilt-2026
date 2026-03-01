@@ -1,6 +1,7 @@
 package frc.robot.subsystems.intake;
 
 import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
 
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -18,6 +19,11 @@ public class Intake extends SubsystemBase {
     private final IntakeIOInputsAutoLogged inputsLeft = new IntakeIOInputsAutoLogged();
     private final IntakeIO ioRight;
     private final IntakeIOInputsAutoLogged inputsRight = new IntakeIOInputsAutoLogged();
+
+    // Dashboard booleans to disable an intake side in a match
+    // TODO IMPLEMENT
+    private final LoggedNetworkBoolean leftDisabledDash = new LoggedNetworkBoolean("Left Intake Disabled", false);
+    private final LoggedNetworkBoolean rightDisabledDash = new LoggedNetworkBoolean("Right Intake Disabled", false);
 
     public Intake(IntakeIO ioLeft, IntakeIO ioRight) {
         this.ioLeft = ioLeft;
@@ -92,10 +98,10 @@ public class Intake extends SubsystemBase {
 
     public Command driveIntake() {
         return Commands.run(() -> {
-            if (!isIn(IntakeSide.LEFT)) {
+            if (isOut(IntakeSide.LEFT)) {
                 driveRoller(IntakeSide.LEFT, rollerSpeed);
             }
-            if (!isIn(IntakeSide.RIGHT)) {
+            if (isOut(IntakeSide.RIGHT)) {
                 driveRoller(IntakeSide.RIGHT, rollerSpeed);
             }
             // driveRoller(IntakeSide.LEFT, isIn(IntakeSide.LEFT) ? 0 : rollerSpeed);

@@ -42,8 +42,9 @@ public class TurretConstants {
     // --- Encoder & Conversion Factors ---
     public static final boolean hoodEncoderInverted = false;
     public static final double encoderOffset = 0;
-    public static final double hoodEncoderZeroOffset = 0.0;
-    public static final double hoodAngleOffset = 12.0;
+    public static final double hoodEncoderZeroOffset = 0.65;
+    public static final double hoodAngleOffset = 3.87;
+    public static final double hoodShotAngleOffset = 74.8;
     // Spark relative encoder is on the turret turn motor.
     // Position factor: motor rotations -> turret mechanism degrees.
     public static final double turretEncoderPositionFactor = (numTeethMotor / numTeethTurret) * 360.0;
@@ -71,7 +72,7 @@ public class TurretConstants {
     public static final double turretTheoreticalKv =
             12.0 / (turretFreeSpeedRPM * turretEncoderVelocityFactor);
 
-    public static final double hoodKp = 0.001;
+    public static final double hoodKp = 0.01;
     public static final double hoodKi = 0.0;
     public static final double hoodKd = 0.0;
     public static final double hoodff = 0;
@@ -80,9 +81,9 @@ public class TurretConstants {
             Units.radiansPerSecondToRotationsPerMinute(hoodGearbox.freeSpeedRadPerSec);
     public static final double hoodKv = 12.0 / ((hoodFreeSpeedRPM / hoodMotorToEncoderReduction) * hoodEncoderVelocityFactor);
 
-    public static final double flywheelKp = 0;
+    public static final double flywheelKp = 0.67;
     public static final double flywheelKi = 0.0;
-    public static final double flywheelKd = 0;
+    public static final double flywheelKd = 0.28;
     public static final double shooterff = 0;
     public static final DCMotor flywheelGearbox = DCMotor.getNeoVortex(1);
     public static final double flywheelFreeSpeedRPM =

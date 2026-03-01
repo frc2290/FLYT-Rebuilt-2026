@@ -29,6 +29,7 @@ import edu.wpi.first.wpilibj2.command.button.Trigger;
 import edu.wpi.first.wpilibj.XboxController.Button;
 
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.StartEndCommand;
@@ -65,7 +66,7 @@ public class RobotContainer {
     private final Turret m_turret;
 
     // The driver's controller
-    XboxController m_driverController;
+    CommandXboxController m_driverController;
     CommandXboxController m_operatorController = new CommandXboxController(1);
 
     SendableChooser<Command> auto_chooser = new SendableChooser<>();
@@ -84,7 +85,7 @@ public class RobotContainer {
             Intake _intake,
             DyeRotor _dyeRotor,
             Turret _turret,
-            XboxController _driverController) {
+            CommandXboxController _driverController) {
 
         m_drive = _drive;
         m_poseEstimator = _poseEstimator;
@@ -138,68 +139,39 @@ public class RobotContainer {
 
         Trigger leftNotIn = new Trigger(() -> !m_intake.isIn(IntakeSide.LEFT));
         Trigger rightNotIn = new Trigger(() -> !m_intake.isIn(IntakeSide.RIGHT));
-        leftNotIn.onTrue(m_driveStateMachine.changeSnakeDirection(IntakeSide.LEFT));
-        rightNotIn.onTrue(m_driveStateMachine.changeSnakeDirection(IntakeSide.RIGHT));
+        //leftNotIn.onTrue(m_driveStateMachine.changeSnakeDirection(IntakeSide.LEFT));
+        //rightNotIn.onTrue(m_driveStateMachine.changeSnakeDirection(IntakeSide.RIGHT));
 
         // END TRIGGERS
 
-        // DRIVER Button definitions.
-        // Map the raw controller buttons to descriptive names for readability.
-        JoystickButton start_button_driver = new JoystickButton(m_driverController, Button.kStart.value);
+        // DRIVER Control definitions
 
-        JoystickButton a_button_driver = new JoystickButton(m_driverController, Button.kA.value);
-        JoystickButton b_button_driver = new JoystickButton(m_driverController, Button.kB.value);
-        JoystickButton x_button_driver = new JoystickButton(m_driverController, Button.kX.value);
-        JoystickButton y_button_driver = new JoystickButton(m_driverController, Button.kY.value);
-
-        JoystickButton left_stick_driver = new JoystickButton(m_driverController, Button.kLeftStick.value);
-        JoystickButton right_stick_driver = new JoystickButton(m_driverController, Button.kRightStick.value);
-
-        JoystickButton left_bumper_driver = new JoystickButton(m_driverController, Button.kLeftBumper.value);
-        JoystickButton right_bumper_driver = new JoystickButton(m_driverController, Button.kRightBumper.value);
-        Trigger left_trigger_driver = new Trigger(() -> m_driverController.getLeftTriggerAxis() > 0.5);
-        Trigger right_trigger_driver = new Trigger(() -> m_driverController.getRightTriggerAxis() > 0.5);
-
-        POVButton dpad_up_driver = new POVButton(m_driverController, 0);
-        POVButton dpad_down_driver = new POVButton(m_driverController, 180);
-        POVButton dpad_left_driver = new POVButton(m_driverController, 270);
-        POVButton dpad_right_driver = new POVButton(m_driverController, 90);
-
-        //a_button_driver.onTrue(m_turret.shoot());
-        a_button_driver.onTrue(m_dyeRotor.runDyeRotorCommand(true)).onFalse(m_dyeRotor.runDyeRotorCommand(false));
-        b_button_driver.whileTrue(
+        m_driverController.a().onTrue(m_dyeRotor.runDyeRotorCommand(true)).onFalse(m_dyeRotor.runDyeRotorCommand(false));
+        m_driverController.b().whileTrue(
                 new ParallelCommandGroup(
                         m_intake.driveIntake(),
                         m_driveStateMachine.tempChangeState(DriveState.SNAKE)));
 
-        x_button_driver.onTrue(m_intake.intakeOut(IntakeSide.LEFT));
-        y_button_driver.onTrue(m_intake.intakeOut(IntakeSide.RIGHT));
+        m_driverController.x().onTrue(m_intake.intakeOut(IntakeSide.LEFT));
+        m_driverController.y().onTrue(m_intake.intakeOut(IntakeSide.RIGHT));
 
-        right_trigger_driver.whileTrue(
+        m_driverController.axisGreaterThan(3, 0.5).whileTrue(
                                 new ParallelCommandGroup(
                                     m_intake.driveIntake(),
                                     m_driveStateMachine.tempChangeState(DriveState.SNAKE)));
 
-        dpad_left_driver.onTrue(m_driveStateMachine.changeState(DriveState.MANUAL));
-        dpad_up_driver.onTrue(m_driveStateMachine.changeState(DriveState.ASSIST));
-
-        // maybe fix this perhaps
-        // Other controls.
-        // right_stick
-        //         .and(dpad_right)
-        //         .onTrue(new InstantCommand(() -> m_robotDrive.zeroHeading())); // Manual heading reset.
-
-        // left_trigger.whileTrue(new Intake(m_intakeShooter));
-        // right_trigger.whileTrue(new Shoot(m_intakeShooter, 1));
+        m_driverController.povLeft().onTrue(m_driveStateMachine.changeState(DriveState.MANUAL));
+        m_driverController.povUp().onTrue(m_driveStateMachine.changeState(DriveState.ASSIST));
+        m_driverController.povRight().onTrue(Commands.runOnce(() -> m_drive.resetGyro())); // Reset Gyro Heading
 
         // END DRIVER BUTTONS
 
         // OPERATOR BUTTONS
 
-        //JoystickButton a_button_operator = new JoystickButton(m_operatorController, Button.kA.value);
-
+        // Override the auto shooting, this same button overrides in both neutral and alliance zone
+        // In alliance zone it will stop shooting and in neutral it will start shuttling fuel
         m_operatorController.a().onTrue(m_stateMachine.setShooterOverrideCommand(true))
-                        .onFalse(m_stateMachine.setShooterOverrideCommand(false));
+                                .onFalse(m_stateMachine.setShooterOverrideCommand(false));
 
         // END OPERATOR BUTTONS
     }

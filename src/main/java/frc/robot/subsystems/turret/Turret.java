@@ -22,7 +22,7 @@ import frc.utils.FieldConstants.Hub;
 import frc.utils.ShootOnTheFly.SOTFResult;
 
 public class Turret extends SubsystemBase {
-    private final TurretIO io; //input outs puts
+    private final TurretIO io; // input outs puts
     private final TurretIOInputsAutoLogged inputs = new TurretIOInputsAutoLogged();
     private Supplier<Pose2d> pose;
     private Supplier<ChassisSpeeds> speeds;
@@ -46,13 +46,13 @@ public class Turret extends SubsystemBase {
         Logger.processInputs("Turret", inputs);
 
         SOTFResult result = sotf.calculateRecursiveTOF(targetTranslation, pose.get(), speeds.get());
-        io.setTurnPosition(Rotation2d.fromDegrees(result.yaw));
+        // io.setTurnPosition(Rotation2d.fromDegrees(result.yaw));
         io.setShooterSpeed(result.vel);
-        if (!stopShoot) {
-            io.setHoodAngle(result.pitch);
-        } else {
-            io.setHoodAngle(0);
-        }
+        io.setShotAngle(result.pitch);
+        // if (!stopShoot) {
+        // } else {
+        //     io.setHoodAngle(0);
+        // }
         Logger.recordOutput("Turret/SOTFYaw", result.yaw);
         Logger.recordOutput("Turret/SOTFVel", result.vel);
         Logger.recordOutput("Turret/SOTFPitch", result.pitch);
@@ -61,6 +61,7 @@ public class Turret extends SubsystemBase {
 
     /**
      * set the translation to point at for the turret
+     * 
      * @param targetPose the translation to point at
      */
     public void setTargetTranslation(Translation2d targetTranslation) {
@@ -69,6 +70,7 @@ public class Turret extends SubsystemBase {
 
     /**
      * manually set the hood angle
+     * 
      * @param angle angle in degrees to set the hood
      */
     public void setHoodAngle(double angle) {
@@ -77,6 +79,7 @@ public class Turret extends SubsystemBase {
 
     /**
      * manually set the turn position
+     * 
      * @param rotation turn position as a rotation2d
      */
     public void setTurnPosition(Rotation2d rotation) {
@@ -85,6 +88,7 @@ public class Turret extends SubsystemBase {
 
     /**
      * manually set the shooter speed
+     * 
      * @param speed speed in m/s to set the shooter
      */
     public void setShooterSpeed(double speed) {
@@ -93,6 +97,7 @@ public class Turret extends SubsystemBase {
 
     /**
      * stop/unstop shooting
+     * 
      * @param stop stopped?
      */
     public void setStopShoot(boolean stop) {
