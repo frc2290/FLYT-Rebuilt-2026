@@ -101,6 +101,12 @@ public class IntakeIOSpark implements IntakeIO {
         deployConfig.closedLoop
                 .feedbackSensor(FeedbackSensor.kAbsoluteEncoder)
                 .pid(deployKp, deployKi, deployKd);
+        deployConfig.closedLoop.maxMotion
+                .cruiseVelocity(16000)
+                .maxAcceleration(80000)
+                .allowedProfileError(0.5);
+        //deployConfig.closedLoop.feedForward.kV(deployKv);
+        //deployConfig.closedLoop.feedForward.kA(0);
         // driveConfig.signals
         // .absoluteEncoderPositionAlwaysOn(true)
         // .absoluteEncoderPositionPeriodMs((int) (1000.0 / odometryFrequency))
@@ -119,7 +125,7 @@ public class IntakeIOSpark implements IntakeIO {
 
     @Override
     public void updateInputs(IntakeIOInputs inputs) {
-        deployController.setSetpoint(deploySetpoint + getZeroOffsetAdj(), ControlType.kPosition);
+        deployController.setSetpoint(deploySetpoint + getZeroOffsetAdj(), ControlType.kMAXMotionPositionControl);
 
         // Update drive inputs
         ifOk(driveSpark, driveEncoder::getVelocity, (value) -> inputs.driveSpeed = value);
