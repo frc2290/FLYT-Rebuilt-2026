@@ -11,10 +11,14 @@ import com.pathplanner.lib.config.ModuleConfig;
 import com.pathplanner.lib.config.RobotConfig;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.util.Units;
 
-public class DriveConstants {
+/** Sole source of truth for drivetrain hardware, geometry, and control constants. */
+public final class DriveConstants {
+  private DriveConstants() {}
+
   public enum MAXSwerveRatio {
     LOW(12.0, 22.0), // 5.50:1
     MEDIUM(13.0, 22.0), // 5.08:1
@@ -43,16 +47,19 @@ public class DriveConstants {
 
   public static final double maxAngularSpeed = 4 * Math.PI;
   public static final double odometryFrequency = 100.0; // Hz
-  public static final double trackWidth = Units.inchesToMeters(27);//20.5
-  public static final double wheelBase = Units.inchesToMeters(20.5);//27
+  public static final double trackWidth = Units.inchesToMeters(20.5); // Y-axis (width between wheels)
+  public static final double wheelBase = Units.inchesToMeters(27.0); // X-axis (length between wheels)
   public static final double driveBaseRadius = Math.hypot(trackWidth / 2.0, wheelBase / 2.0);
+  // WPILib Coordinate System: X is forward/backward, Y is left/right
   public static final Translation2d[] moduleTranslations =
       new Translation2d[] {
-        new Translation2d(trackWidth / 2.0, wheelBase / 2.0),
-        new Translation2d(trackWidth / 2.0, -wheelBase / 2.0),
-        new Translation2d(-trackWidth / 2.0, wheelBase / 2.0),
-        new Translation2d(-trackWidth / 2.0, -wheelBase / 2.0)
+        new Translation2d(wheelBase / 2.0, trackWidth / 2.0), // Front Left (+X, +Y)
+        new Translation2d(wheelBase / 2.0, -trackWidth / 2.0), // Front Right (+X, -Y)
+        new Translation2d(-wheelBase / 2.0, trackWidth / 2.0), // Back Left (-X, +Y)
+        new Translation2d(-wheelBase / 2.0, -trackWidth / 2.0) // Back Right (-X, -Y)
       };
+  public static final SwerveDriveKinematics driveKinematics =
+      new SwerveDriveKinematics(moduleTranslations);
 
   // Zeroed rotation values for each module, see setup instructions
   public static final Rotation2d frontLeftZeroRotation = new Rotation2d(-Math.PI / 2.0);
@@ -74,6 +81,7 @@ public class DriveConstants {
   // Drive motor configuration
   public static final int driveMotorCurrentLimit = 50;
   public static final double wheelRadiusMeters = 0.0736 / 2.0;
+  public static final double wheelDiameterMeters = wheelRadiusMeters * 2.0;
   // Select your active MAXSwerve ratio here.
   public static final MAXSwerveRatio activeDriveRatio = MAXSwerveRatio.EXTRA_HIGH_5;
   public static final double driveMotorReduction = activeDriveRatio.getReduction();

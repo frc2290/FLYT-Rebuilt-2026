@@ -10,7 +10,6 @@ import frc.robot.Commands.Autos.AutoBuilder;
 import frc.robot.Commands.Autos.AutoBuilder.AutoActivity;
 import frc.robot.Commands.Autos.AutoBuilder.AutoEnd;
 import frc.robot.Commands.Autos.AutoBuilder.AutoStart;
-import frc.robot.Constants.DriveConstants;
 import frc.robot.subsystems.StateMachines.DriveStateMachine;
 import frc.robot.subsystems.StateMachines.StateMachine;
 import frc.robot.subsystems.StateMachines.DriveStateMachine.DriveState;
