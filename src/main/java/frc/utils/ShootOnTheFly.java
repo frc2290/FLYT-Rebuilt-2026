@@ -60,7 +60,7 @@ public class ShootOnTheFly {
     }
 
     public SOTFResult calculateRecursiveTOF(Translation2d goalLocation, Pose2d robotPose, ChassisSpeeds robotSpeeds) {
-        Translation2d robotVelocity = new Translation2d(robotSpeeds.vxMetersPerSecond, robotSpeeds.vyMetersPerSecond);
+        Translation2d robotVelocity = getFieldRelativeVelocity(robotSpeeds, robotPose);
 
         double latencyCompensation = 0.0;
         Translation2d futurePos = robotPose.getTranslation().plus(
@@ -98,7 +98,7 @@ public class ShootOnTheFly {
     }
 
     public SOTFResult calculateTOF(Translation2d goalLocation, Pose2d robotPose, ChassisSpeeds robotSpeeds) {
-        Translation2d robotVelocity = new Translation2d(robotSpeeds.vxMetersPerSecond, robotSpeeds.vyMetersPerSecond);
+        Translation2d robotVelocity = getFieldRelativeVelocity(robotSpeeds, robotPose);
         double latencyCompensation = 0.15;
 
         // 1. Project future position
@@ -149,7 +149,7 @@ public class ShootOnTheFly {
     public SOTFResult calculate(Translation2d goalLocation, Pose2d robotPose, ChassisSpeeds robotSpeed) {
         double latency = 0.15; // Tuned constant
         Translation2d futurePos = robotPose.getTranslation().plus(
-                new Translation2d(robotSpeed.vxMetersPerSecond, robotSpeed.vyMetersPerSecond).times(latency));
+                getFieldRelativeVelocity(robotSpeed, robotPose).times(latency));
 
         // 2. GET TARGET VECTOR
         Translation2d targetVec = goalLocation.minus(futurePos);
@@ -167,7 +167,7 @@ public class ShootOnTheFly {
         Logger.recordOutput("SOTF HorzSpeed", idealHorizontalSpeed);
 
         // 4. VECTOR SUBTRACTION
-        Translation2d robotVelVec = new Translation2d(robotSpeed.vxMetersPerSecond, robotSpeed.vyMetersPerSecond);
+        Translation2d robotVelVec = getFieldRelativeVelocity(robotSpeed, robotPose);
         Translation2d shotVec = targetVec.div(dist).times(idealHorizontalSpeed).minus(robotVelVec);
 
         // 5. CONVERT TO CONTROLS
@@ -192,5 +192,10 @@ public class ShootOnTheFly {
     }
 
     private ShootOnTheFly() {
+    }
+
+    private Translation2d getFieldRelativeVelocity(ChassisSpeeds robotSpeeds, Pose2d robotPose) {
+        return new Translation2d(robotSpeeds.vxMetersPerSecond, robotSpeeds.vyMetersPerSecond)
+                .rotateBy(robotPose.getRotation());
     }
 }
