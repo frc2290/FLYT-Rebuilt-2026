@@ -14,7 +14,7 @@ public class ShootOnTheFly {
     private LinearInterpolator shootAngleInterp = new LinearInterpolator();
     private LinearInterpolator shootSpeedInterp = new LinearInterpolator();
 
-    public record FullShooterParams(double rpm, double hoodAngle, double timeOfFlight) {
+    public record FullShooterParams(double speedMetersPerSecond, double hoodAngle, double timeOfFlight) {
     }
 
     private InterpolatingTreeMap<Double, FullShooterParams> SHOOTER_MAP;
@@ -22,7 +22,7 @@ public class ShootOnTheFly {
     public static FullShooterParams interpolateParams(FullShooterParams startValue, FullShooterParams endValue,
             double t) {
         return new FullShooterParams(
-                MathUtil.interpolate(startValue.rpm(), endValue.rpm(), t),
+                MathUtil.interpolate(startValue.speedMetersPerSecond(), endValue.speedMetersPerSecond(), t),
                 MathUtil.interpolate(startValue.hoodAngle(), endValue.hoodAngle(), t),
                 MathUtil.interpolate(startValue.timeOfFlight(), endValue.timeOfFlight(), t));
     }
@@ -82,7 +82,7 @@ public class ShootOnTheFly {
         // the distance of for the LUT
         for (int i = 0; i < 5; i++) {
             params = SHOOTER_MAP.get(distance);
-            double tof = params.timeOfFlight;
+            double tof = params.timeOfFlight();
             double alphaTof = (1.0 - Math.exp(-k * tof)) / k;
             // the reason the TOF is negative isn't for the TOF, but rather the velocity.
             // here, instead of wanting field-relative robot velocity, we want the
@@ -94,7 +94,7 @@ public class ShootOnTheFly {
         // we get the params one more time with the updated distance...
         params = SHOOTER_MAP.get(distance);
         // ...and then return the params and direction
-        return new SOTFResult(ballGoal.getAngle().getDegrees(), params.hoodAngle, params.rpm);
+        return new SOTFResult(ballGoal.getAngle().getDegrees(), params.hoodAngle(), params.speedMetersPerSecond());
     }
 
     public SOTFResult calculateTOF(Translation2d goalLocation, Pose2d robotPose, ChassisSpeeds robotSpeeds) {
@@ -112,7 +112,7 @@ public class ShootOnTheFly {
 
         // 3. Look up baseline velocity from table
         FullShooterParams baseline = SHOOTER_MAP.get(distance);
-        double baselineVelocity = distance / baseline.timeOfFlight;
+        double baselineVelocity = distance / baseline.timeOfFlight();
 
         // 4. Build target velocity vector
         Translation2d targetVelocity = targetDirection.times(baselineVelocity);
@@ -130,20 +130,20 @@ public class ShootOnTheFly {
         double velocityRatio = requiredVelocity / baselineVelocity;
 
         // Split the correction: sqrt gives equal "contribution" from each
-        double rpmFactor = Math.sqrt(velocityRatio);
+        double speedFactor = Math.sqrt(velocityRatio);
         double hoodFactor = Math.sqrt(velocityRatio);
 
-        // Apply RPM scaling
-        double adjustedRpm = baseline.rpm * rpmFactor;
+        // Apply shooter speed scaling (m/s)
+        double adjustedSpeedMetersPerSecond = baseline.speedMetersPerSecond() * speedFactor;
 
         // Apply hood adjustment (changes horizontal component)
-        double totalVelocity = baselineVelocity / Math.cos(Math.toRadians(baseline.hoodAngle));
+        double totalVelocity = baselineVelocity / Math.cos(Math.toRadians(baseline.hoodAngle()));
         double targetHorizFromHood = baselineVelocity * hoodFactor;
         double ratio = MathUtil.clamp(targetHorizFromHood / totalVelocity, 0.0, 1.0);
         double adjustedHood = Math.toDegrees(Math.acos(ratio));
 
-        return new SOTFResult(turretAngle.getDegrees(), adjustedHood, adjustedRpm);
-        // return new ShooterCommand(adjustedRpm, adjustedHood);
+        return new SOTFResult(turretAngle.getDegrees(), adjustedHood, adjustedSpeedMetersPerSecond);
+        // return new ShooterCommand(adjustedSpeedMetersPerSecond, adjustedHood);
     }
 
     public SOTFResult calculate(Translation2d goalLocation, Pose2d robotPose, ChassisSpeeds robotSpeed) {

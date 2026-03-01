@@ -149,13 +149,18 @@ public class TurretIOSpark implements TurretIO {
                     hoodConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
 
 
-        // Flywheel leader config
-        var flywheelLeaderConfig = new SparkFlexConfig();
-        flywheelLeaderConfig
-            .inverted(flywheelIsInverted)
+        // Flywheel base config (shared safety/hardware settings)
+        var flywheelBaseConfig = new SparkFlexConfig();
+        flywheelBaseConfig
             .idleMode(IdleMode.kCoast)
             .smartCurrentLimit(flywheelMotorCurrent)
             .voltageCompensation(12.0);
+
+        // Flywheel leader config
+        var flywheelLeaderConfig = new SparkFlexConfig();
+        flywheelLeaderConfig
+            .apply(flywheelBaseConfig)
+            .inverted(flywheelIsInverted);
         flywheelLeaderConfig
             .encoder
             .positionConversionFactor(flywheelEncoderPositionFactor)
@@ -170,8 +175,10 @@ public class TurretIOSpark implements TurretIO {
 
         // Flywheel follower config
         var flywheelFollowerConfig = new SparkFlexConfig();
-        flywheelFollowerConfig.apply(flywheelLeaderConfig);
-        flywheelFollowerConfig.follow(flywheel1Spark, true);
+        flywheelFollowerConfig
+            .apply(flywheelBaseConfig)
+            // true means follower output is inverted relative to leader
+            .follow(flywheel1Spark, true);
         tryUntilOk(
             flywheel1Spark,
         5,
