@@ -36,7 +36,11 @@ import frc.utils.FieldConstants;
 import frc.utils.PoseEstimatorSubsystem;
 
 import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.OptionalDouble;
 import java.util.function.Consumer;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
@@ -297,7 +301,7 @@ public final class DriveCommandFactory {
         });
   }
 
-  public Command createYAssistCommand() {
+  public Command createTrenchBumpCommand() {
     return runDriveCommand(
         inputs -> {
           /*{
@@ -319,12 +323,24 @@ public final class DriveCommandFactory {
             target = new Translation2d(LinesVertical.trenchCenter, isOnLeft ? FieldConstants.fieldWidth - targetY : targetY);
             Logger.recordOutput("DriveAssist/Target", target);
           }*/
-          Pose2d pose = poseEstimator.getCurrentPose();
+          Pose2d currentPose = poseEstimator.getCurrentPose();
+          ChassisSpeeds speeds = drive.getChassisSpeeds();
+          Translation2d robotVelocity = new Translation2d(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond);
+          Translation2d velocity = robotVelocity.rotateBy(currentPose.getRotation());
+          Translation2d soon = currentPose.getTranslation().plus(velocity.times(0.25));
+          double soonY = soon.getY();
 
-          double weight = 1.0 / (4.0 * Math.abs(LinesVertical.allianceZone - pose.getX()) + 1.0);
-          double ySpeed = yPid.calculate(pose.getY(), 0);
-          double rotSpeed = rotPid.calculate(poseEstimator.getDegrees(), 0);
-          drive.drive(inputs.xSpeed, MathUtil.interpolate(inputs.ySpeed, ySpeed, weight), MathUtil.interpolate(inputs.rotSpeed, rotSpeed, weight), true);
+          OptionalDouble ySpeed = OptionalDouble.empty();
+          OptionalDouble rotSpeed = OptionalDouble.empty();
+          double[] targets = {LinesHorizontal.rightTrenchMiddle, LinesHorizontal.rightBumpMiddle, LinesHorizontal.leftBumpMiddle, LinesHorizontal.leftTrenchMiddle};
+          // double weight = 1.0 / (1.0 * Math.abs(LinesVertical.allianceZone - currentPose.getX()) + 1.0);
+          double weight = 0.8;
+          double targetY;
+          targetY = Arrays.stream(targets).reduce((x, y) -> Math.abs(x - soonY) < Math.abs(y - soonY) ? x : y).orElse(targets[0]);
+          ySpeed = OptionalDouble.of(MathUtil.interpolate(inputs.ySpeed, yPid.calculate(currentPose.getY(), targetY), weight));
+          rotSpeed = OptionalDouble.of(MathUtil.interpolate(inputs.rotSpeed, rotPid.calculate(poseEstimator.getDegrees(), Math.round(poseEstimator.getDegrees() / 90.0) * 90.0), weight));
+
+          drive.drive(inputs.xSpeed, ySpeed.orElse(inputs.ySpeed), rotSpeed.orElse(inputs.rotSpeed), true);
         }
     );
   }

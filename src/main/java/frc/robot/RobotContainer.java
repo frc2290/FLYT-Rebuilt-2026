@@ -133,8 +133,9 @@ public class RobotContainer {
         Trigger isInNeutral = new Trigger(() -> m_stateMachine.getFieldZone() == FieldZone.NEUTRAL);
         Trigger isLeft = new Trigger(() -> m_stateMachine.getLeftSide());
 
-        isOnBump.and(notAuto).whileTrue(m_driveStateMachine.tempChangeState(DriveState.BUMP));
-        isUnderTrench.and(notAuto).whileTrue(m_driveStateMachine.tempChangeState(DriveState.TRENCH));
+        isOnBump.or(isUnderTrench).and(notAuto).whileTrue(m_driveStateMachine.tempChangeState(DriveState.ASSIST));
+        // isOnBump.and(notAuto).whileTrue(m_driveStateMachine.tempChangeState(DriveState.BUMP));
+        // isUnderTrench.and(notAuto).whileTrue(m_driveStateMachine.tempChangeState(DriveState.TRENCH));
 
         Trigger leftNotIn = new Trigger(() -> !m_intake.isIn(IntakeSide.LEFT));
         Trigger rightNotIn = new Trigger(() -> !m_intake.isIn(IntakeSide.RIGHT));

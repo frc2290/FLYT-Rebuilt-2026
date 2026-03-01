@@ -94,7 +94,7 @@ public class DriveStateMachine extends SubsystemBase {
         currentCommand = switch (driveState) {
             case CANCELLED      -> driveCommandFactory.createCancelledCommand();
             case MANUAL         -> driveCommandFactory.createManualDriveCommand();
-            case ASSIST         -> driveCommandFactory.createYAssistCommand();
+            case ASSIST         -> driveCommandFactory.createTrenchBumpCommand();
             case SNAKE          -> driveCommandFactory.createHeadingLockCommand(() -> {
                 double forward = driveCommandFactory.sampleForwardInput();
                 double strafe = -driveCommandFactory.sampleStrafeInput();
