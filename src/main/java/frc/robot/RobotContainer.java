@@ -173,6 +173,8 @@ public class RobotContainer {
         m_operatorController.a().onTrue(m_stateMachine.setShooterOverrideCommand(true))
                                 .onFalse(m_stateMachine.setShooterOverrideCommand(false));
 
+        m_operatorController.b().whileTrue(m_intake.wowowowowoIntake());
+
         // END OPERATOR BUTTONS
     }
 
