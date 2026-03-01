@@ -39,9 +39,9 @@ public class DriveConstants {
     }
   }
 
-  public static final boolean gyroReversed = true;
+  public static final boolean gyroReversed = false;
 
-  public static final double maxAngularSpeed = 2 * Math.PI;
+  public static final double maxAngularSpeed = 4 * Math.PI;
   public static final double odometryFrequency = 100.0; // Hz
   public static final double trackWidth = Units.inchesToMeters(27);//20.5
   public static final double wheelBase = Units.inchesToMeters(20.5);//27

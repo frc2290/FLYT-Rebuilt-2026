@@ -102,10 +102,10 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
     private final PhotonRunnable photonEstimator;
 
     /** PhotonVision pipeline for the rear camera. */
-    private final PhotonRunnable photonEstimator2;
+    //private final PhotonRunnable photonEstimator2;
 
     private final Notifier photonNotifier;
-    private final Notifier photonNotifier2;
+    //private final Notifier photonNotifier2;
 
     private OriginPosition originPosition = kBlueAllianceWallRightSide;
     private boolean sawTag = false;
@@ -127,17 +127,17 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
 
         photonEstimator = new PhotonRunnable(
                 "FrontCamera", VisionConstants.APRILTAG_CAMERA_TO_ROBOT, () -> getHeading());
-        photonEstimator2 = new PhotonRunnable(
-                "ObjectDetectionCamera", VisionConstants.APRILTAG_CAMERA2_TO_ROBOT, () -> getHeading());
+        //photonEstimator2 = new PhotonRunnable(
+        //        "ObjectDetectionCamera", VisionConstants.APRILTAG_CAMERA2_TO_ROBOT, () -> getHeading());
 
         photonNotifier = new Notifier(photonEstimator);
-        photonNotifier2 = new Notifier(photonEstimator2);
+        //photonNotifier2 = new Notifier(photonEstimator2);
 
         // Start PhotonVision thread.
         photonNotifier.setName("PhotonRunnable");
         photonNotifier.startPeriodic(0.01);
-        photonNotifier2.setName("PhotonRunnable2");
-        photonNotifier2.startPeriodic(0.01);
+        //photonNotifier2.setName("PhotonRunnable2");
+        //photonNotifier2.startPeriodic(0.01);
 
         try {
             config = RobotConfig.fromGUISettings();
@@ -193,10 +193,10 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
         // Update pose estimator with drivetrain sensors.
         //poseEstimator.update(rotationSupplier.get(), modulePositionSupplier.get());
 
-        var maybeTargetYaw = photonEstimator2.getTargetYaw();
-        if (maybeTargetYaw != null) {
-            targetYaw = maybeTargetYaw;
-        }
+        // var maybeTargetYaw = photonEstimator2.getTargetYaw();
+        // if (maybeTargetYaw != null) {
+        //     targetYaw = maybeTargetYaw;
+        // }
 
         var visionPose = photonEstimator.grabLatestEstimatedPose();
         if (visionPose != null) {

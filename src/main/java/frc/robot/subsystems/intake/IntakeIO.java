@@ -13,6 +13,7 @@ public interface IntakeIO {
         public double driveCurrentAmps = 0.0;
 
         public Rotation2d deployPosition = Rotation2d.kZero;
+        public double deployPosDeg = 0.0;
         public double deployVelocityRadPerSec = 0.0;
         public double deployAppliedVolts = 0.0;
         public double deployCurrentAmps = 0.0;

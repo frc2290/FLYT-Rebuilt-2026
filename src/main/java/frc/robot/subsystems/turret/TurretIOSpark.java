@@ -3,6 +3,8 @@ package frc.robot.subsystems.turret;
 import static frc.robot.subsystems.turret.TurretConstants.*;
 import static frc.utils.SparkUtil.*;
 
+import java.util.function.DoubleSupplier;
+
 import com.revrobotics.AbsoluteEncoder;
 import com.revrobotics.PersistMode;
 import com.revrobotics.RelativeEncoder;
@@ -20,6 +22,7 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkBase.ControlType;
 
+import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
 import frc.utils.DualEncoderUnwrapper;
@@ -27,7 +30,7 @@ import frc.utils.DualEncoderUnwrapper;
 public class TurretIOSpark implements TurretIO {
 
     // Harware objects
-    private final SparkBase turretSpark;
+    //private final SparkBase turretSpark;
     private final SparkBase hoodSpark; 
     private final SparkBase flywheel1Spark; //later change to bottom/top
     private final SparkBase flywheel2Spark;
@@ -43,22 +46,28 @@ public class TurretIOSpark implements TurretIO {
     private RelativeEncoder flywheel2Encoder;
 
     // Closed loop controllers
-    private final SparkClosedLoopController turretController; 
+    //private final SparkClosedLoopController turretController; 
     private final SparkClosedLoopController hoodController;
-    private final SparkClosedLoopController flywheelController1; 
+    private final SparkClosedLoopController flywheelController1;
 
+    private final Debouncer turretConnectedDebounce =
+      new Debouncer(0.5, Debouncer.DebounceType.kFalling);
+    private final Debouncer hoodConnectedDebounce =
+      new Debouncer(0.5, Debouncer.DebounceType.kFalling);
+    private final Debouncer flywheelConnectedDebounce =
+      new Debouncer(0.5, Debouncer.DebounceType.kFalling);
     //
 
     // Global variables
     private double turretAngle = 0;
     private double turretSpeed = 0;
-    private double turretHoodAngle = 0;
+    private double turretHoodAngle = 10;
     private double turretAngleSetpoint = 0;
 
     public TurretIOSpark() {
 
         // Create motor controllers
-        turretSpark = new SparkFlex(turretCanId, MotorType.kBrushless);
+        //turretSpark = new SparkFlex(turretCanId, MotorType.kBrushless);
         hoodSpark = new SparkMax(hoodCanId, MotorType.kBrushless);
         flywheel1Spark = new SparkFlex(flywheel1CanId, MotorType.kBrushless);
         flywheel2Spark = new SparkFlex(flywheel2CanId, MotorType.kBrushless);
@@ -66,7 +75,7 @@ public class TurretIOSpark implements TurretIO {
         // Setup encoders
         flywheel1Encoder = flywheel1Spark.getEncoder();
         flywheel2Encoder = flywheel2Spark.getEncoder();
-        turnRelEncoder = turretSpark.getEncoder(); 
+        //turnRelEncoder = turretSpark.getEncoder(); 
         hoodEncoder = hoodSpark.getAbsoluteEncoder();
 
         // Setup RoboRio Absolute encoders
@@ -85,32 +94,32 @@ public class TurretIOSpark implements TurretIO {
         (default 1).*/
 
         // Setup Controllers
-        turretController = turretSpark.getClosedLoopController();
+        //turretController = turretSpark.getClosedLoopController();
         hoodController = hoodSpark.getClosedLoopController();
         flywheelController1 = flywheel1Spark.getClosedLoopController();
 
         // Turret parameters
-        var turretConfig = new SparkFlexConfig();
-        turretConfig
-            .inverted(turretIsInverted)
-            .idleMode(IdleMode.kCoast)
-            .smartCurrentLimit(turretMotorCurrent)
-            .voltageCompensation(12.0);
-        turretConfig
-            .encoder
-            .positionConversionFactor(turretEncoderPositionFactor)
-            .velocityConversionFactor(turretEncoderVelocityFactor)
-            .quadratureAverageDepth(2);
-        turretConfig
-            .closedLoop
-            .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-            .pid(turretKp, turretKi, turretKd);
-        tryUntilOk(
-            turretSpark,
-        5,
-            () ->
-                turretSpark.configure(
-                    turretConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
+        // var turretConfig = new SparkFlexConfig();
+        // turretConfig
+        //     .inverted(turretIsInverted)
+        //     .idleMode(IdleMode.kCoast)
+        //     .smartCurrentLimit(turretMotorCurrent)
+        //     .voltageCompensation(12.0);
+        // turretConfig
+        //     .encoder
+        //     .positionConversionFactor(turretEncoderPositionFactor)
+        //     .velocityConversionFactor(turretEncoderVelocityFactor)
+        //     .quadratureAverageDepth(2);
+        // turretConfig
+        //     .closedLoop
+        //     .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
+        //     .pid(turretKp, turretKi, turretKd);
+        // tryUntilOk(
+        //     turretSpark,
+        // 5,
+        //     () ->
+        //         turretSpark.configure(
+        //             turretConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
 
         // Hood Config
         var hoodConfig = new SparkMaxConfig();
@@ -122,6 +131,7 @@ public class TurretIOSpark implements TurretIO {
         hoodConfig
             .absoluteEncoder
             .inverted(hoodEncoderInverted)
+            .zeroOffset(hoodEncoderZeroOffset)
             .positionConversionFactor(hoodEncoderPositionFactor)
             .velocityConversionFactor(hoodEncoderVelocityFactor)
             .averageDepth(2)
@@ -130,7 +140,7 @@ public class TurretIOSpark implements TurretIO {
             .closedLoop
             .feedbackSensor(FeedbackSensor.kAbsoluteEncoder)
             .pid(hoodKp, hoodKi, hoodKd);
-        hoodConfig.closedLoop.feedForward.kV(hoodKv);
+        //hoodConfig.closedLoop.feedForward.kV(hoodKv);
         tryUntilOk(
             hoodSpark,
         5,
@@ -156,7 +166,7 @@ public class TurretIOSpark implements TurretIO {
             .closedLoop
             .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
             .pid(flywheelKp, flywheelKi, flywheelKd);
-        flywheelLeaderConfig.closedLoop.feedForward.kV(flywheelKv);
+        //flywheelLeaderConfig.closedLoop.feedForward.kV(flywheelKv);
 
         // Flywheel follower config
         var flywheelFollowerConfig = new SparkFlexConfig();
@@ -176,7 +186,7 @@ public class TurretIOSpark implements TurretIO {
                     flywheelFollowerConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
 
         // this is very important line that checks turrets position through absalute encoders then sets relative encoder to same pose + whataever offset we want
-        turnRelEncoder.setPosition(getTurretPosAtStart() + encoderOffset);
+        //turnRelEncoder.setPosition(getTurretPosAtStart() + encoderOffset);
     }
 
 
@@ -221,33 +231,84 @@ public class TurretIOSpark implements TurretIO {
     // I think this is used for logger pro to keep track of things?
     @Override
     public void updateInputs(TurretIOInputs inputs) {
-        turretAngle = getTurretPos();
+        double targetEncoderAngle = (turretHoodAngle + hoodAngleOffset);
+        hoodController.setSetpoint(targetEncoderAngle, ControlType.kPosition);
+
+        flywheelController1.setSetpoint(turretSpeed, ControlType.kVelocity);
+
+        //turretAngle = getTurretPos();
         inputs.turretAngle = turretAngle;
-        turretSpeed = getTurretVel();
+        //turretSpeed = getTurretVel();
         inputs.turretSpeed = turretSpeed;
-        turretHoodAngle = (hoodEncoder.getPosition() - hoodEncoderZeroOffset) + hoodAngleOffset;
+        turretHoodAngle = getHoodAngle();
         inputs.turretHoodAngle = turretHoodAngle;
-        inputs.turretAngleSetpoint = turretAngleSetpoint;
+        inputs.turretAngleSetpoint = targetEncoderAngle;
+
+        // sparkStickyFault = false;
+        // ifOk(
+        //     turretSpark,
+        //     turnRelEncoder::getPosition,
+        //     (value) -> inputs.turretPositionRad = new Rotation2d(value).getRadians());
+        // ifOk(turretSpark, turnRelEncoder::getVelocity, (value) -> inputs.turretVelocityRadPerSec = value);
+        // ifOk(
+        //     turretSpark,
+        //     new DoubleSupplier[] {turretSpark::getAppliedOutput, turretSpark::getBusVoltage},
+        //     (values) -> inputs.turretAppliedVolts = values[0] * values[1]);
+        // ifOk(turretSpark, turretSpark::getOutputCurrent, (value) -> inputs.turretCurrentAmps = value);
+        // inputs.turretConnected = turretConnectedDebounce.calculate(!sparkStickyFault);
+
+        sparkStickyFault = false;
+        ifOk(
+            hoodSpark,
+            () -> getHoodAngle(),
+            (value) -> inputs.hoodPositionDeg = value);
+        ifOk(hoodSpark, hoodEncoder::getVelocity, (value) -> inputs.hoodVelocityRadPerSec = value);
+        ifOk(
+            hoodSpark,
+            new DoubleSupplier[] {hoodSpark::getAppliedOutput, hoodSpark::getBusVoltage},
+            (values) -> inputs.hoodAppliedVolts = values[0] * values[1]);
+        ifOk(hoodSpark, hoodSpark::getOutputCurrent, (value) -> inputs.hoodCurrentAmps = value);
+        inputs.hoodConnected = hoodConnectedDebounce.calculate(!sparkStickyFault);
+
+        sparkStickyFault = false;
+        ifOk(
+            flywheel1Spark,
+            flywheel1Encoder::getPosition,
+            (value) -> inputs.flywheelPositionRad = new Rotation2d(value).getRadians());
+        ifOk(flywheel1Spark, flywheel1Encoder::getVelocity, (value) -> inputs.flywheelVelocity = value);
+        ifOk(
+            flywheel1Spark,
+            new DoubleSupplier[] {flywheel1Spark::getAppliedOutput, flywheel1Spark::getBusVoltage},
+            (values) -> inputs.flywheelAppliedVolts = values[0]);
+        ifOk(flywheel1Spark, flywheel1Spark::getOutputCurrent, (value) -> inputs.flywheelCurrentAmps = value);
+        inputs.flywheelConnected = flywheelConnectedDebounce.calculate(!sparkStickyFault);
     }
 
 
     @Override
     public void setTurnPosition(Rotation2d rotation) {
-        turretController.setSetpoint(rotation.getDegrees(), ControlType.kMAXMotionPositionControl, ClosedLoopSlot.kSlot0, turretff);
-        turretAngleSetpoint = rotation.getDegrees();
+        //turretController.setSetpoint(rotation.getDegrees(), ControlType.kMAXMotionPositionControl, ClosedLoopSlot.kSlot0, turretff);
+        //turretAngleSetpoint = rotation.getDegrees();
     }
 
 
     @Override
     public void setHoodAngle(double angle) {
-        double targetEncoderAngle = (angle - hoodAngleOffset) + hoodEncoderZeroOffset;
-        hoodController.setSetpoint(targetEncoderAngle, ControlType.kMAXMotionPositionControl, ClosedLoopSlot.kSlot0, hoodff);
         turretHoodAngle = angle;
     };
 
+    public double getHoodAngle() {
+        return hoodEncoder.getPosition() - hoodAngleOffset;
+    }
+
+    @Override
+    public void setShotAngle(double angle) {
+        double targetHoodAngle = hoodShotAngleOffset - angle;
+        setHoodAngle(targetHoodAngle);
+    }
+
     @Override
     public void setShooterSpeed(double speed) {
-        flywheelController1.setSetpoint(speed, ControlType.kMAXMotionVelocityControl, ClosedLoopSlot.kSlot0, shooterff);
         turretSpeed = speed;
     };
 

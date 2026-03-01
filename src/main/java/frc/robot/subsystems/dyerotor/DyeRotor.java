@@ -33,7 +33,7 @@ public class DyeRotor extends SubsystemBase {
     }
 
     public Command runDyeRotorCommand(boolean run) {
-        return Commands.run(() -> runDyeRotor(run), this);
+        return Commands.run(() -> runDyeRotor(run));
     }
 
     /**

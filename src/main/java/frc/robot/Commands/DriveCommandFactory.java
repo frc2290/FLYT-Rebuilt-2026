@@ -26,6 +26,7 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Constants.OIConstants;
 import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.subsystems.drive.Drive;
@@ -56,7 +57,7 @@ public final class DriveCommandFactory {
 
   private final Drive drive;
   private final PoseEstimatorSubsystem poseEstimator;
-  private final XboxController driverController;
+  private final CommandXboxController driverController;
   private final PIDController rotPid;
   private final PIDController xPid;
   private final PIDController yPid;
@@ -66,14 +67,14 @@ public final class DriveCommandFactory {
    * estimator, and driver controller references.
    */
   public DriveCommandFactory(
-      Drive drive, PoseEstimatorSubsystem poseEstimator, XboxController driverController) {
+      Drive drive, PoseEstimatorSubsystem poseEstimator, CommandXboxController driverController) {
     this.drive = Objects.requireNonNull(drive);
     this.poseEstimator = Objects.requireNonNull(poseEstimator);
     this.driverController = Objects.requireNonNull(driverController);
     // this.rotPid = drive.getRotPidController();
     // this.xPid = drive.getXPidController();
     // this.yPid = drive.getYPidController();
-    this.rotPid = new PIDController(0.05, 0.0, 0.0); // 0.015 0 0
+    this.rotPid = new PIDController(0.015, 0.0, 0.0); // 0.015 0 0
     this.rotPid.enableContinuousInput(0, 360);
     this.xPid = new PIDController(1, 0.0, 0.085); // 2 0.0 0.5
     this.yPid = new PIDController(1, 0.0, 0.085); // 2 0.0 0.5

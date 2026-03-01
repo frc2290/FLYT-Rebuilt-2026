@@ -1,6 +1,8 @@
 package frc.robot.subsystems.intake;
 
 import static edu.wpi.first.math.util.Units.degreesToRadians;
+import static frc.robot.subsystems.dyerotor.DyeRotorConstants.rotorCanId;
+import static frc.robot.subsystems.dyerotor.DyeRotorConstants.rotorEncoderPositionFactor;
 import static frc.robot.subsystems.intake.IntakeConstants.*;
 import static frc.utils.SparkUtil.ifOk;
 import static frc.utils.SparkUtil.tryUntilOk;
@@ -35,7 +37,12 @@ public class IntakeIOSpark implements IntakeIO {
     private final SparkClosedLoopController driveController;
     private final SparkClosedLoopController deployController;
 
-    public IntakeIOSpark(IntakeSide side) {
+    private IntakeSide side;
+
+    private double deploySetpoint = 0.0;
+
+    public IntakeIOSpark(IntakeSide side, boolean inverted, double zeroOffset) {
+        this.side = side;
         driveSpark = new SparkMax(
                 switch (side) {
                     case LEFT -> leftDriveCanId;
@@ -56,6 +63,7 @@ public class IntakeIOSpark implements IntakeIO {
         var driveConfig = new SparkMaxConfig();
         driveConfig
                 .idleMode(IdleMode.kCoast)
+                .inverted(inverted)
                 .smartCurrentLimit(driveMotorCurrentLimit)
                 .voltageCompensation(12.0);
         driveConfig.encoder
@@ -80,12 +88,13 @@ public class IntakeIOSpark implements IntakeIO {
 
         var deployConfig = new SparkFlexConfig();
         deployConfig
-                .inverted(deployInverted)
-                .idleMode(IdleMode.kBrake)
+                .inverted(inverted)
+                .idleMode(IdleMode.kCoast)
                 .smartCurrentLimit(deployMotorCurrentLimit)
                 .voltageCompensation(12.0);
         deployConfig.absoluteEncoder
-                .inverted(deployEncoderInverted)
+                .inverted(inverted)
+                .zeroOffset(zeroOffset)
                 .positionConversionFactor(deployEncoderPositionFactor)
                 .velocityConversionFactor(deployEncoderVelocityFactor)
                 .apply(AbsoluteEncoderConfig.Presets.REV_ThroughBoreEncoderV2);
@@ -110,6 +119,8 @@ public class IntakeIOSpark implements IntakeIO {
 
     @Override
     public void updateInputs(IntakeIOInputs inputs) {
+        deployController.setSetpoint(deploySetpoint + getZeroOffsetAdj(), ControlType.kPosition);
+
         // Update drive inputs
         ifOk(driveSpark, driveEncoder::getVelocity, (value) -> inputs.driveSpeed = value);
         ifOk(
@@ -121,8 +132,12 @@ public class IntakeIOSpark implements IntakeIO {
         // Update deploy inputs
         ifOk(
                 deploySpark,
-                deployEncoder::getPosition,
+                () -> getPosition(),
                 (value) -> inputs.deployPosition = Rotation2d.fromDegrees(value));
+        ifOk(
+                deploySpark,
+                () -> getPosition(),
+                (value) -> inputs.deployPosDeg = value);
         ifOk(
                 deploySpark,
                 deployEncoder::getVelocity,
@@ -141,10 +156,28 @@ public class IntakeIOSpark implements IntakeIO {
 
     @Override
     public void setDeployPosition(Rotation2d rotation) {
-        deployController.setSetpoint(rotation.getDegrees(), ControlType.kPosition);
+        this.deploySetpoint = rotation.getDegrees();
     }
 
     public double getPosition() {
-        return deployEncoder.getPosition();
+        switch (this.side) {
+            case LEFT:
+                return deployEncoder.getPosition() - leftZeroOffsetAdj;
+            case RIGHT:
+                return deployEncoder.getPosition() - rightZeroOffsetAdj;
+            default:
+                return 0;
+        }
+    }
+
+    private double getZeroOffsetAdj() {
+        switch (this.side) {
+            case LEFT:
+                return leftZeroOffsetAdj;
+            case RIGHT:
+                return rightZeroOffsetAdj;
+            default:
+                return 0;
+        }
     }
 }
