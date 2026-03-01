@@ -269,7 +269,7 @@ public class TurretIOSpark implements TurretIO {
             hoodSpark,
             () -> getHoodAngle(),
             (value) -> inputs.hoodPositionDeg = value);
-        ifOk(hoodSpark, hoodEncoder::getVelocity, (value) -> inputs.hoodVelocityRadPerSec = value);
+        ifOk(hoodSpark, hoodEncoder::getVelocity, (value) -> inputs.hoodVelocityDegPerSec = value);
         ifOk(
             hoodSpark,
             new DoubleSupplier[] {hoodSpark::getAppliedOutput, hoodSpark::getBusVoltage},
