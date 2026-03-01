@@ -20,7 +20,7 @@ public interface TurretIO {
 
         public boolean hoodConnected = false;
         public double hoodPositionDeg = 0.0;
-        public double hoodVelocityRadPerSec = 0.0;
+        public double hoodVelocityDegPerSec = 0.0;
         public double hoodAppliedVolts = 0.0;
         public double hoodCurrentAmps = 0.0;
 
