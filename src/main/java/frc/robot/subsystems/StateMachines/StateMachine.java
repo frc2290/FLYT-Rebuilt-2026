@@ -49,7 +49,7 @@ public class StateMachine extends SubsystemBase {
     private FieldZone fieldZone = FieldZone.ALLIANCE;
     private SpecialZone specialZone = SpecialZone.NONE;
     private boolean isAuto = false;
-    private boolean shootOverride = true;
+    private boolean shootOverride = false;
 
     private Supplier<Pose2d> poseSupplier;
     private Supplier<ChassisSpeeds> speedSupplier;
@@ -169,21 +169,17 @@ public class StateMachine extends SubsystemBase {
                     case ALLIANCE:
                         // point at the hub, but only shoot if hub is active
                         m_turret.setTargetTranslation(Hub.topCenterPoint.toTranslation2d());
-                        if (!shootOverride) {
+                        if (shootOverride) {
                             m_dyeRotor.runDyeRotor(true);
-                            m_turret.setStopShoot(false);
                         } else {
                             m_dyeRotor.runDyeRotor(false);
-                            m_turret.setStopShoot(true);
                         }
                         break;
                     case NEUTRAL:
-                        if (!shootOverride) {
+                        if (shootOverride) {
                             m_dyeRotor.runDyeRotor(true);
-                            m_turret.setStopShoot(false);
                         } else {
                             m_dyeRotor.runDyeRotor(false);
-                            m_turret.setStopShoot(true);
                         }
                         // point at one side of the alliance zone, shoot if magic
                         double y = FieldConstants.fieldWidth;

@@ -288,7 +288,10 @@ public class Robot extends LoggedRobot {
 
     /** This function is called periodically during operator control. */
     @Override
-    public void teleopPeriodic() {}
+    public void teleopPeriodic() {
+        // TEMP POINT UPDATE DRIVE TARGET HEADING TO TURRET HEADING FROM SOTF
+        m_driveStateMachine.setSotfHeading(m_turret.getSotfYaw());
+    }
 
     @Override
     public void teleopExit() {

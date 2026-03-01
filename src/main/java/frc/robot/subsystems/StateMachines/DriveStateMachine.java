@@ -46,6 +46,7 @@ public class DriveStateMachine extends SubsystemBase {
         BUMP,           // turns to the closest 45deg
         CLIMB_RELATIVE, // align with tower
         FOLLOW_PATH,    // auto path following
+        SHOOT_LOCK      // lock to sotf heading
     }
 
     private FlytDashboard dashboard = new FlytDashboard("DriveStateMachine");
@@ -59,6 +60,8 @@ public class DriveStateMachine extends SubsystemBase {
     private IntakeSide snakeDirection = IntakeSide.LEFT;
     private Command currentCommand = null;
     private SlewRateLimiter snakeLimiter = new SlewRateLimiter(10);
+
+    private double sotfHeading = 0.0;
 
     public DriveStateMachine(
             Drive m_drive, PoseEstimatorSubsystem m_pose, CommandXboxController m_driverController) {
@@ -106,6 +109,7 @@ public class DriveStateMachine extends SubsystemBase {
             case BUMP           -> driveCommandFactory.createHeadingLockCommand(() -> (Math.round(pose.getDegrees() / 90.0 - 0.5) * 90.0 + 45) % 360);
             case CLIMB_RELATIVE -> driveCommandFactory.createHeadingLockCommand(() -> 0.0);
             case FOLLOW_PATH    -> driveCommandFactory.createFollowPathCommand();
+            case SHOOT_LOCK     -> driveCommandFactory.createHeadingLockCommand(() -> sotfHeading);
         };
         currentCommand.schedule();
     }
@@ -135,5 +139,9 @@ public class DriveStateMachine extends SubsystemBase {
 
     public Command changeSnakeDirection(IntakeSide snakeDirection) {
         return runOnce(() -> this.snakeDirection = snakeDirection);
+    }
+
+    public void setSotfHeading(double heading) {
+        this.sotfHeading = heading;
     }
 }
