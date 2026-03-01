@@ -72,23 +72,23 @@ public class TurretConstants {
     public static final double turretTheoreticalKv =
             12.0 / (turretFreeSpeedRPM * turretEncoderVelocityFactor);
 
-    public static final double hoodKp = 0.01;
+    public static final double hoodKp = 0.05;
     public static final double hoodKi = 0.0;
     public static final double hoodKd = 0.0;
     public static final double hoodff = 0;
     public static final DCMotor hoodGearbox = DCMotor.getNEO(1);
     public static final double hoodFreeSpeedRPM =
             Units.radiansPerSecondToRotationsPerMinute(hoodGearbox.freeSpeedRadPerSec);
-    public static final double hoodKv = 12.0 / ((hoodFreeSpeedRPM / hoodMotorToEncoderReduction) * hoodEncoderVelocityFactor);
+    public static final double hoodKv = 1 / ((hoodFreeSpeedRPM / hoodMotorToEncoderReduction) * hoodEncoderVelocityFactor);
 
     public static final double flywheelKp = 0.67;
     public static final double flywheelKi = 0.0;
-    public static final double flywheelKd = 0.28;
+    public static final double flywheelKd = 0.0;//0.28
     public static final double shooterff = 0;
     public static final DCMotor flywheelGearbox = DCMotor.getNeoVortex(1);
     public static final double flywheelFreeSpeedRPM =
             Units.radiansPerSecondToRotationsPerMinute(flywheelGearbox.freeSpeedRadPerSec);
-    public static final double flywheelKv = 12.0 / (flywheelFreeSpeedRPM * flywheelEncoderVelocityFactor);
+    public static final double flywheelKv = (1.27 / (flywheelFreeSpeedRPM * flywheelEncoderVelocityFactor));
 
     // --- Simulation Constants ---
     public static final double turretTurnSimP = 1.0;

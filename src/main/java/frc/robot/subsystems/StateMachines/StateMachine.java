@@ -236,7 +236,7 @@ public class StateMachine extends SubsystemBase {
     }
 
     public Command setShooterOverrideCommand(boolean shootOverride) {
-        return runOnce(() -> setShootOverride(shootOverride));
+        return run(() -> setShootOverride(shootOverride));
     }
 
     /**

@@ -9,6 +9,7 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import frc.robot.subsystems.intake.IntakeConstants.IntakeSide;
 
 import static edu.wpi.first.math.util.Units.degreesToRadians;
 import static edu.wpi.first.math.util.Units.feetToMeters;
@@ -41,8 +42,9 @@ public class Intake extends SubsystemBase {
         Logger.recordOutput("Intake/RightIn", isIn(IntakeSide.RIGHT));
         Logger.recordOutput("Intake/RightOut", isOut(IntakeSide.RIGHT));
 
-        Logger.recordOutput("Intake/Components", new Pose3d[] {new Pose3d(0, getPosition(IntakeSide.LEFT) / outPosition * feetToMeters(1), 0, new Rotation3d()),
-                                                                   new Pose3d(0, getPosition(IntakeSide.RIGHT) / outPosition * -feetToMeters(1), 0, new Rotation3d())});
+        Logger.recordOutput("Intake/Components", new Pose3d[] {
+                new Pose3d(0, getPosition(IntakeSide.LEFT) / outPosition * feetToMeters(1), 0, new Rotation3d()),
+                new Pose3d(0, getPosition(IntakeSide.RIGHT) / outPosition * -feetToMeters(1), 0, new Rotation3d()) });
     }
 
     private IntakeIO getIntake(IntakeSide side) {
@@ -78,11 +80,11 @@ public class Intake extends SubsystemBase {
 
     public Command intakeIn(IntakeSide side) {
         return run(() -> {
+            driveRoller(side, rollerSpeed);
             deploy(side, false);
         }).until(() -> {
             return isIn(side);
         }).andThen(() -> {
-            // just in case
             driveRoller(side, 0);
         }, this);
     }
@@ -107,8 +109,8 @@ public class Intake extends SubsystemBase {
             // driveRoller(IntakeSide.LEFT, isIn(IntakeSide.LEFT) ? 0 : rollerSpeed);
             // driveRoller(IntakeSide.RIGHT, isIn(IntakeSide.RIGHT) ? 0 : rollerSpeed);
         }).finallyDo(() -> {
-                driveRoller(IntakeSide.LEFT, 0);
-                driveRoller(IntakeSide.RIGHT, 0);
+            driveRoller(IntakeSide.LEFT, 0);
+            driveRoller(IntakeSide.RIGHT, 0);
         });
     }
 }
