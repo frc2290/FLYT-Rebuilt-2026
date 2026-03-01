@@ -14,11 +14,15 @@ import static edu.wpi.first.math.util.Units.degreesToRadians;
 import static edu.wpi.first.math.util.Units.feetToMeters;
 import static frc.robot.subsystems.intake.IntakeConstants.*;
 
+import java.io.OutputStream;
+
 public class Intake extends SubsystemBase {
     private final IntakeIO ioLeft;
     private final IntakeIOInputsAutoLogged inputsLeft = new IntakeIOInputsAutoLogged();
     private final IntakeIO ioRight;
     private final IntakeIOInputsAutoLogged inputsRight = new IntakeIOInputsAutoLogged();
+
+    private double wowowowowoTicks = 0;
 
     // Dashboard booleans to disable an intake side in a match
     // TODO IMPLEMENT
@@ -109,6 +113,26 @@ public class Intake extends SubsystemBase {
         }).finallyDo(() -> {
                 driveRoller(IntakeSide.LEFT, 0);
                 driveRoller(IntakeSide.RIGHT, 0);
+        });
+    }
+
+    public Command wowowowowoIntake() {
+        return run(() -> {
+            wowowowowoTicks++;
+            Rotation2d angle = new Rotation2d(degreesToRadians(outPosition - (Math.sin(wowowowowoTicks / 4.0) / 2.0 + 0.5) * outPosition));
+            if (!isIn(IntakeSide.LEFT)) {
+                ioLeft.setDeployPosition(angle);
+            }
+            if (!isIn(IntakeSide.RIGHT)) {
+                ioRight.setDeployPosition(angle);
+            }
+        }).finallyDo(() -> {
+            if (!isIn(IntakeSide.LEFT)) {
+                ioLeft.setDeployPosition(new Rotation2d(degreesToRadians(outPosition)));
+            }
+            if (!isIn(IntakeSide.RIGHT)) {
+                ioRight.setDeployPosition(new Rotation2d(degreesToRadians(outPosition)));
+            }
         });
     }
 }
