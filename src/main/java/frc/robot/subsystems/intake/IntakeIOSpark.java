@@ -102,9 +102,10 @@ public class IntakeIOSpark implements IntakeIO {
                 .feedbackSensor(FeedbackSensor.kAbsoluteEncoder)
                 .pid(deployKp, deployKi, deployKd);
         deployConfig.closedLoop.maxMotion
-                .cruiseVelocity(16000)
-                .maxAcceleration(40000)
-                .allowedProfileError(0.5);
+                // Conservative starting point for ~0.25s deploy to 80 deg.
+                .cruiseVelocity(800)
+                .maxAcceleration(5000)
+                .allowedProfileError(1);
         //deployConfig.closedLoop.feedForward.kV(deployKv);
         //deployConfig.closedLoop.feedForward.kA(0);
         // driveConfig.signals
