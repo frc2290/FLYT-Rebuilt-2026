@@ -61,6 +61,7 @@ public class Turret extends SubsystemBase {
         Logger.recordOutput("Turret/SOTFVel", result.vel);
         Logger.recordOutput("Turret/SOTFPitch", result.pitch);
         Logger.recordOutput("Turret/SOTFTarget", targetTranslation);
+        Logger.recordOutput("Turret/SOTFDist", result.dist);
     }
 
     /**

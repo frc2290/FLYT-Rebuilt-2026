@@ -72,7 +72,7 @@ public class TurretConstants {
     public static final double turretTheoreticalKv =
             12.0 / (turretFreeSpeedRPM * turretEncoderVelocityFactor);
 
-    public static final double hoodKp = 0.05;
+    public static final double hoodKp = 0.1;
     public static final double hoodKi = 0.0;
     public static final double hoodKd = 0.0;
     public static final double hoodff = 0;
@@ -83,7 +83,7 @@ public class TurretConstants {
 
     public static final double flywheelKp = 0.67;
     public static final double flywheelKi = 0.0;
-    public static final double flywheelKd = 0.0;//0.28
+    public static final double flywheelKd = 3.0;
     public static final double shooterff = 0;
     public static final DCMotor flywheelGearbox = DCMotor.getNeoVortex(1);
     public static final double flywheelFreeSpeedRPM =

@@ -49,7 +49,7 @@ public class IntakeConstants {
     public static final double rollerFreeSpeedRPM =
             Units.radiansPerSecondToRotationsPerMinute(rollerGearbox.freeSpeedRadPerSec);
     public static final double rollerKv = 12.0 / (rollerFreeSpeedRPM * rollerEncoderVelocityFactor);
-    public static final double deployKp = 0.25;
+    public static final double deployKp = 0.025;
     public static final double deployKi = 0.0;
     public static final double deployKd = 0.0;
     public static final DCMotor deployGearbox = DCMotor.getNeoVortex(1);
