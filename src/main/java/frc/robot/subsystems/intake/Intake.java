@@ -121,18 +121,24 @@ public class Intake extends SubsystemBase {
     public Command wowowowowoIntake() {
         return run(() -> {
             wowowowowoTicks++;
-            Rotation2d angle = new Rotation2d(degreesToRadians(outPosition - (Math.sin(wowowowowoTicks / 4.0) / 2.0 + 0.5) * outPosition));
+            double num = outPosition - (Math.sin(wowowowowoTicks / 10.0) / 2.0 + 0.5) * (outPosition * 0.85);
+            Rotation2d angle = new Rotation2d(degreesToRadians(num));
+            boolean direction = Math.cos(num) > 0; // extending if true
             if (!isIn(IntakeSide.LEFT)) {
+                driveRoller(IntakeSide.LEFT, rollerSpeed);
                 ioLeft.setDeployPosition(angle);
             }
             if (!isIn(IntakeSide.RIGHT)) {
+                driveRoller(IntakeSide.RIGHT, rollerSpeed);
                 ioRight.setDeployPosition(angle);
             }
         }).finallyDo(() -> {
             if (!isIn(IntakeSide.LEFT)) {
+                driveRoller(IntakeSide.LEFT, 0);
                 ioLeft.setDeployPosition(new Rotation2d(degreesToRadians(outPosition)));
             }
             if (!isIn(IntakeSide.RIGHT)) {
+                driveRoller(IntakeSide.RIGHT, 0);
                 ioRight.setDeployPosition(new Rotation2d(degreesToRadians(outPosition)));
             }
         });

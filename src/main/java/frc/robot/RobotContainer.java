@@ -146,7 +146,7 @@ public class RobotContainer {
 
         // DRIVER Control definitions
 
-        m_driverController.a().onTrue(m_dyeRotor.runDyeRotorCommand(true)).onFalse(m_dyeRotor.runDyeRotorCommand(false));
+        m_driverController.a().onTrue(m_stateMachine.setShooterOverrideCommand(true)).onFalse(m_stateMachine.setShooterOverrideCommand(false));
         m_driverController.b().whileTrue(
                 new ParallelCommandGroup(
                         m_intake.driveIntake(),

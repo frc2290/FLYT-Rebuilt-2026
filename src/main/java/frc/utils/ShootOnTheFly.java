@@ -31,11 +31,13 @@ public class ShootOnTheFly {
         public double yaw; // turretAngle
         public double pitch; // hoodAngle
         public double vel; // exitVelocity
+        public double dist; // distance
 
-        public SOTFResult(double yaw, double pitch, double vel) {
+        public SOTFResult(double yaw, double pitch, double vel, double dist) {
             this.yaw = yaw;
             this.pitch = pitch;
             this.vel = vel;
+            this.dist = dist;
         }
     }
 
@@ -62,7 +64,7 @@ public class ShootOnTheFly {
     public SOTFResult calculateRecursiveTOF(Translation2d goalLocation, Pose2d robotPose, ChassisSpeeds robotSpeeds) {
         Translation2d robotVelocity = getFieldRelativeVelocity(robotSpeeds, robotPose);
 
-        double latencyCompensation = 0.0;
+        double latencyCompensation = 0.3;
         Translation2d futurePos = robotPose.getTranslation().plus(
                 robotVelocity.times(latencyCompensation));
 
@@ -94,12 +96,12 @@ public class ShootOnTheFly {
         // we get the params one more time with the updated distance...
         params = SHOOTER_MAP.get(distance);
         // ...and then return the params and direction
-        return new SOTFResult(ballGoal.getAngle().getDegrees(), params.hoodAngle(), params.speedMetersPerSecond());
+        return new SOTFResult(ballGoal.getAngle().getDegrees(), params.hoodAngle(), params.speedMetersPerSecond(), distance);
     }
 
     public SOTFResult calculateTOF(Translation2d goalLocation, Pose2d robotPose, ChassisSpeeds robotSpeeds) {
         Translation2d robotVelocity = getFieldRelativeVelocity(robotSpeeds, robotPose);
-        double latencyCompensation = 0.15;
+        double latencyCompensation = 0.3;
 
         // 1. Project future position
         Translation2d futurePos = robotPose.getTranslation().plus(
@@ -142,7 +144,7 @@ public class ShootOnTheFly {
         double ratio = MathUtil.clamp(targetHorizFromHood / totalVelocity, 0.0, 1.0);
         double adjustedHood = Math.toDegrees(Math.acos(ratio));
 
-        return new SOTFResult(turretAngle.getDegrees(), adjustedHood, adjustedSpeedMetersPerSecond);
+        return new SOTFResult(turretAngle.getDegrees(), adjustedHood, adjustedSpeedMetersPerSecond, distance);
         // return new ShooterCommand(adjustedSpeedMetersPerSecond, adjustedHood);
     }
 
@@ -181,7 +183,7 @@ public class ShootOnTheFly {
         double ratio = Math.min(newHorizontalSpeed / totalExitVelocity, 1.0);
         double newPitch = Math.acos(ratio);
 
-        return new SOTFResult(turretAngle, Math.toDegrees(newPitch), totalExitVelocity);
+        return new SOTFResult(turretAngle, Math.toDegrees(newPitch), totalExitVelocity, dist);
     }
 
     public static ShootOnTheFly getInstance() {

@@ -103,7 +103,7 @@ public class IntakeIOSpark implements IntakeIO {
                 .pid(deployKp, deployKi, deployKd);
         deployConfig.closedLoop.maxMotion
                 .cruiseVelocity(16000)
-                .maxAcceleration(80000)
+                .maxAcceleration(40000)
                 .allowedProfileError(0.5);
         //deployConfig.closedLoop.feedForward.kV(deployKv);
         //deployConfig.closedLoop.feedForward.kA(0);
