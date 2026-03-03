@@ -8,7 +8,6 @@ import frc.robot.subsystems.drive.Drive;
 import frc.utils.PoseEstimatorSubsystem;
 import frc.robot.Commands.Autos.AutoBuilder;
 import frc.robot.Commands.Autos.AutoBuilder.AutoActivity;
-import frc.robot.Commands.Autos.AutoBuilder.AutoEnd;
 import frc.robot.Commands.Autos.AutoBuilder.AutoStart;
 import frc.robot.subsystems.StateMachines.DriveStateMachine;
 import frc.robot.subsystems.StateMachines.StateMachine;
@@ -71,7 +70,6 @@ public class RobotContainer {
     SendableChooser<Command> auto_chooser = new SendableChooser<>();
     LoggedDashboardChooser<AutoStart> auto_start = new LoggedDashboardChooser<>("Auto Start");
     LoggedDashboardChooser<AutoActivity> auto_activity = new LoggedDashboardChooser<>("Auto Activity");
-    LoggedDashboardChooser<AutoEnd> auto_end = new LoggedDashboardChooser<>("Auto End");
 
     /**
      * The container for the robot. Contains subsystems, OI devices, and commands.
@@ -110,7 +108,6 @@ public class RobotContainer {
         };
         enum_chooser.accept(auto_start, AutoStart.values());
         enum_chooser.accept(auto_activity, AutoActivity.values());
-        enum_chooser.accept(auto_end, AutoEnd.values());
         // auto_start_pos.addDefaultOption("Trench", "Trench");
         // auto_start_pos.addOption("Bump", "Bump");
         // auto_end_pos.addDefaultOption("Depot", "Depot");
@@ -183,6 +180,6 @@ public class RobotContainer {
      * @return the command to run in autonomous
      */
     public Command getAutonomousCommand() {
-        return new AutoBuilder(auto_start.get(), auto_activity.get(), auto_end.get(), m_driveStateMachine, m_poseEstimator);
+        return new AutoBuilder(auto_start.get(), auto_activity.get(), m_driveStateMachine, m_poseEstimator);
     }
 }
