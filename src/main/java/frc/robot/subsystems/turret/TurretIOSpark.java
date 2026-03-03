@@ -316,6 +316,11 @@ public class TurretIOSpark implements TurretIO {
         turretSpeed = speed;
     };
 
+    @Override
+    public boolean flywheelAtSpeed() {
+        return flywheel1Encoder.getVelocity() > (turretSpeed * 0.9);
+    }
+
 
     @Override
     public void shootFuel() {

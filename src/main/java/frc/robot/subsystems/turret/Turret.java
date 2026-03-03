@@ -116,6 +116,10 @@ public class Turret extends SubsystemBase {
         return runOnce(() -> io.shootFuel());
     }
 
+    public boolean flywheelAtSpeed() {
+        return io.flywheelAtSpeed();
+    }
+
     public double getSotfYaw() {
         return sotfYaw;
     }
