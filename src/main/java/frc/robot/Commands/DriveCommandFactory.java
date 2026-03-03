@@ -34,6 +34,7 @@ import frc.utils.FieldConstants.LinesHorizontal;
 import frc.utils.FieldConstants.LinesVertical;
 import frc.utils.FieldConstants;
 import frc.utils.PoseEstimatorSubsystem;
+import frc.utils.StickExpo;
 
 import java.lang.reflect.Field;
 import java.util.Arrays;
@@ -65,6 +66,8 @@ public final class DriveCommandFactory {
   private final PIDController rotPid;
   private final PIDController xPid;
   private final PIDController yPid;
+  private final StickExpo translationExpo = new StickExpo(3.0);
+  private final StickExpo rotationExpo = new StickExpo(3.0);
 
   /**
    * Constructs a drive command factory that can create commands using the shared drivetrain, pose
@@ -122,7 +125,14 @@ public final class DriveCommandFactory {
 
   /** Grabs a snapshot of the driver inputs so each command can reason about the same numbers. */
   public DriverInputs sampleDriverInputs() {
-    return new DriverInputs(sampleForwardInput(), sampleStrafeInput(), sampleRotationInput());
+    double fwdInput = sampleForwardInput();
+    double strafeInput = sampleStrafeInput();
+    double rotInput = sampleRotationInput();
+
+    Translation2d shapedTranslation = translationExpo.shape2D(fwdInput, strafeInput);
+    double shapedRot = rotationExpo.shape1D(rotInput);
+
+    return new DriverInputs(shapedTranslation.getX(), shapedTranslation.getY(), shapedRot);
   }
 
   /** Runs the provided controller each loop while reserving the drivetrain requirement. */
