@@ -30,8 +30,8 @@ public class TurretConstants {
     public static final double shooterWheelDiameterMeters = 3.0 * 0.0254;
     public static final double rangeTurret = 2.0;
     public static final double numTeethTurret = 240.0;
-    public static final double numTeethPulley1 = 22.0;
-    public static final double numTeethPulley2 = 23.0;
+    public static final double numTeethPulley1 = 25.0;
+    public static final double numTeethPulley2 = 26.0;
     public static final double numTeethMotor = 11.0;
     public static final double turretTurnReduction = 7 / 1;
     public static final double turretShootReduction = 24.0 / 35.0;
