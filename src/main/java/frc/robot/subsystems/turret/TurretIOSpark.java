@@ -7,6 +7,7 @@ import java.util.function.DoubleSupplier;
 
 import com.revrobotics.AbsoluteEncoder;
 import com.revrobotics.PersistMode;
+import com.revrobotics.REVLibError;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.ResetMode;
 import com.revrobotics.spark.ClosedLoopSlot;
@@ -113,12 +114,13 @@ public class TurretIOSpark implements TurretIO {
             .closedLoop
             .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
             .pid(turretKp, turretKi, turretKd);
-        tryUntilOk(
-            turretSpark,
-        5,
-            () ->
-                turretSpark.configure(
-                    turretConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
+        REVLibError turretErr = turretSpark.configure(
+            turretConfig,
+            ResetMode.kResetSafeParameters,
+            PersistMode.kPersistParameters);
+        if (turretErr != REVLibError.kOk) {
+            System.err.println("TURRET CONFIG FAILED: " + turretErr.name());
+        }
 
         // Hood Config
         var hoodConfig = new SparkMaxConfig();
@@ -139,13 +141,13 @@ public class TurretIOSpark implements TurretIO {
             .feedbackSensor(FeedbackSensor.kAbsoluteEncoder)
             .pid(hoodKp, hoodKi, hoodKd);
         //hoodConfig.closedLoop.feedForward.kV(hoodKv);
-        tryUntilOk(
-            hoodSpark,
-        5,
-            () ->
-                hoodSpark.configure(
-                    hoodConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
-
+        REVLibError hoodErr = hoodSpark.configure(
+            hoodConfig,
+            ResetMode.kResetSafeParameters,
+            PersistMode.kPersistParameters);
+        if (hoodErr != REVLibError.kOk) {
+            System.err.println("HOOD CONFIG FAILED: " + hoodErr.name());
+        }
 
         // Flywheel base config (shared safety/hardware settings)
         var flywheelBaseConfig = new SparkFlexConfig();
@@ -176,18 +178,20 @@ public class TurretIOSpark implements TurretIO {
             .apply(flywheelBaseConfig)
             // true means follower output is inverted relative to leader
             .follow(flywheel1Spark, true);
-        tryUntilOk(
-            flywheel1Spark,
-        5,
-            () ->
-                flywheel1Spark.configure(
-                    flywheelLeaderConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
-        tryUntilOk(
-            flywheel2Spark,
-        5,
-            () ->
-                flywheel2Spark.configure(
-                    flywheelFollowerConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
+        REVLibError flywheel1Err = flywheel1Spark.configure(
+            flywheelLeaderConfig,
+            ResetMode.kResetSafeParameters,
+            PersistMode.kPersistParameters);
+        if (flywheel1Err != REVLibError.kOk) {
+            System.err.println("FLYWHEEL1 CONFIG FAILED: " + flywheel1Err.name());
+        }
+        REVLibError flywheel2Err = flywheel2Spark.configure(
+            flywheelFollowerConfig,
+            ResetMode.kResetSafeParameters,
+            PersistMode.kPersistParameters);
+        if (flywheel2Err != REVLibError.kOk) {
+            System.err.println("FLYWHEEL2 CONFIG FAILED: " + flywheel2Err.name());
+        }
 
         // this is very important line that checks turrets position through absalute encoders then sets relative encoder to same pose + whataever offset we want
         turnRelEncoder.setPosition(getTurretPosAtStart() + encoderOffset);
@@ -259,7 +263,7 @@ public class TurretIOSpark implements TurretIO {
         ifOk(
             turretSpark,
             new DoubleSupplier[] {turretSpark::getAppliedOutput, turretSpark::getBusVoltage},
-            (values) -> inputs.turretAppliedVolts = values[0]);
+            (values) -> inputs.turretAppliedVolts = values[0] * values[1]);
         ifOk(turretSpark, turretSpark::getOutputCurrent, (value) -> inputs.turretCurrentAmps = value);
         inputs.turretConnected = turretConnectedDebounce.calculate(!sparkStickyFault);
 
@@ -280,12 +284,12 @@ public class TurretIOSpark implements TurretIO {
         ifOk(
             flywheel1Spark,
             flywheel1Encoder::getPosition,
-            (value) -> inputs.flywheelPositionRad = new Rotation2d(value).getRadians());
+            (value) -> inputs.flywheelPositionMeters = value);
         ifOk(flywheel1Spark, flywheel1Encoder::getVelocity, (value) -> inputs.flywheelVelocity = value);
         ifOk(
             flywheel1Spark,
             new DoubleSupplier[] {flywheel1Spark::getAppliedOutput, flywheel1Spark::getBusVoltage},
-            (values) -> inputs.flywheelAppliedVolts = values[0]);
+            (values) -> inputs.flywheelAppliedVolts = values[0] * values[1]);
         ifOk(flywheel1Spark, flywheel1Spark::getOutputCurrent, (value) -> inputs.flywheelCurrentAmps = value);
         inputs.flywheelConnected = flywheelConnectedDebounce.calculate(!sparkStickyFault);
     }

@@ -1,6 +1,7 @@
 package frc.robot.subsystems.climb;
 
 import com.revrobotics.PersistMode;
+import com.revrobotics.REVLibError;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.ResetMode;
 import com.revrobotics.spark.FeedbackSensor;
@@ -10,7 +11,6 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkMaxConfig;
-import static frc.utils.SparkUtil.*;
 
 import static frc.robot.subsystems.climb.ClimbConstants.*;
 
@@ -59,17 +59,14 @@ public class ClimbIOSpark implements ClimbIO {
             .closedLoop
             .feedbackSensor(FeedbackSensor.kAlternateOrExternalEncoder)
             .pid(climbKp, climbKi, climbKd);
-        tryUntilOk(
-            m_climb,
-                   5,
-                    () ->
-                        m_climb.configure(
-                        climbConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
-
+        REVLibError climbErr = m_climb.configure(
+            climbConfig,
+            ResetMode.kResetSafeParameters,
+            PersistMode.kPersistParameters);
+        if (climbErr != REVLibError.kOk) {
+            System.err.println("CLIMB CONFIG FAILED: " + climbErr.name());
+        }
     }
-
-
-
 
     // I think this is used for logger pro to keep track of things?
     @Override
