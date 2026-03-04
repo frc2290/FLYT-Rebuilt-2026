@@ -6,6 +6,7 @@ package frc.robot.Commands.Autos;
 
 import com.pathplanner.lib.path.PathPlannerPath;
 
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
@@ -35,11 +36,11 @@ public class TrenchToNeutralAuto extends SequentialCommandGroup {
                 neutralToTrench2 = neutralToTrench2.mirrorPath();
             }
             addCommands(
-                stateMachine.setShooterOverrideCommand(false),
+                //stateMachine.setShooterOverrideCommand(false),
                 pose.setCurrentPoseCommand(trenchToNeutral.getStartingHolonomicPose().get()),
                 new ParallelCommandGroup(
                     new SwerveAutoStep(trenchToNeutral, pose),
-                    intake.intakeOut(right ? IntakeSide.LEFT : IntakeSide.RIGHT).andThen(intake.startIntakeCommand())),
+                    new WaitCommand(1.5).andThen(intake.intakeOut(right ? IntakeSide.RIGHT : IntakeSide.LEFT)).andThen(intake.startIntakeCommand())),
                 new SwerveAutoStep(neutralToTrench, pose),
                 stateMachine.setShooterOverrideCommand(true),
                 new WaitCommand(3.5),

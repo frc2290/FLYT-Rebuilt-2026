@@ -43,7 +43,7 @@ public class TurretConstants {
     public static final boolean hoodEncoderInverted = false;
     public static final double encoderOffset = 0;
     public static final double hoodEncoderZeroOffset = 0.65;
-    public static final double hoodAngleOffset = 3.87;
+    public static final double hoodAngleOffset = 7.793;
     public static final double hoodShotAngleOffset = 74.8;
     // Spark relative encoder is on the turret turn motor.
     // Position factor: motor rotations -> turret mechanism degrees.
@@ -69,9 +69,9 @@ public class TurretConstants {
     public static final double turretTheoreticalKv =
             12.0 / (turretFreeSpeedRPM * turretEncoderVelocityFactor);
     public static final double turretGainScale = turretTheoreticalKv / 12.0;
-    public static final double turretKp = turretGainScale * 1.8656;
-    public static final double turretKi = turretGainScale * 0.0;
-    public static final double turretKd = turretGainScale * 0.0;
+    public static final double turretKp = 0.1; //turretGainScale * 1.0;
+    public static final double turretKi = 0.0; //turretGainScale * 0.0;
+    public static final double turretKd = 0.0; //turretGainScale * 0.0;
 
     public static final double hoodff = 0;
     public static final DCMotor hoodGearbox = DCMotor.getNEO(1);
@@ -89,8 +89,8 @@ public class TurretConstants {
     public static final double flywheelFreeSpeedRPM =
             Units.radiansPerSecondToRotationsPerMinute(flywheelGearbox.freeSpeedRadPerSec);
     public static final double flywheelKv =
-            12.0 / (flywheelFreeSpeedRPM * flywheelEncoderVelocityFactor);
-    public static final double flywheelGainScale = flywheelKv / 12.0;
+            1.27 / (flywheelFreeSpeedRPM * flywheelEncoderVelocityFactor);
+    public static final double flywheelGainScale = flywheelKv / 1.27;
     public static final double flywheelKp = flywheelGainScale * 13.2233362812877;
     public static final double flywheelKi = flywheelGainScale * 0.0;
     public static final double flywheelKd = flywheelGainScale * 59.2089684236761;

@@ -271,6 +271,7 @@ public class Robot extends LoggedRobot {
     public void autonomousExit() {
         m_driveStateMachine.setDriveCommand(DriveState.CANCELLED);
         m_stateMachine.setIsAuto(false);
+        m_stateMachine.setShootOverride(false);
     }
 
     @Override
@@ -292,7 +293,7 @@ public class Robot extends LoggedRobot {
     @Override
     public void teleopPeriodic() {
         // TEMP POINT UPDATE DRIVE TARGET HEADING TO TURRET HEADING FROM SOTF
-        m_driveStateMachine.setSotfHeading(m_turret.getSotfYaw());
+        m_driveStateMachine.setSotfHeading(m_turret.getTurretPos());
     }
 
     @Override

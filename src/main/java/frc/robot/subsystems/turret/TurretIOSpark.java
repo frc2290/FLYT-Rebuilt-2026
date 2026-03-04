@@ -30,14 +30,14 @@ import frc.utils.DualEncoderUnwrapper;
 public class TurretIOSpark implements TurretIO {
 
     // Harware objects
-    //private final SparkBase turretSpark;
+    private final SparkBase turretSpark;
     private final SparkBase hoodSpark; 
     private final SparkBase flywheel1Spark; //later change to bottom/top
     private final SparkBase flywheel2Spark;
 
     // Fo turret
     private RelativeEncoder turnRelEncoder; // Experimental for using one encoder for two things at the same time
-    //private AbsoluteEncoder turnEncoder;
+    private AbsoluteEncoder turnEncoder;
     private DutyCycleEncoder turnEncoder1;
     private DutyCycleEncoder turnEncoder2;
     //private AbsoluteEncoder turnEncoder2;
@@ -46,7 +46,7 @@ public class TurretIOSpark implements TurretIO {
     private RelativeEncoder flywheel2Encoder;
 
     // Closed loop controllers
-    //private final SparkClosedLoopController turretController; 
+    private final SparkClosedLoopController turretController; 
     private final SparkClosedLoopController hoodController;
     private final SparkClosedLoopController flywheelController1;
 
@@ -67,7 +67,7 @@ public class TurretIOSpark implements TurretIO {
     public TurretIOSpark() {
 
         // Create motor controllers
-        //turretSpark = new SparkFlex(turretCanId, MotorType.kBrushless);
+        turretSpark = new SparkFlex(turretCanId, MotorType.kBrushless);
         hoodSpark = new SparkMax(hoodCanId, MotorType.kBrushless);
         flywheel1Spark = new SparkFlex(flywheel1CanId, MotorType.kBrushless);
         flywheel2Spark = new SparkFlex(flywheel2CanId, MotorType.kBrushless);
@@ -75,14 +75,14 @@ public class TurretIOSpark implements TurretIO {
         // Setup encoders
         flywheel1Encoder = flywheel1Spark.getEncoder();
         flywheel2Encoder = flywheel2Spark.getEncoder();
-        //turnRelEncoder = turretSpark.getEncoder(); 
+        turnRelEncoder = turretSpark.getEncoder(); 
         hoodEncoder = hoodSpark.getAbsoluteEncoder();
 
         // Setup RoboRio Absolute encoders
         // Initializes duty cycle encoders on DIO pins 0 and 1.
         // get() returns position in rotations [0, 1].
-        turnEncoder1 = new DutyCycleEncoder(0);
-        turnEncoder2 = new DutyCycleEncoder(1);
+        turnEncoder1 = new DutyCycleEncoder(0, 1, 0.2664760066619002);
+        turnEncoder2 = new DutyCycleEncoder(1, 1, 0.2869740071743502);
 
         // Gets if the encoders are connected, IMPLEMENT LATER
         turnEncoder1.isConnected();
@@ -94,31 +94,31 @@ public class TurretIOSpark implements TurretIO {
         (default 1).*/
 
         // Setup Controllers
-        //turretController = turretSpark.getClosedLoopController();
+        turretController = turretSpark.getClosedLoopController();
         hoodController = hoodSpark.getClosedLoopController();
         flywheelController1 = flywheel1Spark.getClosedLoopController();
 
         // Turret parameters
-        // var turretConfig = new SparkFlexConfig();
-        // turretConfig
-        //     .inverted(turretIsInverted)
-        //     .idleMode(IdleMode.kCoast)
-        //     .smartCurrentLimit(turretMotorCurrent)
-        // turretConfig
-        //     .encoder
-        //     .positionConversionFactor(turretEncoderPositionFactor)
-        //     .velocityConversionFactor(turretEncoderVelocityFactor)
-        //     .quadratureAverageDepth(2);
-        // turretConfig
-        //     .closedLoop
-        //     .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-        //     .pid(turretKp, turretKi, turretKd);
-        // tryUntilOk(
-        //     turretSpark,
-        // 5,
-        //     () ->
-        //         turretSpark.configure(
-        //             turretConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
+        var turretConfig = new SparkFlexConfig();
+        turretConfig
+            .inverted(turretIsInverted)
+            .idleMode(IdleMode.kCoast)
+            .smartCurrentLimit(turretMotorCurrent);
+        turretConfig
+            .encoder
+            .positionConversionFactor(turretEncoderPositionFactor)
+            .velocityConversionFactor(turretEncoderVelocityFactor)
+            .quadratureAverageDepth(2);
+        turretConfig
+            .closedLoop
+            .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
+            .pid(turretKp, turretKi, turretKd);
+        tryUntilOk(
+            turretSpark,
+        5,
+            () ->
+                turretSpark.configure(
+                    turretConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
 
         // Hood Config
         var hoodConfig = new SparkMaxConfig();
@@ -190,7 +190,7 @@ public class TurretIOSpark implements TurretIO {
                     flywheelFollowerConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
 
         // this is very important line that checks turrets position through absalute encoders then sets relative encoder to same pose + whataever offset we want
-        //turnRelEncoder.setPosition(getTurretPosAtStart() + encoderOffset);
+        turnRelEncoder.setPosition(getTurretPosAtStart() + encoderOffset);
     }
 
 
@@ -235,31 +235,33 @@ public class TurretIOSpark implements TurretIO {
     // I think this is used for logger pro to keep track of things?
     @Override
     public void updateInputs(TurretIOInputs inputs) {
-        double targetEncoderAngle = (turretHoodAngle + hoodAngleOffset);
-        hoodController.setSetpoint(targetEncoderAngle, ControlType.kPosition);
+        double targetHoodEncoderAngle = (turretHoodAngle + hoodAngleOffset);
+        hoodController.setSetpoint(targetHoodEncoderAngle, ControlType.kPosition);
 
         flywheelController1.setSetpoint(turretSpeed, ControlType.kVelocity);
 
+        turretController.setSetpoint(turretAngleSetpoint, ControlType.kPosition);
+
         //turretAngle = getTurretPos();
         inputs.turretAngle = turretAngle;
-        //turretSpeed = getTurretVel();
         inputs.turretSpeed = turretSpeed;
-        //turretHoodAngle = getHoodAngle();
         inputs.turretHoodAngle = turretHoodAngle;
-        inputs.turretAngleSetpoint = targetEncoderAngle;
+        inputs.turretAngleSetpoint = turretAngleSetpoint;
+        inputs.turretEnc1Pos = turnEncoder1.get();
+        inputs.turretEnc2Pos = turnEncoder2.get();
 
-        // sparkStickyFault = false;
-        // ifOk(
-        //     turretSpark,
-        //     turnRelEncoder::getPosition,
-        //     (value) -> inputs.turretPositionRad = new Rotation2d(value).getRadians());
-        // ifOk(turretSpark, turnRelEncoder::getVelocity, (value) -> inputs.turretVelocityRadPerSec = value);
-        // ifOk(
-        //     turretSpark,
-        //     new DoubleSupplier[] {turretSpark::getAppliedOutput, turretSpark::getBusVoltage},
-        //     (values) -> inputs.turretAppliedVolts = values[0] * values[1]);
-        // ifOk(turretSpark, turretSpark::getOutputCurrent, (value) -> inputs.turretCurrentAmps = value);
-        // inputs.turretConnected = turretConnectedDebounce.calculate(!sparkStickyFault);
+        sparkStickyFault = false;
+        ifOk(
+            turretSpark,
+            turnRelEncoder::getPosition,
+            (value) -> inputs.turretPosition = value);
+        ifOk(turretSpark, turnRelEncoder::getVelocity, (value) -> inputs.turretVelocity = value);
+        ifOk(
+            turretSpark,
+            new DoubleSupplier[] {turretSpark::getAppliedOutput, turretSpark::getBusVoltage},
+            (values) -> inputs.turretAppliedVolts = values[0]);
+        ifOk(turretSpark, turretSpark::getOutputCurrent, (value) -> inputs.turretCurrentAmps = value);
+        inputs.turretConnected = turretConnectedDebounce.calculate(!sparkStickyFault);
 
         sparkStickyFault = false;
         ifOk(
@@ -291,8 +293,14 @@ public class TurretIOSpark implements TurretIO {
 
     @Override
     public void setTurnPosition(Rotation2d rotation) {
-        //turretController.setSetpoint(rotation.getDegrees(), ControlType.kMAXMotionPositionControl, ClosedLoopSlot.kSlot0, turretff);
-        //turretAngleSetpoint = rotation.getDegrees();
+        double targetRotation = rotation.getDegrees();
+        if (targetRotation > 75) {
+            targetRotation = 75;
+        }
+        if (targetRotation < -75) {
+            targetRotation = -75;
+        }
+        turretAngleSetpoint = targetRotation;
     }
 
 
@@ -318,7 +326,7 @@ public class TurretIOSpark implements TurretIO {
 
     @Override
     public boolean flywheelAtSpeed() {
-        return flywheel1Encoder.getVelocity() > (turretSpeed * 0.9);
+        return flywheel1Encoder.getVelocity() > (turretSpeed * 0.8);
     }
 
 
