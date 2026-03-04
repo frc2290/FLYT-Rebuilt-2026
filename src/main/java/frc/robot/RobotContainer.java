@@ -55,7 +55,6 @@ import com.pathplanner.lib.auto.NamedCommands;
  * periodic methods (other than the scheduler calls).  Instead, the structure of the robot
  * (including subsystems, commands, and button mappings) should be declared here.
  */
-@SuppressWarnings("unused")
 public class RobotContainer {
     // The robot's subsystems
     private final Drive m_drive;
@@ -73,7 +72,7 @@ public class RobotContainer {
     SendableChooser<Command> auto_chooser = new SendableChooser<>();
     LoggedDashboardChooser<AutoStart> auto_start = new LoggedDashboardChooser<>("Auto Start");
     LoggedDashboardChooser<AutoActivity> auto_activity = new LoggedDashboardChooser<>("Auto Activity");
-    LoggedDashboardChooser<AutoEnd> auto_end = new LoggedDashboardChooser<>("Auto End");
+    //LoggedDashboardChooser<AutoEnd> auto_end = new LoggedDashboardChooser<>("Auto End");
     LoggedDashboardChooser<Boolean> auto_right = new LoggedDashboardChooser<>("Right Side Auto?");
 
     /**
