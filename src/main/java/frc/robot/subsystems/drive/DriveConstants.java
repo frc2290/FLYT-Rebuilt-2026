@@ -43,7 +43,9 @@ public final class DriveConstants {
     }
   }
 
-  public static final boolean gyroReversed = false;
+  public static final boolean gyroReversed = true;
+  // Fixed yaw offset to align NavX zero with field-forward for autos.
+  public static final double gyroYawOffsetDeg = 180.0;
 
   public static final double maxAngularSpeed = 4 * Math.PI;
   public static final double odometryFrequency = 100.0; // Hz

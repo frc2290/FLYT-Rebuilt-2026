@@ -4,8 +4,11 @@
 
 package frc.robot.Commands.Autos;
 
+import org.littletonrobotics.junction.Logger;
+
 import com.pathplanner.lib.path.PathPlannerPath;
 
+import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -29,12 +32,14 @@ public class TrenchToNeutralAuto extends SequentialCommandGroup {
             PathPlannerPath neutralToTrench = PathPlannerPath.fromPathFile("NeutralTrenchRight");
             PathPlannerPath trenchToNeutral2 = PathPlannerPath.fromPathFile("TrenchNeutralRight2");
             PathPlannerPath neutralToTrench2 = PathPlannerPath.fromPathFile("NeutralTrenchRight2");
-            if (!right) {
-                trenchToNeutral = trenchToNeutral.mirrorPath();
-                neutralToTrench = neutralToTrench.mirrorPath();
-                trenchToNeutral2 = trenchToNeutral2.mirrorPath();
-                neutralToTrench2 = neutralToTrench2.mirrorPath();
-            }
+            Pose2d startPose = trenchToNeutral.getStartingHolonomicPose().get();
+            Logger.recordOutput("StartPose", startPose);
+            // if (!right) {
+            //     trenchToNeutral = trenchToNeutral.mirrorPath();
+            //     neutralToTrench = neutralToTrench.mirrorPath();
+            //     trenchToNeutral2 = trenchToNeutral2.mirrorPath();
+            //     neutralToTrench2 = neutralToTrench2.mirrorPath();
+            // }
             addCommands(
                 //stateMachine.setShooterOverrideCommand(false),
                 pose.setCurrentPoseCommand(trenchToNeutral.getStartingHolonomicPose().get()),
