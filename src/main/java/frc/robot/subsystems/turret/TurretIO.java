@@ -27,7 +27,7 @@ public interface TurretIO {
         public double hoodCurrentAmps = 0.0;
 
         public boolean flywheelConnected = false;
-        public double flywheelPositionRad = 0.0;
+        public double flywheelPositionMeters = 0.0;
         public double flywheelVelocity = 0.0;
         public double flywheelAppliedVolts = 0.0;
         public double flywheelCurrentAmps = 0.0;

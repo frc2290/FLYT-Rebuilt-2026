@@ -259,7 +259,7 @@ public class TurretIOSpark implements TurretIO {
         ifOk(
             turretSpark,
             new DoubleSupplier[] {turretSpark::getAppliedOutput, turretSpark::getBusVoltage},
-            (values) -> inputs.turretAppliedVolts = values[0]);
+            (values) -> inputs.turretAppliedVolts = values[0] * values[1]);
         ifOk(turretSpark, turretSpark::getOutputCurrent, (value) -> inputs.turretCurrentAmps = value);
         inputs.turretConnected = turretConnectedDebounce.calculate(!sparkStickyFault);
 
@@ -280,12 +280,12 @@ public class TurretIOSpark implements TurretIO {
         ifOk(
             flywheel1Spark,
             flywheel1Encoder::getPosition,
-            (value) -> inputs.flywheelPositionRad = new Rotation2d(value).getRadians());
+            (value) -> inputs.flywheelPositionMeters = value);
         ifOk(flywheel1Spark, flywheel1Encoder::getVelocity, (value) -> inputs.flywheelVelocity = value);
         ifOk(
             flywheel1Spark,
             new DoubleSupplier[] {flywheel1Spark::getAppliedOutput, flywheel1Spark::getBusVoltage},
-            (values) -> inputs.flywheelAppliedVolts = values[0]);
+            (values) -> inputs.flywheelAppliedVolts = values[0] * values[1]);
         ifOk(flywheel1Spark, flywheel1Spark::getOutputCurrent, (value) -> inputs.flywheelCurrentAmps = value);
         inputs.flywheelConnected = flywheelConnectedDebounce.calculate(!sparkStickyFault);
     }
