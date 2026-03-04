@@ -102,11 +102,10 @@ public final class DriveConstants {
       driveFreeSpeedRPM * driveEncoderVelocityFactor * wheelRadiusMeters;
 
   // Drive PID configuration
+  public static final double driveKp = 0.017;
+  public static final double driveKd = 0.0;
   public static final double driveKs = 0.0;
   public static final double driveKv = 12.0 / (driveFreeSpeedRPM * driveEncoderVelocityFactor);
-  public static final double driveGainScale = driveKv / 12.0;
-  public static final double driveKp = driveGainScale * 3.39006874903582;
-  public static final double driveKd = driveGainScale * 0.0;
   public static final double driveSimP = 0.05;
   public static final double driveSimD = 0.0;
   public static final double driveSimKs = 0.0;
@@ -117,20 +116,15 @@ public final class DriveConstants {
   public static final int turnMotorCurrentLimit = 20;
   public static final double turnMotorReduction = 9424.0 / 203.0;
   public static final DCMotor turnGearbox = DCMotor.getNeo550(1);
-  public static final double turnFreeSpeedRPM =
-      Units.radiansPerSecondToRotationsPerMinute(turnGearbox.freeSpeedRadPerSec);
 
   // Turn encoder configuration
   public static final boolean turnEncoderInverted = true;
   public static final double turnEncoderPositionFactor = 2 * Math.PI; // Rotations -> Radians
   public static final double turnEncoderVelocityFactor = (2 * Math.PI) / 60.0; // RPM -> Rad/Sec
-  public static final double turnKv =
-      12.0 / ((turnFreeSpeedRPM / turnMotorReduction) * turnEncoderVelocityFactor);
-  public static final double turnGainScale = turnKv / 12.0;
 
   // Turn PID configuration
-  public static final double turnKp = turnGainScale * 49.6263185870544;
-  public static final double turnKd = turnGainScale * 0.0;
+  public static final double turnKp = 2.0;
+  public static final double turnKd = 0.0;
   public static final double turnSimP = 8.0;
   public static final double turnSimD = 0.0;
   public static final double turnPIDMinInput = 0; // Radians
