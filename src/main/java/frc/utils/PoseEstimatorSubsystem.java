@@ -50,6 +50,7 @@ import org.photonvision.EstimatedRobotPose;
 
 import org.littletonrobotics.junction.AutoLogOutput;
 // import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.Logger;
 
 /** Pose estimator that uses odometry and AprilTags with PhotonVision. */
 public class PoseEstimatorSubsystem extends SubsystemBase {
@@ -213,6 +214,8 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
             drive.addVisionMeasurement(finalPose, update.timestamp(), update.stdDevs());
             sawTag = true;
         });
+
+        Logger.recordOutput("TargetPose", targetPose);
 
         // Set the pose on the dashboard.
         //var dashboardPose = drive.getPose();

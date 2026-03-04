@@ -13,10 +13,12 @@ public interface TurretIO {
         public double turretAngleSetpoint = 0;
 
         public boolean turretConnected = false;
-        public double turretPositionRad = 0.0;
-        public double turretVelocityRadPerSec = 0.0;
+        public double turretPosition = 0.0;
+        public double turretVelocity = 0.0;
         public double turretAppliedVolts = 0.0;
         public double turretCurrentAmps = 0.0;
+        public double turretEnc1Pos = 0.0;
+        public double turretEnc2Pos = 0.0;
 
         public boolean hoodConnected = false;
         public double hoodPositionDeg = 0.0;

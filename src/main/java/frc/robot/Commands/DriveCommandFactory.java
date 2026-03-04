@@ -189,22 +189,22 @@ public final class DriveCommandFactory {
     return runDriveCommand(
         inputs -> {
           // Give the driver full control of heading if they request it.
-          if (applyManualRotationOverride(inputs)) {
-            return;
-          }
+          // if (applyManualRotationOverride(inputs)) {
+          //   return;
+          // }
 
           // Otherwise steer toward the pose estimator's active trajectory target.
           Pose2d targetPose =
               Objects.requireNonNull(
                   poseEstimator.getTargetPose(), "Follow path target pose was null");
-
           // These PID calculations intentionally mirror the autonomous follower.
+          Pose2d curPos = poseEstimator.getCurrentPose();
           double rotSpeed =
-              rotPid.calculate(poseEstimator.getDegrees(), targetPose.getRotation().getDegrees());
+              rotPid.calculate(curPos.getRotation().getDegrees(), targetPose.getRotation().getDegrees());
           double xCommand =
-              xPid.calculate(poseEstimator.getCurrentPose().getX(), targetPose.getX());
+              xPid.calculate(curPos.getX(), targetPose.getX());
           double yCommand =
-              yPid.calculate(poseEstimator.getCurrentPose().getY(), targetPose.getY());
+              yPid.calculate(curPos.getY(), targetPose.getY());
 
           // Drive toward the path planner target while still using field-relative speeds.
           drive.drive(xCommand, yCommand, rotSpeed, true);

@@ -101,8 +101,8 @@ public class IntakeIOSpark implements IntakeIO {
                 .pid(deployKp, deployKi, deployKd);
         deployConfig.closedLoop.maxMotion
                 // Conservative starting point for ~0.25s deploy to 80 deg.
-                .cruiseVelocity(800)
-                .maxAcceleration(5000)
+                .cruiseVelocity(8000)
+                .maxAcceleration(50000)
                 .allowedProfileError(1);
         //deployConfig.closedLoop.feedForward.kV(deployKv);
         //deployConfig.closedLoop.feedForward.kA(0);
@@ -130,8 +130,8 @@ public class IntakeIOSpark implements IntakeIO {
         ifOk(driveSpark, driveEncoder::getVelocity, (value) -> inputs.driveSpeed = value);
         ifOk(
                 driveSpark,
-                new DoubleSupplier[] { driveSpark::getAppliedOutput, driveSpark::getBusVoltage },
-                (values) -> inputs.driveAppliedVolts = values[0] * values[1]);
+                new DoubleSupplier[] { driveSpark::getAppliedOutput},
+                (values) -> inputs.driveAppliedVolts = values[0]);
         ifOk(driveSpark, driveSpark::getOutputCurrent, (value) -> inputs.driveCurrentAmps = value);
 
         // Update deploy inputs

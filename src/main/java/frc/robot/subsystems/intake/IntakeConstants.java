@@ -47,7 +47,7 @@ public class IntakeConstants {
             Units.radiansPerSecondToRotationsPerMinute(rollerGearbox.freeSpeedRadPerSec);
     public static final double rollerKv = 12.0 / (rollerFreeSpeedRPM * rollerEncoderVelocityFactor);
     public static final double rollerGainScale = rollerKv / 12.0;
-    public static final double rollerKp = rollerGainScale * 0.0;
+    public static final double rollerKp = 0.5;//rollerGainScale * 0.0;
     public static final double rollerKi = rollerGainScale * 0.0;
     public static final double rollerKd = rollerGainScale * 0.0;
     public static final DCMotor deployGearbox = DCMotor.getNeoVortex(1);
@@ -67,10 +67,10 @@ public class IntakeConstants {
 
     // --- Subsystem Behaviors & Targets ---
     public static final double inPosition = 0;
-    public static final double outPosition = 80;
+    public static final double outPosition = 86;
     public static final double positionBuffer = 5;
     // Intake roller surface speed command in m/s.
-    public static final double rollerSpeed = 6;
+    public static final double rollerSpeed = 3;
     public static final double leftZeroOffsetAdj = 18.0;
     public static final double rightZeroOffsetAdj = 27.0;
 }

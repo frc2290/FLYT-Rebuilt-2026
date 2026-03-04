@@ -98,8 +98,8 @@ public final class Constants {
         // Multi-camera AprilTag rig configuration (robot-to-camera transforms).
         public static final String kForwardCamName = "forward";
         public static final Transform3d kForwardCamTransform = new Transform3d(
-                new Translation3d(0.3, 0.0, 0.5),
-                new Rotation3d(0.0, degreesToRadians(-42.0), 0.0));
+                new Translation3d(0.24765, -0.1524, 0.5334),
+                new Rotation3d(0.0, degreesToRadians(-45.0), 0.0));
 
         public static final String kBackwardCamName = "backward";
         public static final Transform3d kBackwardCamTransform = new Transform3d(

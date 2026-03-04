@@ -120,13 +120,13 @@ public class RobotContainer {
         auto_right.addDefaultOption("Right", true);
         auto_right.addOption("Left", false);
 
-        NamedCommands.registerCommand("IntakeLeftOut", m_intake.intakeOut(IntakeSide.LEFT));
-        NamedCommands.registerCommand("IntakeRightOut", m_intake.intakeOut(IntakeSide.RIGHT));
-        NamedCommands.registerCommand("IntakeRun", m_intake.runIntakeCommand());
-        NamedCommands.registerCommand("IntakeStart", m_intake.startIntakeCommand());
-        NamedCommands.registerCommand("IntakeStop", m_intake.stopIntakeCommand());
-        NamedCommands.registerCommand("IntakeLeftOutStart", new SequentialCommandGroup(m_intake.intakeOut(IntakeSide.LEFT), m_intake.startIntakeCommand()));
-        NamedCommands.registerCommand("IntakeRightOutStart", new SequentialCommandGroup(m_intake.intakeOut(IntakeSide.RIGHT), m_intake.startIntakeCommand()));
+        //NamedCommands.registerCommand("IntakeLeftOut", m_intake.intakeOut(IntakeSide.LEFT));
+        //NamedCommands.registerCommand("IntakeRightOut", m_intake.intakeOut(IntakeSide.RIGHT));
+        //NamedCommands.registerCommand("IntakeRun", m_intake.runIntakeCommand());
+        //NamedCommands.registerCommand("IntakeStart", m_intake.startIntakeCommand());
+        //NamedCommands.registerCommand("IntakeStop", m_intake.stopIntakeCommand());
+        //NamedCommands.registerCommand("IntakeLeftOutStart", new SequentialCommandGroup(m_intake.intakeOut(IntakeSide.LEFT), m_intake.startIntakeCommand()));
+        //NamedCommands.registerCommand("IntakeRightOutStart", new SequentialCommandGroup(m_intake.intakeOut(IntakeSide.RIGHT), m_intake.startIntakeCommand()));
 
         if (Robot.isSimulation()) {
             FuelSim instance = FuelSim.getInstance();
@@ -145,7 +145,7 @@ public class RobotContainer {
         Trigger isInNeutral = new Trigger(() -> m_stateMachine.getFieldZone() == FieldZone.NEUTRAL);
         Trigger isLeft = new Trigger(() -> m_stateMachine.getLeftSide());
 
-        isOnBump.or(isUnderTrench).and(notAuto).whileTrue(m_driveStateMachine.tempChangeState(DriveState.ASSIST));
+        //isOnBump.or(isUnderTrench).and(notAuto).whileTrue(m_driveStateMachine.tempChangeState(DriveState.ASSIST));
         // isOnBump.and(notAuto).whileTrue(m_driveStateMachine.tempChangeState(DriveState.BUMP));
         // isUnderTrench.and(notAuto).whileTrue(m_driveStateMachine.tempChangeState(DriveState.TRENCH));
 
