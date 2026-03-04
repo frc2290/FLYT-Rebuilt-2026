@@ -9,7 +9,6 @@ import frc.utils.PoseEstimatorSubsystem;
 import frc.robot.Commands.Autos.AutoBuilder;
 import frc.robot.Commands.Autos.TrenchToNeutralAuto;
 import frc.robot.Commands.Autos.AutoBuilder.AutoActivity;
-import frc.robot.Commands.Autos.AutoBuilder.AutoEnd;
 import frc.robot.Commands.Autos.AutoBuilder.AutoStart;
 import frc.robot.subsystems.StateMachines.DriveStateMachine;
 import frc.robot.subsystems.StateMachines.StateMachine;
@@ -114,7 +113,6 @@ public class RobotContainer {
         };
         enum_chooser.accept(auto_start, AutoStart.values());
         enum_chooser.accept(auto_activity, AutoActivity.values());
-        enum_chooser.accept(auto_end, AutoEnd.values());
         // auto_start_pos.addDefaultOption("Trench", "Trench");
         // auto_start_pos.addOption("Bump", "Bump");
         // auto_end_pos.addDefaultOption("Depot", "Depot");

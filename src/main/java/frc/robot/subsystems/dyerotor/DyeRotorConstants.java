@@ -29,12 +29,6 @@ public class DyeRotorConstants {
     public static final double feederEncoderVelocityFactor = 1.0/feedGearRatio;
 
     // --- Control Loop Constants (PID & Feedforward) ---
-    public static final double rotorKp = 0;
-    public static final double rotorKi = 0;
-    public static final double rotorKd = 0;
-    public static final double feederKp = 0;
-    public static final double feederKi = 0;
-    public static final double feederKd = 0;
     public static final DCMotor rotorGearbox = DCMotor.getNeoVortex(1);
     public static final DCMotor feederGearbox = DCMotor.getNEO(1);
     public static final double rotorFreeSpeedRPM =
@@ -46,6 +40,14 @@ public class DyeRotorConstants {
     // This ensures that commanding the theoretical max mechanism RPM outputs exactly 12.0 (Max Voltage).
     public static final double rotorKv = 12.0 / (rotorFreeSpeedRPM / rotorGearRatio);
     public static final double feederKv = 12.0 / (feederFreeSpeedRPM / feedGearRatio);
+    public static final double rotorGainScale = rotorKv / 12.0;
+    public static final double feederGainScale = feederKv / 12.0;
+    public static final double rotorKp = rotorGainScale * 0.0;
+    public static final double rotorKi = rotorGainScale * 0.0;
+    public static final double rotorKd = rotorGainScale * 0.0;
+    public static final double feederKp = feederGainScale * 0.0;
+    public static final double feederKi = feederGainScale * 0.0;
+    public static final double feederKd = feederGainScale * 0.0;
 
     // --- Subsystem Behaviors & Targets ---
     // Throughput target used by runDyeRotor(true)
