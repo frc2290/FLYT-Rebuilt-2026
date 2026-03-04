@@ -12,8 +12,8 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 
 import static frc.robot.subsystems.dyerotor.DyeRotorConstants.*;
 import static frc.utils.SparkUtil.ifOk;
-import static frc.utils.SparkUtil.tryUntilOk;
 
+import com.revrobotics.REVLibError;
 import java.util.function.DoubleSupplier;
 
 public class DyeRotorIOSpark implements DyeRotorIO {
@@ -50,32 +50,46 @@ public class DyeRotorIOSpark implements DyeRotorIO {
                 .inverted(rotorIsInverted)
                 .idleMode(IdleMode.kCoast)
                 .smartCurrentLimit(rotorMotorCurrent);
-        rotorConfig.encoder
+        rotorConfig
+                .encoder
                 .positionConversionFactor(rotorEncoderPositionFactor)
                 .velocityConversionFactor(rotorEncoderVelocityFactor)
                 .quadratureAverageDepth(2);
-        rotorConfig.closedLoop
+        rotorConfig
+                .closedLoop
                 .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
                 .pid(rotorKp, rotorKi, rotorKd);
         rotorConfig.closedLoop.feedForward.kV(rotorKv);
-        tryUntilOk(rotor, 5,
-                () -> rotor.configure(rotorConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
+        REVLibError rotorErr = rotor.configure(
+                rotorConfig,
+                ResetMode.kResetSafeParameters,
+                PersistMode.kPersistParameters);
+        if (rotorErr != REVLibError.kOk) {
+                System.err.println("DYEROTOR ROTOR CONFIG FAILED: " + rotorErr.name());
+        }
 
         var feederConfig = new SparkMaxConfig();
         feederConfig
                 .inverted(feederIsInverted)
                 .idleMode(IdleMode.kCoast)
                 .smartCurrentLimit(feederMotorCurrent);
-        feederConfig.encoder
+        feederConfig
+                .encoder
                 .positionConversionFactor(feederEncoderPositionFactor)
                 .velocityConversionFactor(feederEncoderVelocityFactor)
                 .uvwAverageDepth(2);
-        feederConfig.closedLoop
+        feederConfig
+                .closedLoop
                 .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
                 .pid(feederKp, feederKi, feederKd);
         feederConfig.closedLoop.feedForward.kV(feederKv);
-        tryUntilOk(feeder, 5,
-                () -> feeder.configure(feederConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
+        REVLibError feederErr = feeder.configure(
+                feederConfig,
+                ResetMode.kResetSafeParameters,
+                PersistMode.kPersistParameters);
+        if (feederErr != REVLibError.kOk) {
+                System.err.println("DYEROTOR FEEDER CONFIG FAILED: " + feederErr.name());
+        }
     }
 
     // private double getFeederSpeed() {

@@ -16,6 +16,7 @@ import com.revrobotics.spark.SparkLowLevel.MotorType;
 import com.revrobotics.AbsoluteEncoder;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.PersistMode;
+import com.revrobotics.REVLibError;
 import com.revrobotics.ResetMode;
 
 import frc.robot.Configs;
@@ -52,10 +53,20 @@ public class MAXSwerveModule {
         // Apply the respective configurations to the SPARKS. Reset parameters before
         // applying the configuration to bring the SPARK to a known good state. Persist
         // the settings to the SPARK to avoid losing them on a power cycle.
-        m_drivingSpark.configure(Configs.MAXSwerveModule.drivingConfig, ResetMode.kResetSafeParameters,
+        REVLibError drivingErr = m_drivingSpark.configure(
+                Configs.MAXSwerveModule.drivingConfig,
+                ResetMode.kResetSafeParameters,
                 PersistMode.kPersistParameters);
-        m_turningSpark.configure(Configs.MAXSwerveModule.turningConfig, ResetMode.kResetSafeParameters,
+        if (drivingErr != REVLibError.kOk) {
+                System.err.println("MAX SWERVE DRIVE CONFIG FAILED: " + drivingErr.name());
+        }
+        REVLibError turningErr = m_turningSpark.configure(
+                Configs.MAXSwerveModule.turningConfig,
+                ResetMode.kResetSafeParameters,
                 PersistMode.kPersistParameters);
+        if (turningErr != REVLibError.kOk) {
+                System.err.println("MAX SWERVE TURN CONFIG FAILED: " + turningErr.name());
+        }
 
         m_chassisAngularOffset = chassisAngularOffset;
         m_desiredState.angle = new Rotation2d(m_turningEncoder.getPosition());
