@@ -92,6 +92,11 @@ public class TurretIOSim implements TurretIO {
         turretSpeed = speed;
     };
 
+    @Override
+    public boolean flywheelAtSpeed() {
+        return true;
+    }
+
     public void simIntake() {
         fuelCount++;
     }
