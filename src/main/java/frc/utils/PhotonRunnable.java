@@ -16,23 +16,18 @@
 //
 package frc.utils;
 
+import static frc.robot.Constants.VisionConstants.kVisionMaxPoseZMeters;
+
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFieldLayout.OriginPosition;
-// import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.RobotBase;
-import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import frc.utils.PoseUtils.Heading;
-import java.util.List;
-import java.util.Optional;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
-import org.photonvision.PhotonPoseEstimator.ConstrainedSolvepnpParams;
 import org.photonvision.PhotonPoseEstimator.PoseStrategy;
 import org.photonvision.targeting.PhotonPipelineResult;
 
@@ -41,76 +36,78 @@ public class PhotonRunnable implements Runnable {
 
     private final PhotonPoseEstimator photonPoseEstimator;
     private final PhotonCamera photonCamera;
+    private final AprilTagFieldLayout layout;
+    private final String cameraName;
 
     /** Latest pose estimate published from the PhotonVision thread. */
-    private final AtomicReference<EstimatedRobotPose> atomicEstimatedRobotPose = new AtomicReference<EstimatedRobotPose>();
+    private final AtomicReference<EstimatedRobotPose> atomicEstimatedRobotPose =
+            new AtomicReference<EstimatedRobotPose>();
 
     /** java is evil */
     private final AtomicReference<Double> atomicTargetYaw = new AtomicReference<Double>();
 
-    /** Heading supplier used to inject gyro data into the pose estimator. */
-    private Supplier<Heading> heading;
-
     /** Cached pipeline result from the last successful update. */
-    private PhotonPipelineResult photonResults;
-
-    private PhotonPipelineResult hasAResult = new PhotonPipelineResult();
-    private AprilTagFieldLayout layout;
-    private String cameraName;
-    private Optional<ConstrainedSolvepnpParams> params = Optional.of(new ConstrainedSolvepnpParams(false, 1.0));
+    private volatile PhotonPipelineResult photonResults;
 
     public PhotonRunnable(
             String cam_name, Transform3d cameraToRobot, Supplier<Heading> headingSupplier) {
         cameraName = cam_name;
-        heading = headingSupplier;
         this.photonCamera = new PhotonCamera(cameraName);
-        ;
-        PhotonPoseEstimator photonPoseEstimator = null;
-        // layout = AprilTagFieldLayout.loadField(AprilTagFields.k2026RebuiltWelded);
+        // Keep layout origin fixed to blue; alliance flipping is handled in PoseEstimatorSubsystem.
         layout = FieldConstants.AprilTagLayoutType.OFFICIAL.getLayout();
-        // PV estimates will always be blue, they'll get flipped by robot thread
         layout.setOrigin(OriginPosition.kBlueAllianceWallRightSide);
-        // if you're doing a sim and don't have the DS, the alliance getter crashes
-        if (RobotBase.isReal()) {
-            if (DriverStation.getAlliance().get() == Alliance.Red) {
-                layout.setOrigin(OriginPosition.kRedAllianceWallRightSide);
-            }
-        }
-        if (photonCamera != null) {
-            photonPoseEstimator = new PhotonPoseEstimator(layout, PoseStrategy.CONSTRAINED_SOLVEPNP, cameraToRobot);
-        }
-        this.photonPoseEstimator = photonPoseEstimator;
+
+        this.photonPoseEstimator = new PhotonPoseEstimator(
+                layout,
+                PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,
+                cameraToRobot);
     }
 
     @Override
     public void run() {
-        // Get AprilTag data
-        if (photonPoseEstimator != null && photonCamera != null) {
-            List<PhotonPipelineResult> results = photonCamera.getAllUnreadResults();
+        if (photonPoseEstimator == null || photonCamera == null) {
+            return;
+        }
 
-            for (PhotonPipelineResult result : results) {
-                try {
-                    // System.out.println(result.getBestTarget().toString());
-                    // System.out.println(result.getBestTarget().getYaw());
-                    // System.out.println(result.getBestTarget().yaw);
-                    atomicTargetYaw.set(result.getBestTarget().yaw);
-                } catch (Exception e) {
-                    //System.out.println("no targets");
-                };
-                Heading tempHeading = heading.get();
-                photonPoseEstimator.addHeadingData(tempHeading.timestamp, tempHeading.rotation);
-                Optional<EstimatedRobotPose> photonPose = photonPoseEstimator.update(result, Optional.empty(),
-                        Optional.empty(), params);
-                if (photonPose.isPresent()) {
-                    double tagDist = result.getBestTarget().bestCameraToTarget.getTranslation().getNorm();
-                    double poseAmbig = result.getBestTarget().getPoseAmbiguity();
-                    // System.out.println(poseAmbig);
-                    if (tagDist < 3 && poseAmbig < 0.2) {
-                        atomicEstimatedRobotPose.set(photonPose.get());
-                    }
-                }
+        var results = photonCamera.getAllUnreadResults();
+        EstimatedRobotPose newestPose = null;
+
+        for (PhotonPipelineResult result : results) {
+            if (!result.hasTargets()) {
+                continue;
+            }
+
+            photonResults = result;
+            atomicTargetYaw.set(result.getBestTarget().yaw);
+
+            var photonPose = photonPoseEstimator
+                    .estimateCoprocMultiTagPose(result)
+                    .or(() -> photonPoseEstimator.estimateLowestAmbiguityPose(result));
+
+            if (photonPose.isEmpty()) {
+                continue;
+            }
+
+            var est = photonPose.get();
+            if (Math.abs(est.estimatedPose.getZ()) > kVisionMaxPoseZMeters) {
+                continue;
+            }
+
+            if (newestPose == null || est.timestampSeconds > newestPose.timestampSeconds) {
+                newestPose = est;
             }
         }
+
+        if (newestPose != null) {
+            EstimatedRobotPose current = atomicEstimatedRobotPose.get();
+            if (current == null || newestPose.timestampSeconds > current.timestampSeconds) {
+                atomicEstimatedRobotPose.set(newestPose);
+            }
+        }
+    }
+
+    public EstimatedRobotPose grabLatestUpdate() {
+        return atomicEstimatedRobotPose.getAndSet(null);
     }
 
     /**
@@ -123,7 +120,7 @@ public class PhotonRunnable implements Runnable {
      * @return latest estimated pose
      */
     public EstimatedRobotPose grabLatestEstimatedPose() {
-        return atomicEstimatedRobotPose.getAndSet(null);
+        return grabLatestUpdate();
     }
 
     public Double getTargetYaw() {
@@ -131,7 +128,13 @@ public class PhotonRunnable implements Runnable {
     }
 
     public Pose2d grabLatestResult() {
-        return layout.getTagPose(hasAResult.getBestTarget().getFiducialId()).get().toPose2d();
+        if (photonResults == null || !photonResults.hasTargets()) {
+            return null;
+        }
+
+        return layout.getTagPose(photonResults.getBestTarget().getFiducialId())
+                .map(pose3d -> pose3d.toPose2d())
+                .orElse(null);
     }
 
     public PhotonPipelineResult grabLatestTag() {

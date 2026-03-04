@@ -40,6 +40,7 @@ import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Constants;
 import frc.robot.Constants.Mode;
 import frc.utils.LocalADStarAK;
+import java.util.Optional;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import org.littletonrobotics.junction.AutoLogOutput;
@@ -298,6 +299,11 @@ public class Drive extends SubsystemBase {
     @AutoLogOutput(key = "Odometry/Robot")
     public Pose2d getPose() {
         return poseEstimator.getEstimatedPosition();
+    }
+
+    /** Samples the historical odometry pose at a timestamp, if buffered. */
+    public Optional<Pose2d> samplePoseAt(double timestampSeconds) {
+        return poseEstimator.sampleAt(timestampSeconds);
     }
 
     /** Returns the current odometry rotation. */

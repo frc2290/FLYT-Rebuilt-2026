@@ -95,6 +95,27 @@ public final class Constants {
                 new Translation3d(0.0015, -0.3279, (0.9473 - 0.102)),
                 new Rotation3d(degreesToRadians(180), degreesToRadians(-45), degreesToRadians(-200)));
 
+        // Multi-camera AprilTag rig configuration (robot-to-camera transforms).
+        public static final String kForwardCamName = "forward";
+        public static final Transform3d kForwardCamTransform = new Transform3d(
+                new Translation3d(0.3, 0.0, 0.5),
+                new Rotation3d(0.0, degreesToRadians(-42.0), 0.0));
+
+        public static final String kBackwardCamName = "backward";
+        public static final Transform3d kBackwardCamTransform = new Transform3d(
+                new Translation3d(-0.3, 0.0, 0.5),
+                new Rotation3d(0.0, degreesToRadians(-35.0), degreesToRadians(180.0)));
+
+        public static final String kLeftCamName = "left";
+        public static final Transform3d kLeftCamTransform = new Transform3d(
+                new Translation3d(0.0, 0.3, 0.5),
+                new Rotation3d(0.0, degreesToRadians(-10.0), degreesToRadians(90.0)));
+
+        public static final String kRightCamName = "right";
+        public static final Transform3d kRightCamTransform = new Transform3d(
+                new Translation3d(0.0, -0.3, 0.5),
+                new Rotation3d(0.0, degreesToRadians(-10.0), degreesToRadians(-90.0)));
+
         public static final double FIELD_LENGTH_METERS = 16.541;
         public static final double FIELD_WIDTH_METERS = 8.069;
 
@@ -172,6 +193,26 @@ public final class Constants {
         public static final Translation2d netScore = new Translation2d(295 * inToM, 295 * inToM);
 
         public static final int ATPipelineIndex = 0;
+
+        // Vision fusion and std-dev tuning constants.
+        public static final double kVisionMaxTimeSkewSeconds = 0.100;
+        public static final double kVisionInvalidStdDev = 1000.0;
+        public static final double kVisionRejectVarianceThreshold = 90000.0;
+        public static final double kVisionRotationVarianceFusionCutoff = 1000.0;
+
+        public static final double kVisionXyStdDevCoefficient = 0.01;
+        public static final double kVisionThetaStdDevCoefficient = 0.03;
+        public static final double kVisionCameraStdDevFactor = 1.0;
+        public static final double kVisionStdDevDistanceExponent = 1.2;
+        public static final double kVisionStdDevTagCountExponent = 2.0;
+        public static final double kVisionStdDevMin = 0.01;
+
+        public static final double kVisionFinalXyStdDevFloor = 0.05;
+        public static final double kVisionFinalThetaStdDevFallback = 0.03;
+        public static final double kVisionFinalThetaStdDevFloor = 0.03;
+
+        // Reject vision frames with physically impossible field Z estimates.
+        public static final double kVisionMaxPoseZMeters = 1.0;
 
         public static final double xTolerance = Units.inchesToMeters(1);
         public static final double xToleranceHasDistance = Units.inchesToMeters(11.5);

@@ -96,8 +96,9 @@ public class DriveStateMachine extends SubsystemBase {
             case MANUAL         -> driveCommandFactory.createManualDriveCommand();
             case ASSIST         -> driveCommandFactory.createTrenchBumpCommand();
             case SNAKE          -> driveCommandFactory.createHeadingLockCommand(() -> {
-                double forward = driveCommandFactory.sampleForwardInput();
-                double strafe = -driveCommandFactory.sampleStrafeInput();
+                DriverInputs inputs = driveCommandFactory.sampleDriverInputs();
+                double forward = inputs.xSpeed;
+                double strafe = -inputs.ySpeed;
                 if (forward != 0 || strafe != 0) {
                     // s stands for sign
                     float s = snakeDirection == IntakeSide.LEFT ? -1 : 1;
