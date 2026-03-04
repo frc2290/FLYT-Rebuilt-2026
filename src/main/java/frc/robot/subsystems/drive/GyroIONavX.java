@@ -15,7 +15,13 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import java.util.Queue;
 
-/** IO implementation for NavX. */
+/**
+ * IO implementation for NavX.
+ *
+ * <p>All reported yaw values follow WPILib field conventions: counterclockwise-positive heading and
+ * angular velocity. NavX measurements are converted from the sensor's clockwise-positive frame, and
+ * {@code gyroReversed} is applied to both position and rate.
+ */
 public class GyroIONavX implements GyroIO {
     private final AHRS navX = new AHRS(NavXComType.kMXP_SPI, (byte) odometryFrequency);
     private final Queue<Double> yawPositionQueue;
@@ -23,14 +29,16 @@ public class GyroIONavX implements GyroIO {
 
     public GyroIONavX() {
         yawTimestampQueue = SparkOdometryThread.getInstance().makeTimestampQueue();
-        yawPositionQueue = SparkOdometryThread.getInstance().registerSignal(navX::getAngle);
+        yawPositionQueue =
+                SparkOdometryThread.getInstance().registerSignal(() -> convertNavXYawToWpilib(navX.getAngle()));
     }
 
     @Override
     public void updateInputs(GyroIOInputs inputs) {
         inputs.connected = navX.isConnected();
-        inputs.yawPosition = Rotation2d.fromDegrees(getAngle());
-        inputs.yawVelocityRadPerSec = Units.degreesToRadians(-navX.getRawGyroZ());
+        inputs.yawPosition = Rotation2d.fromDegrees(convertNavXYawToWpilib(navX.getAngle()));
+        inputs.yawVelocityRadPerSec =
+                Units.degreesToRadians(convertNavXYawToWpilib(navX.getRawGyroZ()));
 
         inputs.odometryYawTimestamps = yawTimestampQueue.stream().mapToDouble((Double value) -> value).toArray();
         inputs.odometryYawPositions = yawPositionQueue.stream()
@@ -42,7 +50,12 @@ public class GyroIONavX implements GyroIO {
 
     @Override
     public double getAngle() {
-        return navX.getAngle() * (DriveConstants.gyroReversed ? -1.0 : 1.0);
+        return convertNavXYawToWpilib(navX.getAngle());
+    }
+
+    private static double convertNavXYawToWpilib(double navXValueDegrees) {
+        double wpilibDegrees = -navXValueDegrees;
+        return wpilibDegrees * (DriveConstants.gyroReversed ? -1.0 : 1.0);
     }
 
     @Override
