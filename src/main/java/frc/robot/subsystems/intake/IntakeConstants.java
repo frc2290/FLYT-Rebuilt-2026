@@ -46,19 +46,17 @@ public class IntakeConstants {
     public static final double rollerFreeSpeedRPM =
             Units.radiansPerSecondToRotationsPerMinute(rollerGearbox.freeSpeedRadPerSec);
     public static final double rollerKv = 12.0 / (rollerFreeSpeedRPM * rollerEncoderVelocityFactor);
-    public static final double rollerGainScale = rollerKv / 12.0;
-    public static final double rollerKp = 0.5;//rollerGainScale * 0.0;
-    public static final double rollerKi = rollerGainScale * 0.0;
-    public static final double rollerKd = rollerGainScale * 0.0;
+    public static final double rollerKp = 0.5;
+    public static final double rollerKi = 0.0;
+    public static final double rollerKd = 0.0;
     public static final DCMotor deployGearbox = DCMotor.getNeoVortex(1);
     public static final double deployFreeSpeedRPM =
             Units.radiansPerSecondToRotationsPerMinute(deployGearbox.freeSpeedRadPerSec);
     public static final double deployKv = 12.0
             / ((deployFreeSpeedRPM / deployMotorToEncoderReduction) * deployEncoderVelocityFactor);
-    public static final double deployGainScale = deployKv / 12.0;
-    public static final double deployKp = deployGainScale * 28.2666666666667;
-    public static final double deployKi = deployGainScale * 0.0;
-    public static final double deployKd = deployGainScale * 0.0;
+    public static final double deployKp = 0.025;
+    public static final double deployKi = 0.0;
+    public static final double deployKd = 0.0;
 
     // --- Simulation Constants ---
     public static final double deploySimKp = 8.0;

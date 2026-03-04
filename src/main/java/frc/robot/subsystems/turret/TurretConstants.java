@@ -68,10 +68,9 @@ public class TurretConstants {
             Units.radiansPerSecondToRotationsPerMinute(turretGearbox.freeSpeedRadPerSec);
     public static final double turretTheoreticalKv =
             12.0 / (turretFreeSpeedRPM * turretEncoderVelocityFactor);
-    public static final double turretGainScale = turretTheoreticalKv / 12.0;
-    public static final double turretKp = 0.1; //turretGainScale * 1.0;
-    public static final double turretKi = 0.0; //turretGainScale * 0.0;
-    public static final double turretKd = 0.0; //turretGainScale * 0.0;
+    public static final double turretKp = 0.1;
+    public static final double turretKi = 0.0;
+    public static final double turretKd = 0.0;
 
     public static final double hoodff = 0;
     public static final DCMotor hoodGearbox = DCMotor.getNEO(1);
@@ -79,10 +78,9 @@ public class TurretConstants {
             Units.radiansPerSecondToRotationsPerMinute(hoodGearbox.freeSpeedRadPerSec);
     public static final double hoodKv = 12.0
             / ((hoodFreeSpeedRPM / hoodMotorToEncoderReduction) * hoodEncoderVelocityFactor);
-    public static final double hoodGainScale = hoodKv / 12.0;
-    public static final double hoodKp = hoodGainScale * 9.32341012329656;
-    public static final double hoodKi = hoodGainScale * 0.0;
-    public static final double hoodKd = hoodGainScale * 0.0;
+    public static final double hoodKp = 0.1;
+    public static final double hoodKi = 0.0;
+    public static final double hoodKd = 0.0;
 
     public static final double shooterff = 0;
     public static final DCMotor flywheelGearbox = DCMotor.getNeoVortex(1);
@@ -90,10 +88,9 @@ public class TurretConstants {
             Units.radiansPerSecondToRotationsPerMinute(flywheelGearbox.freeSpeedRadPerSec);
     public static final double flywheelKv =
             1.27 / (flywheelFreeSpeedRPM * flywheelEncoderVelocityFactor);
-    public static final double flywheelGainScale = flywheelKv / 1.27;
-    public static final double flywheelKp = flywheelGainScale * 13.2233362812877;
-    public static final double flywheelKi = flywheelGainScale * 0.0;
-    public static final double flywheelKd = flywheelGainScale * 59.2089684236761;
+    public static final double flywheelKp = 0.67;
+    public static final double flywheelKi = 0.0;
+    public static final double flywheelKd = 3.0;
 
     // --- Simulation Constants ---
     public static final double turretTurnSimP = 1.0;
