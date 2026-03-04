@@ -130,8 +130,8 @@ public class IntakeIOSpark implements IntakeIO {
         ifOk(driveSpark, driveEncoder::getVelocity, (value) -> inputs.driveSpeed = value);
         ifOk(
                 driveSpark,
-                new DoubleSupplier[] { driveSpark::getAppliedOutput},
-                (values) -> inputs.driveAppliedVolts = values[0]);
+                new DoubleSupplier[] { driveSpark::getAppliedOutput, driveSpark::getBusVoltage },
+                (values) -> inputs.driveAppliedVolts = values[0] * values[1]);
         ifOk(driveSpark, driveSpark::getOutputCurrent, (value) -> inputs.driveCurrentAmps = value);
 
         // Update deploy inputs
