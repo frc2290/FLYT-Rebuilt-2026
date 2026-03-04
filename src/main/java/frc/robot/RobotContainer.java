@@ -7,6 +7,7 @@ package frc.robot;
 import frc.robot.subsystems.drive.Drive;
 import frc.utils.PoseEstimatorSubsystem;
 import frc.robot.Commands.Autos.AutoBuilder;
+import frc.robot.Commands.Autos.TrenchToNeutralAuto;
 import frc.robot.Commands.Autos.AutoBuilder.AutoActivity;
 import frc.robot.Commands.Autos.AutoBuilder.AutoEnd;
 import frc.robot.Commands.Autos.AutoBuilder.AutoStart;
@@ -47,6 +48,8 @@ import java.util.function.Consumer;
 
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
+import com.pathplanner.lib.auto.NamedCommands;
+
 /*
  * This class is where the bulk of the robot should be declared.  Since Command-based is a
  * "declarative" paradigm, very little robot logic should actually be handled in the {@link Robot}
@@ -72,6 +75,7 @@ public class RobotContainer {
     LoggedDashboardChooser<AutoStart> auto_start = new LoggedDashboardChooser<>("Auto Start");
     LoggedDashboardChooser<AutoActivity> auto_activity = new LoggedDashboardChooser<>("Auto Activity");
     LoggedDashboardChooser<AutoEnd> auto_end = new LoggedDashboardChooser<>("Auto End");
+    LoggedDashboardChooser<Boolean> auto_right = new LoggedDashboardChooser<>("Right Side Auto?");
 
     /**
      * The container for the robot. Contains subsystems, OI devices, and commands.
@@ -115,6 +119,15 @@ public class RobotContainer {
         // auto_start_pos.addOption("Bump", "Bump");
         // auto_end_pos.addDefaultOption("Depot", "Depot");
         // auto_end_pos.addOption("Outpost", "Outpost");
+        auto_right.addDefaultOption("Right", true);
+        auto_right.addOption("Left", false);
+
+        NamedCommands.registerCommand("IntakeLeftOut", m_intake.intakeOut(IntakeSide.LEFT));
+        NamedCommands.registerCommand("IntakeRightOut", m_intake.intakeOut(IntakeSide.RIGHT));
+        NamedCommands.registerCommand("IntakeOn", m_intake.driveIntake());
+        NamedCommands.registerCommand("IntakeOff", m_intake.stopIntake());
+        NamedCommands.registerCommand("IntakeLeftOutOn", new ParallelCommandGroup(m_intake.driveIntake(), m_intake.intakeOut(IntakeSide.LEFT)));
+        NamedCommands.registerCommand("IntakeRightOutOn", new ParallelCommandGroup(m_intake.driveIntake(), m_intake.intakeOut(IntakeSide.RIGHT)));
 
         if (Robot.isSimulation()) {
             FuelSim instance = FuelSim.getInstance();
@@ -183,6 +196,7 @@ public class RobotContainer {
      * @return the command to run in autonomous
      */
     public Command getAutonomousCommand() {
-        return new AutoBuilder(auto_start.get(), auto_activity.get(), auto_end.get(), m_driveStateMachine, m_poseEstimator);
+        //return new AutoBuilder(auto_start.get(), auto_activity.get(), auto_end.get(), m_driveStateMachine, m_poseEstimator);
+        return new TrenchToNeutralAuto(m_poseEstimator, m_intake, auto_right.get());
     }
 }

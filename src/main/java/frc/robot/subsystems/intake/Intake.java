@@ -118,6 +118,13 @@ public class Intake extends SubsystemBase {
         });
     }
 
+    public Command stopIntake() {
+        return Commands.runOnce(() -> {
+            driveRoller(IntakeSide.LEFT, 0);
+            driveRoller(IntakeSide.RIGHT, 0);
+        });
+    }
+
     public Command wowowowowoIntake() {
         return run(() -> {
             wowowowowoTicks++;
