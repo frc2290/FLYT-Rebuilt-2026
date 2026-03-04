@@ -102,27 +102,30 @@ public class Intake extends SubsystemBase {
         }));
     }
 
-    public Command driveIntake() {
-        return Commands.run(() -> {
-            if (isOut(IntakeSide.LEFT)) {
-                driveRoller(IntakeSide.LEFT, rollerSpeed);
-            }
-            if (isOut(IntakeSide.RIGHT)) {
-                driveRoller(IntakeSide.RIGHT, rollerSpeed);
-            }
-            // driveRoller(IntakeSide.LEFT, isIn(IntakeSide.LEFT) ? 0 : rollerSpeed);
-            // driveRoller(IntakeSide.RIGHT, isIn(IntakeSide.RIGHT) ? 0 : rollerSpeed);
-        }).finallyDo(() -> {
-            driveRoller(IntakeSide.LEFT, 0);
-            driveRoller(IntakeSide.RIGHT, 0);
-        });
+    private void runIntake() {
+        if (isOut(IntakeSide.LEFT)) {
+            driveRoller(IntakeSide.LEFT, rollerSpeed);
+        }
+        if (isOut(IntakeSide.RIGHT)) {
+            driveRoller(IntakeSide.RIGHT, rollerSpeed);
+        }
     }
 
-    public Command stopIntake() {
-        return Commands.runOnce(() -> {
-            driveRoller(IntakeSide.LEFT, 0);
-            driveRoller(IntakeSide.RIGHT, 0);
-        });
+    private void stopIntake() {
+        driveRoller(IntakeSide.LEFT, 0);
+        driveRoller(IntakeSide.RIGHT, 0);
+    }
+
+    public Command startIntakeCommand() {
+        return Commands.runOnce(this::runIntake);
+    }
+
+    public Command stopIntakeCommand() {
+        return Commands.runOnce(this::stopIntake);
+    }
+
+    public Command runIntakeCommand() {
+        return Commands.run(this::runIntake).finallyDo(this::stopIntake);
     }
 
     public Command wowowowowoIntake() {

@@ -9,9 +9,10 @@ import com.pathplanner.lib.path.PathPlannerPath;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
-import edu.wpi.first.wpilibj2.command.ParallelRaceGroup;
 import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
+import edu.wpi.first.wpilibj2.command.WaitCommand;
 import frc.robot.Commands.SwerveAutoStep;
+import frc.robot.subsystems.StateMachines.StateMachine;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.IntakeConstants.IntakeSide;
 import frc.utils.PoseEstimatorSubsystem;
@@ -21,15 +22,33 @@ import frc.utils.PoseEstimatorSubsystem;
 // https://docs.wpilib.org/en/stable/docs/software/commandbased/convenience-features.html
 public class TrenchToNeutralAuto extends SequentialCommandGroup {
     /** Creates a new TrenchToNeutralAuto. */
-    public TrenchToNeutralAuto(PoseEstimatorSubsystem pose, Intake intake, boolean right) {
+    public TrenchToNeutralAuto(PoseEstimatorSubsystem pose, StateMachine stateMachine, Intake intake, boolean right) {
         try {
             PathPlannerPath trenchToNeutral = PathPlannerPath.fromPathFile("TrenchNeutralRight");
-            // Add your commands in the addCommands() call, e.g.
-            // addCommands(new FooCommand(), new BarCommand());
+            PathPlannerPath neutralToTrench = PathPlannerPath.fromPathFile("NeutralTrenchRight");
+            PathPlannerPath trenchToNeutral2 = PathPlannerPath.fromPathFile("TrenchNeutralRight2");
+            PathPlannerPath neutralToTrench2 = PathPlannerPath.fromPathFile("NeutralTrenchRight2");
+            if (!right) {
+                trenchToNeutral = trenchToNeutral.mirrorPath();
+                neutralToTrench = neutralToTrench.mirrorPath();
+                trenchToNeutral2 = trenchToNeutral2.mirrorPath();
+                neutralToTrench2 = neutralToTrench2.mirrorPath();
+            }
             addCommands(
+                stateMachine.setShooterOverrideCommand(false),
                 pose.setCurrentPoseCommand(trenchToNeutral.getStartingHolonomicPose().get()),
-                new SwerveAutoStep(trenchToNeutral, pose),
-                new ParallelCommandGroup(intake.driveIntake(), intake.intakeOut((right ? IntakeSide.LEFT : IntakeSide.RIGHT)))
+                new ParallelCommandGroup(
+                    new SwerveAutoStep(trenchToNeutral, pose),
+                    intake.intakeOut(right ? IntakeSide.LEFT : IntakeSide.RIGHT).andThen(intake.startIntakeCommand())),
+                new SwerveAutoStep(neutralToTrench, pose),
+                stateMachine.setShooterOverrideCommand(true),
+                new WaitCommand(3.5),
+                stateMachine.setShooterOverrideCommand(false),
+                new SwerveAutoStep(trenchToNeutral2, pose),
+                new SwerveAutoStep(neutralToTrench2, pose),
+                stateMachine.setShooterOverrideCommand(true),
+                new WaitCommand(3.5),
+                stateMachine.setShooterOverrideCommand(false)
             );
         } catch (Exception ex) {
             DriverStation.reportError(

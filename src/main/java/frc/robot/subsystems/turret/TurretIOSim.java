@@ -33,7 +33,7 @@ public class TurretIOSim implements TurretIO {
 
     private Supplier<Pose2d> poseSupplier;
     private Supplier<ChassisSpeeds> speedSupplier;
-    private int fuelCount = 30;
+    private int fuelCount = 8;
     private double turretAngle = 0;
     private double turretSpeed = 0;
     private double turretHoodAngle = 0;

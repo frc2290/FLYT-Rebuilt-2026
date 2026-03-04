@@ -31,6 +31,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
+import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import edu.wpi.first.wpilibj2.command.StartEndCommand;
 
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
@@ -121,14 +122,15 @@ public class RobotContainer {
 
         NamedCommands.registerCommand("IntakeLeftOut", m_intake.intakeOut(IntakeSide.LEFT));
         NamedCommands.registerCommand("IntakeRightOut", m_intake.intakeOut(IntakeSide.RIGHT));
-        NamedCommands.registerCommand("IntakeOn", m_intake.driveIntake());
-        NamedCommands.registerCommand("IntakeOff", m_intake.stopIntake());
-        NamedCommands.registerCommand("IntakeLeftOutOn", new ParallelCommandGroup(m_intake.driveIntake(), m_intake.intakeOut(IntakeSide.LEFT)));
-        NamedCommands.registerCommand("IntakeRightOutOn", new ParallelCommandGroup(m_intake.driveIntake(), m_intake.intakeOut(IntakeSide.RIGHT)));
+        NamedCommands.registerCommand("IntakeRun", m_intake.runIntakeCommand());
+        NamedCommands.registerCommand("IntakeStart", m_intake.startIntakeCommand());
+        NamedCommands.registerCommand("IntakeStop", m_intake.stopIntakeCommand());
+        NamedCommands.registerCommand("IntakeLeftOutStart", new SequentialCommandGroup(m_intake.intakeOut(IntakeSide.LEFT), m_intake.startIntakeCommand()));
+        NamedCommands.registerCommand("IntakeRightOutStart", new SequentialCommandGroup(m_intake.intakeOut(IntakeSide.RIGHT), m_intake.startIntakeCommand()));
 
         if (Robot.isSimulation()) {
             FuelSim instance = FuelSim.getInstance();
-            // instance.spawnStartingFuel();
+            instance.spawnStartingFuel();
             instance.registerRobot(inchesToMeters(30), inchesToMeters(37), inchesToMeters(5.0), _poseEstimator::getCurrentPose, _drive::getChassisSpeeds);
             instance.start();
         }
@@ -159,7 +161,7 @@ public class RobotContainer {
         m_driverController.a().onTrue(m_stateMachine.setShooterOverrideCommand(true)).onFalse(m_stateMachine.setShooterOverrideCommand(false));
         m_driverController.b().whileTrue(
                 new ParallelCommandGroup(
-                        m_intake.driveIntake(),
+                        m_intake.runIntakeCommand(),
                         m_driveStateMachine.tempChangeState(DriveState.SNAKE)));
 
         m_driverController.x().onTrue(m_intake.intakeOut(IntakeSide.LEFT));
@@ -167,7 +169,7 @@ public class RobotContainer {
 
         m_driverController.axisGreaterThan(3, 0.5).whileTrue(
                                 new ParallelCommandGroup(
-                                    m_intake.driveIntake(),
+                                    m_intake.runIntakeCommand(),
                                     m_driveStateMachine.tempChangeState(DriveState.SNAKE)));
 
         m_driverController.povLeft().onTrue(m_driveStateMachine.changeState(DriveState.MANUAL));
@@ -194,6 +196,6 @@ public class RobotContainer {
      */
     public Command getAutonomousCommand() {
         //return new AutoBuilder(auto_start.get(), auto_activity.get(), auto_end.get(), m_driveStateMachine, m_poseEstimator);
-        return new TrenchToNeutralAuto(m_poseEstimator, m_intake, auto_right.get());
+        return new TrenchToNeutralAuto(m_poseEstimator, m_stateMachine, m_intake, auto_right.get());
     }
 }
