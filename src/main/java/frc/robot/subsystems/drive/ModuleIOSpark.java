@@ -12,6 +12,7 @@ import static frc.utils.SparkUtil.*;
 
 import com.revrobotics.AbsoluteEncoder;
 import com.revrobotics.PersistMode;
+import com.revrobotics.REVLibError;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.ResetMode;
 import com.revrobotics.spark.ClosedLoopSlot;
@@ -118,13 +119,14 @@ public class ModuleIOSpark implements ModuleIO {
         .appliedOutputPeriodMs(20)
         .busVoltagePeriodMs(20)
         .outputCurrentPeriodMs(20);
-    tryUntilOk(
-        driveSpark,
-        5,
-        () ->
-            driveSpark.configure(
-                driveConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
-    tryUntilOk(driveSpark, 5, () -> driveEncoder.setPosition(0.0));
+    REVLibError driveErr = driveSpark.configure(
+        driveConfig,
+        ResetMode.kResetSafeParameters,
+        PersistMode.kPersistParameters);
+    if (driveErr != REVLibError.kOk) {
+      System.err.println("MODULE " + module + " DRIVE CONFIG FAILED: " + driveErr.name());
+    }
+    driveEncoder.setPosition(0.0);
 
     // Configure turn motor
     var turnConfig = new SparkMaxConfig();
@@ -153,12 +155,13 @@ public class ModuleIOSpark implements ModuleIO {
         .appliedOutputPeriodMs(20)
         .busVoltagePeriodMs(20)
         .outputCurrentPeriodMs(20);
-    tryUntilOk(
-        turnSpark,
-        5,
-        () ->
-            turnSpark.configure(
-                turnConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
+    REVLibError turnErr = turnSpark.configure(
+        turnConfig,
+        ResetMode.kResetSafeParameters,
+        PersistMode.kPersistParameters);
+    if (turnErr != REVLibError.kOk) {
+      System.err.println("MODULE " + module + " TURN CONFIG FAILED: " + turnErr.name());
+    }
 
     // Create odometry queues
     timestampQueue = SparkOdometryThread.getInstance().makeTimestampQueue();

@@ -5,12 +5,12 @@ import static frc.robot.subsystems.dyerotor.DyeRotorConstants.rotorCanId;
 import static frc.robot.subsystems.dyerotor.DyeRotorConstants.rotorEncoderPositionFactor;
 import static frc.robot.subsystems.intake.IntakeConstants.*;
 import static frc.utils.SparkUtil.ifOk;
-import static frc.utils.SparkUtil.tryUntilOk;
 
 import java.util.function.DoubleSupplier;
 
 import com.revrobotics.AbsoluteEncoder;
 import com.revrobotics.PersistMode;
+import com.revrobotics.REVLibError;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.ResetMode;
 import com.revrobotics.spark.FeedbackSensor;
@@ -65,11 +65,13 @@ public class IntakeIOSpark implements IntakeIO {
                 .idleMode(IdleMode.kCoast)
                 .inverted(inverted)
                 .smartCurrentLimit(driveMotorCurrentLimit);
-        driveConfig.encoder
+        driveConfig
+                .encoder
                 .positionConversionFactor(rollerEncoderPositionFactor)
                 .velocityConversionFactor(rollerEncoderVelocityFactor)
                 .uvwAverageDepth(2);
-        driveConfig.closedLoop
+        driveConfig
+                .closedLoop
                 .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
                 .pid(rollerKp, rollerKi, rollerKd);
         driveConfig.closedLoop.feedForward.kV(rollerKv);
@@ -78,34 +80,38 @@ public class IntakeIOSpark implements IntakeIO {
         // .busVoltagePeriodMs(20)
         // .outputCurrentPeriodMs(20);
 
-        tryUntilOk(
-                driveSpark,
-                5,
-                () -> driveSpark.configure(
-                        driveConfig, ResetMode.kResetSafeParameters,
-                        PersistMode.kPersistParameters));
+        REVLibError driveErr = driveSpark.configure(
+                driveConfig,
+                ResetMode.kResetSafeParameters,
+                PersistMode.kPersistParameters);
+        if (driveErr != REVLibError.kOk) {
+                System.err.println("INTAKE " + side + " DRIVE CONFIG FAILED: " + driveErr.name());
+        }
 
         var deployConfig = new SparkFlexConfig();
         deployConfig
                 .inverted(inverted)
                 .idleMode(IdleMode.kCoast)
                 .smartCurrentLimit(deployMotorCurrentLimit);
-        deployConfig.absoluteEncoder
+        deployConfig
+                .absoluteEncoder
                 .inverted(inverted)
                 .zeroOffset(zeroOffset)
                 .positionConversionFactor(deployEncoderPositionFactor)
                 .velocityConversionFactor(deployEncoderVelocityFactor)
                 .apply(AbsoluteEncoderConfig.Presets.REV_ThroughBoreEncoderV2);
-        deployConfig.closedLoop
+        deployConfig
+                .closedLoop
                 .feedbackSensor(FeedbackSensor.kAbsoluteEncoder)
                 .pid(deployKp, deployKi, deployKd);
-        deployConfig.closedLoop.maxMotion
+        deployConfig.closedLoop
+                .maxMotion
                 // Conservative starting point for ~0.25s deploy to 80 deg.
                 .cruiseVelocity(8000)
                 .maxAcceleration(50000)
                 .allowedProfileError(1);
-        //deployConfig.closedLoop.feedForward.kV(deployKv);
-        //deployConfig.closedLoop.feedForward.kA(0);
+        // deployConfig.closedLoop.feedForward.kV(deployKv);
+        // deployConfig.closedLoop.feedForward.kA(0);
         // driveConfig.signals
         // .absoluteEncoderPositionAlwaysOn(true)
         // .absoluteEncoderPositionPeriodMs((int) (1000.0 / odometryFrequency))
@@ -114,12 +120,13 @@ public class IntakeIOSpark implements IntakeIO {
         // .appliedOutputPeriodMs(20)
         // .busVoltagePeriodMs(20)
         // .outputCurrentPeriodMs(20);
-        tryUntilOk(
-                deploySpark,
-                5,
-                () -> deploySpark.configure(
-                        deployConfig, ResetMode.kResetSafeParameters, PersistMode.kPersistParameters));
-
+        REVLibError deployErr = deploySpark.configure(
+                deployConfig,
+                ResetMode.kResetSafeParameters,
+                PersistMode.kPersistParameters);
+        if (deployErr != REVLibError.kOk) {
+                System.err.println("INTAKE " + side + " DEPLOY CONFIG FAILED: " + deployErr.name());
+        }
     }
 
     @Override
