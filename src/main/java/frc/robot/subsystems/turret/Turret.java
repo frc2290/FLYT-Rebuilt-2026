@@ -54,7 +54,7 @@ public class Turret extends SubsystemBase {
         io.setTurnPosition(Rotation2d.fromDegrees(result.yaw).rotateBy(pose.get().getRotation().times(-1)));
         double turretCurPos = getTurretPos();
         double turretPointedAt = Rotation2d.fromDegrees(turretCurPos).rotateBy(pose.get().getRotation()).getDegrees();
-        if (result.yaw - 2 < turretPointedAt && turretPointedAt < result.yaw + 2) {
+        if (result.yaw - 5 < turretPointedAt && turretPointedAt < result.yaw + 5) {
             turretPointedAtTarget = true;
         } else {
             turretPointedAtTarget = false;
@@ -71,6 +71,8 @@ public class Turret extends SubsystemBase {
         Logger.recordOutput("Turret/SOTFPitch", result.pitch);
         Logger.recordOutput("Turret/SOTFTarget", targetTranslation);
         Logger.recordOutput("Turret/SOTFDist", result.dist);
+        Logger.recordOutput("Turret/PointedAtHub", turretPointedAtTarget);
+        Logger.recordOutput("Turret/turretPointedAt", turretPointedAt);
     }
 
     /**
