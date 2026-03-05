@@ -56,7 +56,7 @@ public class Turret extends SubsystemBase {
         Rotation2d turretPointedAt = Rotation2d.fromDegrees(turretCurPos).rotateBy(pose.get().getRotation());
         Rotation2d targetYaw = Rotation2d.fromDegrees(result.yaw);
         Rotation2d error = turretPointedAt.minus(targetYaw);
-        if (Math.abs(error.getDegrees()) < 5) {
+        if (Math.abs(error.getDegrees()) < 10) {
             turretPointedAtTarget = true;
         } else {
             turretPointedAtTarget = false;
