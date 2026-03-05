@@ -109,7 +109,7 @@ public class DriveStateMachine extends SubsystemBase {
             case TRENCH         -> driveCommandFactory.createHeadingLockCommand(() -> Math.round(pose.getDegrees() / 90.0) * 90.0);
             case BUMP           -> driveCommandFactory.createHeadingLockCommand(() -> (Math.round(pose.getDegrees() / 90.0 - 0.5) * 90.0 + 45) % 360);
             case CLIMB_RELATIVE -> driveCommandFactory.createHeadingLockCommand(() -> 0.0);
-            case SHOOT_LOCK     -> driveCommandFactory.createHeadingLockCommand(() -> pose.getCurrentPose().rotateBy(Rotation2d.fromDegrees(sotfHeading)).times(-1).getRotation().getDegrees());
+            case SHOOT_LOCK     -> driveCommandFactory.createHeadingLockCommand(() -> pose.getCurrentPose().rotateBy(Rotation2d.fromDegrees(sotfHeading)).getRotation().getDegrees());
             case FOLLOW_PATH    -> driveCommandFactory.createFollowPathCommand();
         };
         currentCommand.schedule();
