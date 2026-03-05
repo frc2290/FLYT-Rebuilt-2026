@@ -79,7 +79,7 @@ public class Turret extends SubsystemBase {
         Logger.recordOutput("Turret/SOTFTarget", targetTranslation);
         Logger.recordOutput("Turret/SOTFDist", result.dist);
         Logger.recordOutput("Turret/PointedAtHub", turretPointedAtTarget);
-        Logger.recordOutput("Turret/turretPointedAt", turretPointedAt);
+        Logger.recordOutput("Turret/turretPointedAt", turretPointedAt.getDegrees());
     }
 
     /**
