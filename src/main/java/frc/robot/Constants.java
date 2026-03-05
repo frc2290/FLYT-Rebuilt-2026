@@ -103,8 +103,8 @@ public final class Constants {
 
         public static final String kBackwardCamName = "backward";
         public static final Transform3d kBackwardCamTransform = new Transform3d(
-                new Translation3d(-0.3, 0.0, 0.5),
-                new Rotation3d(0.0, degreesToRadians(-35.0), degreesToRadians(180.0)));
+                new Translation3d(inchesToMeters(12.25), inchesToMeters(5.375), inchesToMeters(21)),
+                new Rotation3d(0.0, degreesToRadians(-42.0), degreesToRadians(180.0)));
 
         public static final String kLeftCamName = "left";
         public static final Transform3d kLeftCamTransform = new Transform3d(

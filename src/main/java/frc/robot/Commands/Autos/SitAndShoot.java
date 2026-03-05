@@ -25,7 +25,7 @@ public class SitAndShoot extends FlytSequentialAuto {
 
     @Override
     public void setup() {
-        addCommands(pose.setCurrentPoseCommand((this.right ? new Pose2d(3.8, 0.65, Rotation2d.fromDegrees(0)) : new Pose2d(3.8, 7.45, Rotation2d.fromDegrees(180)))), 
+        addCommands(pose.setCurrentPoseCommand((this.right ? new Pose2d(3.8, 0.65, Rotation2d.fromDegrees(0)) : new Pose2d(3.6, 7.28, Rotation2d.fromDegrees(180)))), 
                     this.stateMachine.setShooterOverrideCommand(true));
     }
 
