@@ -203,7 +203,7 @@ public final class Constants {
         public static final double kVisionXyStdDevCoefficient = 0.01;
         public static final double kVisionThetaStdDevCoefficient = 0.03;
         public static final double kVisionCameraStdDevFactor = 1.0;
-        public static final double kVisionStdDevDistanceExponent = 1.2;
+        public static final double kVisionStdDevDistanceExponent = 2.0;
         public static final double kVisionStdDevTagCountExponent = 2.0;
         public static final double kVisionStdDevMin = 0.01;
 
