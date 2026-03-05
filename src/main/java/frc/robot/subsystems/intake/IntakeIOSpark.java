@@ -1,0 +1,195 @@
+package frc.robot.subsystems.intake;
+
+import static edu.wpi.first.math.util.Units.degreesToRadians;
+import static frc.robot.subsystems.dyerotor.DyeRotorConstants.rotorCanId;
+import static frc.robot.subsystems.dyerotor.DyeRotorConstants.rotorEncoderPositionFactor;
+import static frc.robot.subsystems.intake.IntakeConstants.*;
+import static frc.utils.SparkUtil.ifOk;
+
+import java.util.function.DoubleSupplier;
+
+import com.revrobotics.AbsoluteEncoder;
+import com.revrobotics.PersistMode;
+import com.revrobotics.REVLibError;
+import com.revrobotics.RelativeEncoder;
+import com.revrobotics.ResetMode;
+import com.revrobotics.spark.FeedbackSensor;
+import com.revrobotics.spark.SparkBase;
+import com.revrobotics.spark.SparkBase.ControlType;
+import com.revrobotics.spark.SparkClosedLoopController;
+import com.revrobotics.spark.SparkFlex;
+import com.revrobotics.spark.SparkLowLevel.MotorType;
+import com.revrobotics.spark.SparkMax;
+import com.revrobotics.spark.config.AbsoluteEncoderConfig;
+import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
+import com.revrobotics.spark.config.SparkFlexConfig;
+import com.revrobotics.spark.config.SparkMaxConfig;
+
+import edu.wpi.first.math.geometry.Rotation2d;
+import frc.robot.subsystems.intake.IntakeConstants.IntakeSide;
+
+public class IntakeIOSpark implements IntakeIO {
+    private final SparkBase driveSpark;
+    private final SparkBase deploySpark;
+
+    private final RelativeEncoder driveEncoder;
+    private final AbsoluteEncoder deployEncoder;
+    private final SparkClosedLoopController driveController;
+    private final SparkClosedLoopController deployController;
+
+    private IntakeSide side;
+
+    private double deploySetpoint = 0.0;
+
+    public IntakeIOSpark(IntakeSide side, boolean inverted, double zeroOffset) {
+        this.side = side;
+        driveSpark = new SparkMax(
+                switch (side) {
+                    case LEFT -> leftDriveCanId;
+                    case RIGHT -> rightDriveCanId;
+                }, MotorType.kBrushless);
+
+        deploySpark = new SparkFlex(
+                switch (side) {
+                    case LEFT -> leftDeployCanId;
+                    case RIGHT -> rightDeployCanId;
+                }, MotorType.kBrushless);
+
+        driveEncoder = driveSpark.getEncoder();
+        deployEncoder = deploySpark.getAbsoluteEncoder();
+        driveController = driveSpark.getClosedLoopController();
+        deployController = deploySpark.getClosedLoopController();
+
+        var driveConfig = new SparkMaxConfig();
+        driveConfig
+                .idleMode(IdleMode.kCoast)
+                .inverted(inverted)
+                .smartCurrentLimit(driveMotorCurrentLimit);
+        driveConfig
+                .encoder
+                .positionConversionFactor(rollerEncoderPositionFactor)
+                .velocityConversionFactor(rollerEncoderVelocityFactor)
+                .uvwAverageDepth(2);
+        driveConfig
+                .closedLoop
+                .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
+                .pid(rollerKp, rollerKi, rollerKd);
+        driveConfig.closedLoop.feedForward.kV(rollerKv);
+        // driveConfig.signals
+        // .appliedOutputPeriodMs(20)
+        // .busVoltagePeriodMs(20)
+        // .outputCurrentPeriodMs(20);
+
+        REVLibError driveErr = driveSpark.configure(
+                driveConfig,
+                ResetMode.kResetSafeParameters,
+                PersistMode.kPersistParameters);
+        if (driveErr != REVLibError.kOk) {
+                System.err.println("INTAKE " + side + " DRIVE CONFIG FAILED: " + driveErr.name());
+        }
+
+        var deployConfig = new SparkFlexConfig();
+        deployConfig
+                .inverted(inverted)
+                .idleMode(IdleMode.kCoast)
+                .smartCurrentLimit(deployMotorCurrentLimit);
+        deployConfig
+                .absoluteEncoder
+                .inverted(inverted)
+                .zeroOffset(zeroOffset)
+                .positionConversionFactor(deployEncoderPositionFactor)
+                .velocityConversionFactor(deployEncoderVelocityFactor)
+                .apply(AbsoluteEncoderConfig.Presets.REV_ThroughBoreEncoderV2);
+        deployConfig
+                .closedLoop
+                .feedbackSensor(FeedbackSensor.kAbsoluteEncoder)
+                .pid(deployKp, deployKi, deployKd);
+        deployConfig.closedLoop
+                .maxMotion
+                // Conservative starting point for ~0.25s deploy to 80 deg.
+                .cruiseVelocity(8000)
+                .maxAcceleration(50000)
+                .allowedProfileError(1);
+        // deployConfig.closedLoop.feedForward.kV(deployKv);
+        // deployConfig.closedLoop.feedForward.kA(0);
+        // driveConfig.signals
+        // .absoluteEncoderPositionAlwaysOn(true)
+        // .absoluteEncoderPositionPeriodMs((int) (1000.0 / odometryFrequency))
+        // .absoluteEncoderVelocityAlwaysOn(true)
+        // .absoluteEncoderVelocityPeriodMs(20)
+        // .appliedOutputPeriodMs(20)
+        // .busVoltagePeriodMs(20)
+        // .outputCurrentPeriodMs(20);
+        REVLibError deployErr = deploySpark.configure(
+                deployConfig,
+                ResetMode.kResetSafeParameters,
+                PersistMode.kPersistParameters);
+        if (deployErr != REVLibError.kOk) {
+                System.err.println("INTAKE " + side + " DEPLOY CONFIG FAILED: " + deployErr.name());
+        }
+    }
+
+    @Override
+    public void updateInputs(IntakeIOInputs inputs) {
+        deployController.setSetpoint(deploySetpoint + getZeroOffsetAdj(), ControlType.kMAXMotionPositionControl);
+
+        // Update drive inputs
+        ifOk(driveSpark, driveEncoder::getVelocity, (value) -> inputs.driveSpeed = value);
+        ifOk(
+                driveSpark,
+                new DoubleSupplier[] { driveSpark::getAppliedOutput, driveSpark::getBusVoltage },
+                (values) -> inputs.driveAppliedVolts = values[0] * values[1]);
+        ifOk(driveSpark, driveSpark::getOutputCurrent, (value) -> inputs.driveCurrentAmps = value);
+
+        // Update deploy inputs
+        ifOk(
+                deploySpark,
+                () -> getPosition(),
+                (value) -> inputs.deployPosition = Rotation2d.fromDegrees(value));
+        ifOk(
+                deploySpark,
+                () -> getPosition(),
+                (value) -> inputs.deployPosDeg = value);
+        ifOk(
+                deploySpark,
+                deployEncoder::getVelocity,
+                (value) -> inputs.deployVelocityRadPerSec = degreesToRadians(value));
+        ifOk(
+                deploySpark,
+                new DoubleSupplier[] { deploySpark::getAppliedOutput, deploySpark::getBusVoltage },
+                (values) -> inputs.deployAppliedVolts = values[0] * values[1]);
+        ifOk(deploySpark, deploySpark::getOutputCurrent, (value) -> inputs.deployCurrentAmps = value);
+    }
+
+    @Override
+    public void setIntakeSpeed(double speed) {
+        driveController.setSetpoint(speed, ControlType.kVelocity);
+    }
+
+    @Override
+    public void setDeployPosition(Rotation2d rotation) {
+        this.deploySetpoint = rotation.getDegrees();
+    }
+
+    public double getPosition() {
+        switch (this.side) {
+            case LEFT:
+                return deployEncoder.getPosition() - leftZeroOffsetAdj;
+            case RIGHT:
+                return deployEncoder.getPosition() - rightZeroOffsetAdj;
+            default:
+                return 0;
+        }
+    }
+
+    private double getZeroOffsetAdj() {
+        switch (this.side) {
+            case LEFT:
+                return leftZeroOffsetAdj;
+            case RIGHT:
+                return rightZeroOffsetAdj;
+            default:
+                return 0;
+        }
+    }
+}

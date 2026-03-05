@@ -1,0 +1,20 @@
+Future Build Plans:
+
+Intake:
+- 3 motors
+ - 2x Vortex for intake deployment
+ - 1x Neo for running intake (switch drive direction to turn on other intake)
+
+Hopper:
+ - 1x Vortex Spindexer
+
+Queuing:
+ - 1x Vortex
+
+Turret:
+- 3 motors
+ - 1x Vortex for shooting
+ - 1x Neo for turning
+ - 1x Neo for hood
+
+Climber:

@@ -20,16 +20,33 @@ import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.interpolation.Interpolator;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Constants.OIConstants;
 import frc.robot.subsystems.DriveSubsystem;
+import frc.robot.subsystems.drive.Drive;
+import frc.utils.FieldConstants.LinesHorizontal;
+import frc.utils.FieldConstants.LinesVertical;
+import frc.utils.FieldConstants;
 import frc.utils.PoseEstimatorSubsystem;
+import frc.utils.StickExpo;
+
+import java.lang.reflect.Field;
+import java.util.Arrays;
+import java.util.Comparator;
 import java.util.Objects;
+import java.util.Optional;
+import java.util.OptionalDouble;
 import java.util.function.Consumer;
 import java.util.function.DoubleSupplier;
 import java.util.function.Supplier;
+
+import org.littletonrobotics.junction.Logger;
 
 /**
  * Factory for building the common drive commands used throughout the robot code.
@@ -43,32 +60,40 @@ import java.util.function.Supplier;
  */
 public final class DriveCommandFactory {
 
-  private final DriveSubsystem drive;
+  private final Drive drive;
   private final PoseEstimatorSubsystem poseEstimator;
-  private final XboxController driverController;
+  private final CommandXboxController driverController;
   private final PIDController rotPid;
   private final PIDController xPid;
   private final PIDController yPid;
+  private final StickExpo translationExpo = new StickExpo(3.0);
+  private final StickExpo rotationExpo = new StickExpo(3.0);
 
   /**
    * Constructs a drive command factory that can create commands using the shared drivetrain, pose
    * estimator, and driver controller references.
    */
   public DriveCommandFactory(
-      DriveSubsystem drive, PoseEstimatorSubsystem poseEstimator, XboxController driverController) {
+      Drive drive, PoseEstimatorSubsystem poseEstimator, CommandXboxController driverController) {
     this.drive = Objects.requireNonNull(drive);
     this.poseEstimator = Objects.requireNonNull(poseEstimator);
     this.driverController = Objects.requireNonNull(driverController);
-    this.rotPid = drive.getRotPidController();
-    this.xPid = drive.getXPidController();
-    this.yPid = drive.getYPidController();
+    // this.rotPid = drive.getRotPidController();
+    // this.xPid = drive.getXPidController();
+    // this.yPid = drive.getYPidController();
+    this.rotPid = new PIDController(0.015, 0.0, 0.0); // 0.015 0 0
+    this.rotPid.enableContinuousInput(0, 360);
+    this.xPid = new PIDController(1, 0.0, 0.085); // 2 0.0 0.5
+    this.yPid = new PIDController(1, 0.0, 0.085); // 2 0.0 0.5
+
+
   }
 
   /** Small helper that bundles the driver stick inputs for a single loop of command execution. */
-  private static final class DriverInputs {
-    final double xSpeed;
-    final double ySpeed;
-    final double rotSpeed;
+  public static final class DriverInputs {
+    public final double xSpeed;
+    public final double ySpeed;
+    public final double rotSpeed;
 
     DriverInputs(double xSpeed, double ySpeed, double rotSpeed) {
       this.xSpeed = xSpeed;
@@ -81,7 +106,7 @@ public final class DriveCommandFactory {
    * Samples the driver's left Y stick, applies the configured deadband, and flips the axis so
    * forward stick pushes produce positive field-relative X speeds.
    */
-  private double sampleForwardInput() {
+  public double sampleForwardInput() {
     return -MathUtil.applyDeadband(driverController.getLeftY(), OIConstants.kDriveDeadband);
   }
 
@@ -89,7 +114,7 @@ public final class DriveCommandFactory {
    * Samples the driver's left X stick with the same shaping as the original manual drive command so
    * small stick noise is ignored.
    */
-  private double sampleStrafeInput() {
+  public double sampleStrafeInput() {
     return -MathUtil.applyDeadband(driverController.getLeftX(), OIConstants.kDriveDeadband);
   }
 
@@ -99,8 +124,15 @@ public final class DriveCommandFactory {
   }
 
   /** Grabs a snapshot of the driver inputs so each command can reason about the same numbers. */
-  private DriverInputs sampleDriverInputs() {
-    return new DriverInputs(sampleForwardInput(), sampleStrafeInput(), sampleRotationInput());
+  public DriverInputs sampleDriverInputs() {
+    double fwdInput = sampleForwardInput();
+    double strafeInput = sampleStrafeInput();
+    double rotInput = sampleRotationInput();
+
+    Translation2d shapedTranslation = translationExpo.shape2D(fwdInput, strafeInput);
+    double shapedRot = rotationExpo.shape1D(rotInput);
+
+    return new DriverInputs(shapedTranslation.getX(), shapedTranslation.getY(), shapedRot);
   }
 
   /** Runs the provided controller each loop while reserving the drivetrain requirement. */
@@ -142,7 +174,7 @@ public final class DriveCommandFactory {
     return runDriveCommand(
         inputs ->
             // Pass the field-relative speeds straight to the drivetrain.
-            drive.drive(inputs.xSpeed*0.5, inputs.ySpeed*0.5, inputs.rotSpeed*0.5, true));
+            drive.drive(inputs.xSpeed, inputs.ySpeed, inputs.rotSpeed, true));
   }
 
   /**
@@ -157,22 +189,22 @@ public final class DriveCommandFactory {
     return runDriveCommand(
         inputs -> {
           // Give the driver full control of heading if they request it.
-          if (applyManualRotationOverride(inputs)) {
-            return;
-          }
+          // if (applyManualRotationOverride(inputs)) {
+          //   return;
+          // }
 
           // Otherwise steer toward the pose estimator's active trajectory target.
           Pose2d targetPose =
               Objects.requireNonNull(
                   poseEstimator.getTargetPose(), "Follow path target pose was null");
-
           // These PID calculations intentionally mirror the autonomous follower.
+          Pose2d curPos = poseEstimator.getCurrentPose();
           double rotSpeed =
-              rotPid.calculate(poseEstimator.getDegrees(), targetPose.getRotation().getDegrees());
+              rotPid.calculate(curPos.getRotation().getDegrees(), targetPose.getRotation().getDegrees());
           double xCommand =
-              xPid.calculate(poseEstimator.getCurrentPose().getX(), targetPose.getX());
+              xPid.calculate(curPos.getX(), targetPose.getX());
           double yCommand =
-              yPid.calculate(poseEstimator.getCurrentPose().getY(), targetPose.getY());
+              yPid.calculate(curPos.getY(), targetPose.getY());
 
           // Drive toward the path planner target while still using field-relative speeds.
           drive.drive(xCommand, yCommand, rotSpeed, true);
@@ -276,6 +308,102 @@ public final class DriveCommandFactory {
 
           double rotSpeed = rotPid.calculate(poseEstimator.getDegrees(), headingTarget);
           drive.drive(inputs.xSpeed, inputs.ySpeed, rotSpeed, true);
+        });
+  }
+
+  public Command createTrenchBumpCommand() {
+    return runDriveCommand(
+        inputs -> {
+          /*{
+            Translation2d trenchBumpDivide = new Translation2d(
+              isNear ?
+                LinesVertical.allianceZone : LinesVertical.neutralZoneNear,
+              isOnLeft ?
+                LinesHorizontal.leftMiddle : LinesHorizontal.rightMiddle);
+            Translation2d error = trenchBumpDivide.minus(currentTranslation);
+            Rotation2d errorAngle = error.getAngle();
+            
+            double targetY;
+            Logger.recordOutput("DriveAssist/Rel", inputAngle.relativeTo(errorAngle));
+            if ((inputAngle.relativeTo(errorAngle).getRadians() > 0) ^ isOnLeft ^ !isNear) {
+              targetY = (LinesHorizontal.rightBumpStart + LinesHorizontal.rightBumpEnd) / 2.0;
+            } else {
+              targetY = LinesHorizontal.rightTrenchOpenStart / 2.0;
+            }
+            target = new Translation2d(LinesVertical.trenchCenter, isOnLeft ? FieldConstants.fieldWidth - targetY : targetY);
+            Logger.recordOutput("DriveAssist/Target", target);
+          }*/
+          Pose2d currentPose = poseEstimator.getCurrentPose();
+          ChassisSpeeds speeds = drive.getChassisSpeeds();
+          Translation2d robotVelocity = new Translation2d(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond);
+          Translation2d velocity = robotVelocity.rotateBy(currentPose.getRotation());
+          Translation2d soon = currentPose.getTranslation().plus(velocity.times(0.25));
+          double soonY = soon.getY();
+
+          OptionalDouble ySpeed = OptionalDouble.empty();
+          OptionalDouble rotSpeed = OptionalDouble.empty();
+          double[] targets = {LinesHorizontal.rightTrenchMiddle, LinesHorizontal.rightBumpMiddle, LinesHorizontal.leftBumpMiddle, LinesHorizontal.leftTrenchMiddle};
+          // double weight = 1.0 / (1.0 * Math.abs(LinesVertical.allianceZone - currentPose.getX()) + 1.0);
+          double weight = 0.8;
+          double targetY;
+          targetY = Arrays.stream(targets).reduce((x, y) -> Math.abs(x - soonY) < Math.abs(y - soonY) ? x : y).orElse(targets[0]);
+          ySpeed = OptionalDouble.of(MathUtil.interpolate(inputs.ySpeed, yPid.calculate(currentPose.getY(), targetY), weight));
+          rotSpeed = OptionalDouble.of(MathUtil.interpolate(inputs.rotSpeed, rotPid.calculate(poseEstimator.getDegrees(), Math.round(poseEstimator.getDegrees() / 90.0) * 90.0), weight));
+
+          drive.drive(inputs.xSpeed, ySpeed.orElse(inputs.ySpeed), rotSpeed.orElse(inputs.rotSpeed), true);
+        }
+    );
+  }
+
+  public Command createDriveAssistCommand() {
+    return runDriveCommand(
+        inputs -> {
+          // input stuff
+          Rotation2d inputAngle = new Rotation2d(inputs.xSpeed, inputs.ySpeed);
+          double inputMagnitude = Math.hypot(inputs.xSpeed, inputs.ySpeed);
+          Logger.recordOutput("DriveAssist/InputAngle", inputAngle);
+
+          // position and velocity
+          Pose2d currentPose = poseEstimator.getCurrentPose();
+          Translation2d currentTranslation = currentPose.getTranslation();
+
+          boolean isNear = currentPose.getX() < LinesVertical.trenchCenter;
+          boolean isOnLeft = currentPose.getY() > FieldConstants.fieldWidth / 2.0;
+          Logger.recordOutput("DriveAssist/IsNear", isNear);
+          Logger.recordOutput("DriveAssist/IsOnLeft", isOnLeft);
+
+          ChassisSpeeds speeds = drive.getChassisSpeeds();
+          Translation2d robotVelocity = new Translation2d(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond);
+          Translation2d velocity = robotVelocity.rotateBy(currentPose.getRotation());
+          Logger.recordOutput("DriveAssist/Velocity", velocity);
+          
+          Translation2d soon = currentTranslation.plus(velocity.times(0.25));
+          Logger.recordOutput("DriveAssist/Soon", soon);
+
+          // target calculation
+          Translation2d target = new Translation2d();
+
+          // positive corrective steering
+          Translation2d error = target.minus(currentTranslation);
+          Rotation2d errorAngle = error.getAngle();
+          double errorDist = error.getNorm();
+          Logger.recordOutput("DriveAssist/ErrorAngle", errorAngle);
+          Logger.recordOutput("DriveAssist/ErrorDist", errorDist);
+
+          // double weight = 1.0 / (errorDist / 4.0 + 1.0);
+          double weight = 1.0;
+          Logger.recordOutput("DriveAssist/PositiveCorrectiveWeight", weight);
+
+          Rotation2d driveAngle;
+          double relativeAngle = inputAngle.relativeTo(errorAngle).getDegrees();
+          if (relativeAngle > -30 && relativeAngle < 30) {
+              driveAngle = inputAngle.interpolate(errorAngle, weight);
+          } else {
+              driveAngle = inputAngle;
+          }
+
+          // the driving
+          drive.drive(driveAngle.getCos() * inputMagnitude, driveAngle.getSin() * inputMagnitude, inputs.rotSpeed, true);
         });
   }
 }
