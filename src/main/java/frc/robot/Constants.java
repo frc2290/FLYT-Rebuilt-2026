@@ -99,7 +99,7 @@ public final class Constants {
         public static final String kForwardCamName = "forward";
         public static final Transform3d kForwardCamTransform = new Transform3d(
                 new Translation3d(0.24765, -0.1524, 0.5334),
-                new Rotation3d(0.0, degreesToRadians(-45.0), 0.0));
+                new Rotation3d(0.0, degreesToRadians(-42.0), 0.0));
 
         public static final String kBackwardCamName = "backward";
         public static final Transform3d kBackwardCamTransform = new Transform3d(
@@ -108,12 +108,12 @@ public final class Constants {
 
         public static final String kLeftCamName = "left";
         public static final Transform3d kLeftCamTransform = new Transform3d(
-                new Translation3d(0.0, 0.3, 0.5),
+                new Translation3d(-0.3175, 0.2921, 0.523875),
                 new Rotation3d(0.0, degreesToRadians(-10.0), degreesToRadians(90.0)));
 
         public static final String kRightCamName = "right";
         public static final Transform3d kRightCamTransform = new Transform3d(
-                new Translation3d(0.0, -0.3, 0.5),
+                new Translation3d(-0.3175, -0.2921, 0.523875),
                 new Rotation3d(0.0, degreesToRadians(-10.0), degreesToRadians(-90.0)));
 
         public static final double FIELD_LENGTH_METERS = 16.541;
