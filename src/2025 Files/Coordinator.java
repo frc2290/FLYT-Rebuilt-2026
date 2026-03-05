@@ -16,11 +16,9 @@
 //
 package frc.robot.subsystems;
 
-import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import frc.robot.Commands.Shoot;
-import frc.robot.subsystems.DriveStateMachine.DriveState;
+import frc.robot.subsystems.StateMachines.DriveStateMachine;
+import frc.robot.subsystems.StateMachines.DriveStateMachine.DriveState;
 import frc.utils.FlytDashboard;
 
 
@@ -115,8 +113,9 @@ public class Coordinator extends SubsystemBase {
         setDriveGoal(DriveState.MANUAL);
         break;
       case SHOOT:
-        // setDriveGoal(DriveState.HUB_ORIENTED);
-        setDriveGoal(DriveState.POINT_AT_FUEL);
+        setDriveGoal(DriveState.SNAKE);
+        //setDriveGoal(DriveState.HUB_ORIENTED);
+        //setDriveGoal(DriveState.POINT_AT_FUEL);
         break;
       case RESET:
         setDriveGoal(DriveState.CANCELLED);

@@ -4,20 +4,46 @@
 
 package frc.robot;
 
+import org.littletonrobotics.junction.LogFileUtil;
+import org.littletonrobotics.junction.LoggedRobot;
+import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.NT4Publisher;
+import org.littletonrobotics.junction.wpilog.WPILOGReader;
+import org.littletonrobotics.junction.wpilog.WPILOGWriter;
 import org.littletonrobotics.urcl.URCL;
 
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
-import edu.wpi.first.wpilibj.TimedRobot;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
-import frc.robot.subsystems.DriveStateMachine;
-import frc.robot.subsystems.DriveSubsystem;
-import frc.robot.subsystems.IntakeShooter;
-import frc.robot.subsystems.Coordinator;
-import frc.robot.subsystems.Coordinator.RobotState;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import frc.robot.subsystems.StateMachines.DriveStateMachine;
+import frc.robot.subsystems.StateMachines.StateMachine;
+import frc.robot.subsystems.StateMachines.DriveStateMachine.DriveState;
+import frc.robot.subsystems.drive.Drive;
+import frc.robot.subsystems.drive.GyroIO;
+import frc.robot.subsystems.drive.GyroIONavX;
+import frc.robot.subsystems.drive.ModuleIO;
+import frc.robot.subsystems.drive.ModuleIOSim;
+import frc.robot.subsystems.drive.ModuleIOSpark;
+
+import frc.robot.subsystems.dyerotor.DyeRotor;
+import frc.robot.subsystems.dyerotor.DyeRotorIO;
+import frc.robot.subsystems.dyerotor.DyeRotorIOSim;
+import frc.robot.subsystems.dyerotor.DyeRotorIOSpark;
+import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.intake.IntakeIO;
+import frc.robot.subsystems.intake.IntakeIOSim;
+import frc.robot.subsystems.intake.IntakeIOSpark;
+import frc.robot.subsystems.intake.IntakeConstants.IntakeSide;
+
+import frc.robot.subsystems.turret.Turret;
+import frc.robot.subsystems.turret.TurretIO;
+import frc.robot.subsystems.turret.TurretIOSim;
+import frc.robot.subsystems.turret.TurretIOSpark;
+import frc.utils.FuelSim;
 import frc.utils.PoseEstimatorSubsystem;
 
 /**
@@ -29,7 +55,7 @@ import frc.utils.PoseEstimatorSubsystem;
  * build.gradle file in the
  * project.
  */
-public class Robot extends TimedRobot {
+public class Robot extends LoggedRobot {
     /**
      * Cached handle to the active autonomous routine so we can cancel or reschedule
      * if needed.
@@ -43,21 +69,104 @@ public class Robot extends TimedRobot {
      * Cached reference to the primary driver controller so subsystems can read
      * axes.
      */
-    private XboxController m_driver = new XboxController(0);
+    private CommandXboxController m_driver = new CommandXboxController(0);
 
     // The robot's subsystems.
     /** Owns all hardware for swerve driving and exposes the drive commands. */
-    private final DriveSubsystem m_robotDrive = new DriveSubsystem();
-    private final IntakeShooter m_intakeShooter = new IntakeShooter();
-    private final PoseEstimatorSubsystem m_poseEstimator = new PoseEstimatorSubsystem(m_robotDrive);
+    private final Drive m_robotDrive;
+    private final PoseEstimatorSubsystem m_poseEstimator;
+    private final Intake m_intake;
+    private final DyeRotor m_dyeRotor;
+    private final Turret m_turret;
 
     /** Coordinates all autonomous and teleop driving modes. */
-    private final DriveStateMachine m_driveStateMachine =
-      new DriveStateMachine(m_robotDrive, m_poseEstimator, m_driver);
+    private final StateMachine m_stateMachine;
+    private final DriveStateMachine m_driveStateMachine;
 
-    /** Central coordinator that keeps drive and manipulator state machines in sync. */
-    private final Coordinator m_coordinator =
-      new Coordinator(m_driveStateMachine);
+    public Robot() {
+        Logger.recordMetadata("GitSHA", BuildConstants.GIT_SHA);
+        Logger.recordMetadata("ProjectName", "FLYT-Rebuilt-2026"); // Set a metadata value
+
+        // Set up data receivers & replay source
+        switch (Constants.currentMode) {
+        case REAL:
+            // Running on a real robot, log to a USB stick ("/U/logs")
+            Logger.addDataReceiver(new WPILOGWriter());
+            Logger.addDataReceiver(new NT4Publisher());
+            break;
+
+        case SIM:
+            // Running a physics simulator, log to NT
+            Logger.addDataReceiver(new NT4Publisher());
+            break;
+
+        case REPLAY:
+            // Replaying a log, set up replay source
+            setUseTiming(false); // Run as fast as possible
+            String logPath = LogFileUtil.findReplayLog();
+            Logger.setReplaySource(new WPILOGReader(logPath));
+            Logger.addDataReceiver(new WPILOGWriter(LogFileUtil.addPathSuffix(logPath, "_sim")));
+            break;
+        }
+
+        Logger.start(); // Start logging! No more data receivers, replay sources, or metadata values may
+                        // be added.
+
+        switch (Constants.currentMode) {
+            case REAL:
+                // Real robot, instantiate hardware IO implementations
+                m_robotDrive = new Drive(
+                               new GyroIONavX(),
+                               new ModuleIOSpark(0),
+                               new ModuleIOSpark(1),
+                               new ModuleIOSpark(2),
+                               new ModuleIOSpark(3));
+                m_poseEstimator = new PoseEstimatorSubsystem(m_robotDrive);
+                m_intake = new Intake(new IntakeIOSpark(IntakeSide.LEFT, false, 0.5), new IntakeIOSpark(IntakeSide.RIGHT, true, 0.25));
+                // m_dyeRotor = new DyeRotor(new DyeRotorIOSpark());
+                m_dyeRotor = new DyeRotor(new DyeRotorIOSpark());
+                m_turret = new Turret(new TurretIOSpark(),
+                                      m_poseEstimator::getCurrentPose,
+                                      m_robotDrive::getChassisSpeeds);
+                break;
+            case SIM:
+                // Sim robot, instantiate physics sim IO implementations
+                m_robotDrive = new Drive(
+                               new GyroIO() {},
+                               new ModuleIOSim(),
+                               new ModuleIOSim(),
+                               new ModuleIOSim(),
+                               new ModuleIOSim());
+                m_poseEstimator = new PoseEstimatorSubsystem(m_robotDrive);
+                var turretIO = new TurretIOSim(m_poseEstimator::getCurrentPose,
+                                      m_poseEstimator::getChassisSpeeds);
+                m_intake = new Intake(new IntakeIOSim(IntakeSide.LEFT, turretIO), new IntakeIOSim(IntakeSide.RIGHT, turretIO));
+                m_dyeRotor = new DyeRotor(new DyeRotorIOSim());
+                m_turret = new Turret(turretIO,
+                                      m_poseEstimator::getCurrentPose,
+                                      m_robotDrive::getChassisSpeeds);
+                break;
+            default:
+                // Replayed robot, disable IO implementations
+                m_robotDrive = new Drive(
+                               new GyroIO() {},
+                               new ModuleIO() {},
+                               new ModuleIO() {},
+                               new ModuleIO() {},
+                               new ModuleIO() {});
+                m_poseEstimator = new PoseEstimatorSubsystem(m_robotDrive);
+                m_intake = new Intake(new IntakeIO() {}, new IntakeIO() {});
+                m_dyeRotor = new DyeRotor(new DyeRotorIO() {});
+                m_turret = new Turret(new TurretIO() {},
+                                        m_poseEstimator::getCurrentPose,
+                                        m_robotDrive::getChassisSpeeds);
+                break;
+        }
+
+        m_stateMachine = new StateMachine(m_poseEstimator::getCurrentPose, m_poseEstimator::getChassisSpeeds, m_intake, m_turret, m_dyeRotor);
+        m_driveStateMachine = new DriveStateMachine(m_robotDrive, m_poseEstimator,
+            m_driver);
+    }
 
     /**
      * This function is run when the robot is first started up and should be used
@@ -71,13 +180,13 @@ public class Robot extends TimedRobot {
         // autonomous chooser on the dashboard.
         m_robotContainer = new RobotContainer(
                 m_robotDrive,
-                m_intakeShooter,
                 m_poseEstimator,
+                m_stateMachine,
                 m_driveStateMachine,
-                m_coordinator,
+                m_intake,
+                m_dyeRotor,
+                m_turret,
                 m_driver);
-
-
 
         DataLogManager.start();
         DriverStation.startDataLog(DataLogManager.getLog());
@@ -85,19 +194,15 @@ public class Robot extends TimedRobot {
         // run.
         // Display the Command Scheduler Status
 
-        //URCL.start();
+        // URCL.start();
 
         // If logging only to DataLog.
         URCL.start(DataLogManager.getLog());
 
-
-
-
         SmartDashboard.putData(CommandScheduler.getInstance());
-        
-        //Display subystem satatus
+
+        // Display subystem satatus
         SmartDashboard.putData(m_robotDrive);
-        
 
     }
 
@@ -113,6 +218,8 @@ public class Robot extends TimedRobot {
      */
     @Override
     public void robotPeriodic() {
+        DriverStation.getAlliance().ifPresent(m_poseEstimator::setAlliance);
+
         // Runs the Scheduler. This is responsible for polling buttons, adding
         // newly-scheduled
         // commands, running already-scheduled commands, removing finished or
@@ -125,12 +232,11 @@ public class Robot extends TimedRobot {
 
     @Override
     public void disabledInit() {
-        // m_coordinator.robotDisabled(true);
+        m_driveStateMachine.setDriveCommand(DriveState.CANCELLED);
     }
 
     @Override
-    public void disabledPeriodic() {
-    }
+    public void disabledPeriodic() {}
 
     /**
      * This autonomous runs the autonomous command selected by your
@@ -138,10 +244,10 @@ public class Robot extends TimedRobot {
      */
     @Override
     public void autonomousInit() {
-
-        m_coordinator.robotAuto(true);
-        m_coordinator.robotDisabled(false);
         m_autonomousCommand = m_robotContainer.getAutonomousCommand();
+        m_stateMachine.setIsAuto(true);
+        m_driveStateMachine.setDriveCommand(DriveState.FOLLOW_PATH);
+        //m_autonomousCommand = new PathPlannerAuto("New Auto");
 
         /*
          * String autoSelected = SmartDashboard.getString("Auto Selector",
@@ -162,14 +268,15 @@ public class Robot extends TimedRobot {
     }
 
     @Override
+    public void autonomousExit() {
+        m_driveStateMachine.setDriveCommand(DriveState.CANCELLED);
+        m_stateMachine.setIsAuto(false);
+        m_stateMachine.setShootOverride(false);
+    }
+
+    @Override
     public void teleopInit() {
-
-        m_coordinator.robotAuto(false);
-        m_coordinator.robotDisabled(false);
-
-        m_coordinator.setRobotGoal(RobotState.START_POSITION);
-
-
+        m_stateMachine.startHubTimer();
 
         // This makes sure that the autonomous stops running when
         // teleop starts running. If you want the autonomous to
@@ -185,6 +292,13 @@ public class Robot extends TimedRobot {
     /** This function is called periodically during operator control. */
     @Override
     public void teleopPeriodic() {
+        // TEMP POINT UPDATE DRIVE TARGET HEADING TO TURRET HEADING FROM SOTF
+        m_driveStateMachine.setSotfHeading(m_turret.getTurretPos());
+    }
+
+    @Override
+    public void teleopExit() {
+        m_stateMachine.stopHubTimer();
     }
 
     @Override
@@ -197,5 +311,12 @@ public class Robot extends TimedRobot {
     /** This function is called periodically during test mode. */
     @Override
     public void testPeriodic() {
+    }
+
+    @Override
+    public void simulationPeriodic() {
+        FuelSim.getInstance().updateSim();
+        Logger.recordOutput("Fuel Simulation/Blue Scored", FuelSim.Hub.BLUE_HUB.getScore());
+        Logger.recordOutput("Fuel Simulation/Red Scored", FuelSim.Hub.RED_HUB.getScore());
     }
 }
