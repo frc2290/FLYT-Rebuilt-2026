@@ -31,6 +31,7 @@ public class Turret extends SubsystemBase {
     private Translation2d targetTranslation = Hub.topCenterPoint.toTranslation2d();
 
     private double sotfYaw = 0.0;
+    private boolean turretPointedAtTarget = false;
 
     public Turret(TurretIO turretIO, Supplier<Pose2d> pose, Supplier<ChassisSpeeds> speeds) {
         this.io = turretIO;
@@ -51,6 +52,13 @@ public class Turret extends SubsystemBase {
         SOTFResult result = sotf.calculateRecursiveTOF(targetTranslation, pose.get(), speeds.get());
         sotfYaw = result.yaw;
         io.setTurnPosition(Rotation2d.fromDegrees(result.yaw).rotateBy(pose.get().getRotation().times(-1)));
+        double turretCurPos = getTurretPos();
+        double turretPointedAt = Rotation2d.fromDegrees(turretCurPos).rotateBy(pose.get().getRotation()).getDegrees();
+        if (result.yaw - 2 < turretPointedAt && turretPointedAt < result.yaw + 2) {
+            turretPointedAtTarget = true;
+        } else {
+            turretPointedAtTarget = false;
+        }
         io.setShooterSpeed(result.vel * 1.3);
         //io.setShooterSpeed(8);
         if (!stopShoot) {
@@ -127,5 +135,9 @@ public class Turret extends SubsystemBase {
 
     public double getTurretPos() {
         return inputs.turretPosition;
+    }
+
+    public boolean isTurretPointedAtTarget() {
+        return turretPointedAtTarget;
     }
 }

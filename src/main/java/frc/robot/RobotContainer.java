@@ -7,7 +7,10 @@ package frc.robot;
 import frc.robot.subsystems.drive.Drive;
 import frc.utils.PoseEstimatorSubsystem;
 import frc.robot.Commands.Autos.AutoBuilder;
+import frc.robot.Commands.Autos.FlytSequentialAuto;
+import frc.robot.Commands.Autos.SitAndShoot;
 import frc.robot.Commands.Autos.TrenchToNeutralAuto;
+import frc.robot.Commands.Autos.TrenchToNeutralToOutpost;
 import frc.robot.Commands.Autos.AutoBuilder.AutoActivity;
 import frc.robot.Commands.Autos.AutoBuilder.AutoStart;
 import frc.robot.subsystems.StateMachines.DriveStateMachine;
@@ -74,7 +77,8 @@ public class RobotContainer {
     LoggedDashboardChooser<AutoStart> auto_start = new LoggedDashboardChooser<>("Auto Start");
     LoggedDashboardChooser<AutoActivity> auto_activity = new LoggedDashboardChooser<>("Auto Activity");
     //LoggedDashboardChooser<AutoEnd> auto_end = new LoggedDashboardChooser<>("Auto End");
-    LoggedDashboardChooser<Boolean> auto_right = new LoggedDashboardChooser<>("Right Side Auto?");
+    LoggedDashboardChooser<Boolean> auto_right = new LoggedDashboardChooser<>("Field Side");
+    LoggedDashboardChooser<FlytSequentialAuto> auto_choice = new LoggedDashboardChooser<>("Auto Routine");
 
     /**
      * The container for the robot. Contains subsystems, OI devices, and commands.
@@ -119,6 +123,9 @@ public class RobotContainer {
         // auto_end_pos.addOption("Outpost", "Outpost");
         auto_right.addDefaultOption("Right", true);
         auto_right.addOption("Left", false);
+        auto_choice.addDefaultOption("Trench 2x", new TrenchToNeutralAuto(_poseEstimator, _stateMachine, _intake));
+        auto_choice.addOption("Trench to Outpost/Depot", new TrenchToNeutralToOutpost(_poseEstimator, _stateMachine, _intake));
+        auto_choice.addOption("Sit And Shoot", new SitAndShoot(_stateMachine));
 
         //NamedCommands.registerCommand("IntakeLeftOut", m_intake.intakeOut(IntakeSide.LEFT));
         //NamedCommands.registerCommand("IntakeRightOut", m_intake.intakeOut(IntakeSide.RIGHT));
@@ -195,7 +202,10 @@ public class RobotContainer {
      * @return the command to run in autonomous
      */
     public Command getAutonomousCommand() {
-        //return new AutoBuilder(auto_start.get(), auto_activity.get(), auto_end.get(), m_driveStateMachine, m_poseEstimator);
-        return new TrenchToNeutralAuto(m_poseEstimator, m_stateMachine, m_intake, auto_right.get());
+        FlytSequentialAuto auto = auto_choice.get();
+        auto.clearCommands();
+        auto.setRight(auto_right.get());
+        auto.setup();
+        return auto;
     }
 }

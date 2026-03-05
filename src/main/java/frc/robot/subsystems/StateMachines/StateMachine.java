@@ -169,14 +169,14 @@ public class StateMachine extends SubsystemBase {
                     case ALLIANCE:
                         // point at the hub, but only shoot if hub is active
                         m_turret.setTargetTranslation(Hub.topCenterPoint.toTranslation2d());
-                        if (shootOverride && m_turret.flywheelAtSpeed()) {
+                        if (shootOverride && m_turret.flywheelAtSpeed() && m_turret.isTurretPointedAtTarget()) {
                             m_dyeRotor.runDyeRotor(true);
                         } else {
                             m_dyeRotor.runDyeRotor(false);
                         }
                         break;
                     case NEUTRAL:
-                        if (shootOverride && m_turret.flywheelAtSpeed()) {
+                        if (shootOverride && m_turret.flywheelAtSpeed() && m_turret.isTurretPointedAtTarget()) {
                             m_dyeRotor.runDyeRotor(true);
                         } else {
                             m_dyeRotor.runDyeRotor(false);
