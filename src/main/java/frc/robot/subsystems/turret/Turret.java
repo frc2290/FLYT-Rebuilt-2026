@@ -53,12 +53,19 @@ public class Turret extends SubsystemBase {
         sotfYaw = result.yaw;
         io.setTurnPosition(Rotation2d.fromDegrees(result.yaw).rotateBy(pose.get().getRotation().times(-1)));
         double turretCurPos = getTurretPos();
-        double turretPointedAt = Rotation2d.fromDegrees(turretCurPos).rotateBy(pose.get().getRotation()).getDegrees();
-        if (result.yaw - 5 < turretPointedAt && turretPointedAt < result.yaw + 5) {
+        Rotation2d turretPointedAt = Rotation2d.fromDegrees(turretCurPos).rotateBy(pose.get().getRotation());
+        Rotation2d targetYaw = Rotation2d.fromDegrees(result.yaw);
+        Rotation2d error = turretPointedAt.minus(targetYaw);
+        if (Math.abs(error.getDegrees()) < 5) {
             turretPointedAtTarget = true;
         } else {
             turretPointedAtTarget = false;
         }
+        // if (result.yaw - 5 < turretPointedAt && turretPointedAt < result.yaw + 5) {
+        //     turretPointedAtTarget = true;
+        // } else {
+        //     turretPointedAtTarget = false;
+        // }
         io.setShooterSpeed(result.vel * 1.3);
         //io.setShooterSpeed(8);
         if (!stopShoot) {
