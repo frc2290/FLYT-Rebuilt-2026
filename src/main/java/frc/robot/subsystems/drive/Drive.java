@@ -57,6 +57,7 @@ public class Drive extends SubsystemBase {
 
     private SwerveDriveKinematics kinematics = new SwerveDriveKinematics(moduleTranslations);
     private Rotation2d rawGyroRotation = Rotation2d.kZero;
+    private Rotation2d driveHeadingOffset = Rotation2d.kZero;
     private SwerveModulePosition[] lastModulePositions = // For delta tracking
             new SwerveModulePosition[] {
                     new SwerveModulePosition(),
@@ -321,9 +322,14 @@ public class Drive extends SubsystemBase {
         }
     }
 
+    /** Returns the field-relative heading used by driver controls. */
+    public Rotation2d getDriveFieldHeading() {
+        return rawGyroRotation.plus(driveHeadingOffset);
+    }
+
     /** Resets the current odometry pose. */
     public void setPose(Pose2d pose) {
-        //poseEstimator.resetPose(pose);
+        driveHeadingOffset = pose.getRotation().minus(rawGyroRotation);
         poseEstimator.resetPosition(rawGyroRotation, getModulePositions(), pose);
     }
 
@@ -373,7 +379,7 @@ public class Drive extends SubsystemBase {
         var swerveModuleStates = kinematics.toSwerveModuleStates(
                 fieldRelative
                         ? ChassisSpeeds.fromFieldRelativeSpeeds(xSpeedDelivered, ySpeedDelivered, rotDelivered,
-                                rawGyroRotation)
+                                getDriveFieldHeading())
                         : new ChassisSpeeds(xSpeedDelivered, ySpeedDelivered, rotDelivered));
         SwerveDriveKinematics.desaturateWheelSpeeds(
                 swerveModuleStates, DriveConstants.maxSpeedMetersPerSec);
