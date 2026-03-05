@@ -24,14 +24,14 @@ import frc.utils.PoseEstimatorSubsystem;
 // NOTE:  Consider using this command inline, rather than writing a subclass.  For more
 // information, see:
 // https://docs.wpilib.org/en/stable/docs/software/commandbased/convenience-features.html
-public class TrenchToNeutralAuto extends FlytSequentialAuto {
+public class TrenchToNeutralToOutpost extends FlytSequentialAuto {
     private boolean right = true;
     private PoseEstimatorSubsystem pose;
     private StateMachine stateMachine;
     private Intake intake;
 
     /** Creates a new TrenchToNeutralAuto. */
-    public TrenchToNeutralAuto(PoseEstimatorSubsystem pose, StateMachine stateMachine, Intake intake) {
+    public TrenchToNeutralToOutpost(PoseEstimatorSubsystem pose, StateMachine stateMachine, Intake intake) {
         this.pose = pose;
         this.stateMachine = stateMachine;
         this.intake = intake;
@@ -42,15 +42,13 @@ public class TrenchToNeutralAuto extends FlytSequentialAuto {
         try {
             PathPlannerPath trenchToNeutral = PathPlannerPath.fromPathFile("TrenchNeutralRight");
             PathPlannerPath neutralToTrench = PathPlannerPath.fromPathFile("NeutralTrenchRight");
-            PathPlannerPath trenchToNeutral2 = PathPlannerPath.fromPathFile("TrenchNeutralRight2");
-            PathPlannerPath neutralToTrench2 = PathPlannerPath.fromPathFile("NeutralTrenchRight2");
+            PathPlannerPath trenchToOutpost = PathPlannerPath.fromPathFile("TrenchRightOutpost");
             Pose2d startPose = trenchToNeutral.getStartingHolonomicPose().get();
             Logger.recordOutput("StartPose", startPose);
             if (!this.right) {
                 trenchToNeutral = trenchToNeutral.mirrorPath();
                 neutralToTrench = neutralToTrench.mirrorPath();
-                trenchToNeutral2 = trenchToNeutral2.mirrorPath();
-                neutralToTrench2 = neutralToTrench2.mirrorPath();
+                trenchToOutpost = PathPlannerPath.fromPathFile("TrenchLeftDepot");
             }
             addCommands(
                 stateMachine.setShooterOverrideCommand(false),
@@ -61,11 +59,9 @@ public class TrenchToNeutralAuto extends FlytSequentialAuto {
                 new SwerveAutoStep(neutralToTrench, pose),
                 stateMachine.setShooterOverrideCommand(true),
                 new WaitCommand(3.5),
-                stateMachine.setShooterOverrideCommand(false),
-                new SwerveAutoStep(trenchToNeutral2, pose),
-                new SwerveAutoStep(neutralToTrench2, pose),
-                stateMachine.setShooterOverrideCommand(true),
-                new WaitCommand(3.5),
+                new ParallelCommandGroup(
+                    new SwerveAutoStep(trenchToOutpost, pose),
+                    intake.intakeOut((right ? IntakeSide.LEFT : IntakeSide.RIGHT))),
                 stateMachine.setShooterOverrideCommand(false)
             );
         } catch (Exception ex) {
