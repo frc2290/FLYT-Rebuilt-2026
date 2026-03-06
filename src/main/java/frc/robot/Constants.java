@@ -34,7 +34,7 @@ import edu.wpi.first.wpilibj.RobotBase;
  */
 public final class Constants {
     // BEGIN advantagekit stuff
-    public static final Mode simMode = Mode.REPLAY;
+    public static final Mode simMode = Mode.SIM;
     public static final Mode currentMode = RobotBase.isReal() ? Mode.REAL : simMode;
 
     public static final double boundBuffer = inchesToMeters(15.0);
@@ -103,7 +103,7 @@ public final class Constants {
 
         public static final String kBackwardCamName = "backward";
         public static final Transform3d kBackwardCamTransform = new Transform3d(
-                new Translation3d(inchesToMeters(12.25), inchesToMeters(5.375), inchesToMeters(21)),
+                new Translation3d(inchesToMeters(12.16), inchesToMeters(5.25), inchesToMeters(20.93)),
                 new Rotation3d(0.0, degreesToRadians(-42.0), degreesToRadians(180.0)));
 
         public static final String kLeftCamName = "left";
@@ -113,7 +113,7 @@ public final class Constants {
 
         public static final String kRightCamName = "right";
         public static final Transform3d kRightCamTransform = new Transform3d(
-                new Translation3d(-0.3175, -0.2921, 0.523875),
+                new Translation3d(-0.317251, -0.293112, 0.521863),
                 new Rotation3d(0.0, degreesToRadians(-10.0), degreesToRadians(-90.0)));
 
         public static final double FIELD_LENGTH_METERS = 16.541;

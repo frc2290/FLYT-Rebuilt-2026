@@ -127,14 +127,6 @@ public class RobotContainer {
         auto_choice.addOption("Trench to Outpost/Depot", new TrenchToNeutralToOutpost(_poseEstimator, _stateMachine, _intake));
         auto_choice.addOption("Sit And Shoot", new SitAndShoot(_stateMachine, _poseEstimator));
 
-        //NamedCommands.registerCommand("IntakeLeftOut", m_intake.intakeOut(IntakeSide.LEFT));
-        //NamedCommands.registerCommand("IntakeRightOut", m_intake.intakeOut(IntakeSide.RIGHT));
-        //NamedCommands.registerCommand("IntakeRun", m_intake.runIntakeCommand());
-        //NamedCommands.registerCommand("IntakeStart", m_intake.startIntakeCommand());
-        //NamedCommands.registerCommand("IntakeStop", m_intake.stopIntakeCommand());
-        //NamedCommands.registerCommand("IntakeLeftOutStart", new SequentialCommandGroup(m_intake.intakeOut(IntakeSide.LEFT), m_intake.startIntakeCommand()));
-        //NamedCommands.registerCommand("IntakeRightOutStart", new SequentialCommandGroup(m_intake.intakeOut(IntakeSide.RIGHT), m_intake.startIntakeCommand()));
-
         if (Robot.isSimulation()) {
             FuelSim instance = FuelSim.getInstance();
             instance.spawnStartingFuel();
