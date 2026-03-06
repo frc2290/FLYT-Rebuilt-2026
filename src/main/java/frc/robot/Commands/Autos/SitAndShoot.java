@@ -6,6 +6,7 @@ package frc.robot.Commands.Autos;
 
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.math.geometry.Pose2d;
 import frc.robot.subsystems.StateMachines.DriveStateMachine;
 import frc.robot.subsystems.StateMachines.DriveStateMachine.DriveState;
@@ -36,6 +37,7 @@ public class SitAndShoot extends FlytSequentialAuto {
         //            Commands.runOnce(() -> pose.setTargetPose((this.right ? rightPose : leftPose))),
         //            this.stateMachine.setShooterOverrideCommand(true));
         addCommands(driveState.changeState(DriveState.CANCELLED),
+                    new WaitCommand(2),
                     this.stateMachine.setShooterOverrideCommand(true));
     }
 
