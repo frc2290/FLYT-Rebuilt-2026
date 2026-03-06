@@ -164,8 +164,8 @@ public class TurretIOSpark implements TurretIO {
             .encoder
             .positionConversionFactor(flywheelEncoderPositionFactor)
             .velocityConversionFactor(flywheelEncoderVelocityFactor)
-            .quadratureMeasurementPeriod(10)
-            .quadratureAverageDepth(2);
+            .quadratureMeasurementPeriod(5)
+            .quadratureAverageDepth(1);
         flywheelLeaderConfig
             .closedLoop
             .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
