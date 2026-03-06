@@ -72,7 +72,7 @@ public class Turret extends SubsystemBase {
         //io.setShooterSpeed(result.vel * 1.375);
         //io.setShooterSpeed(8);
         if (!stopShoot) {
-            io.setShotAngle(80.947728);
+            io.setShotAngle(75);
         } else {
             io.setHoodAngle(0);
         }
