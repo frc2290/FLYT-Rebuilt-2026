@@ -203,7 +203,7 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
         addIfNotNull(updates, rightPhotonRunnable.grabLatestUpdate());
 
         Optional<VisionPoseFuser.FusedVisionUpdate> fusedUpdate =
-                VisionPoseFuser.fuse(updates, drive::samplePoseAt);
+                VisionPoseFuser.fuse(updates);
 
         fusedUpdate.ifPresent(update -> {
             Pose2d finalPose = update.pose();
