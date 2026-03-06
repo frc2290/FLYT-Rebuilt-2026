@@ -195,7 +195,6 @@ public final class Constants {
         public static final int ATPipelineIndex = 0;
 
         // Vision fusion and std-dev tuning constants.
-        public static final double kVisionMaxTimeSkewSeconds = 0.100;
         public static final double kVisionInvalidStdDev = 1000.0;
         public static final double kVisionRejectVarianceThreshold = 90000.0;
         public static final double kVisionRotationVarianceFusionCutoff = 1000.0;
