@@ -8,6 +8,7 @@ import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.math.geometry.Pose2d;
 import frc.robot.subsystems.StateMachines.DriveStateMachine;
+import frc.robot.subsystems.StateMachines.DriveStateMachine.DriveState;
 import frc.robot.subsystems.StateMachines.StateMachine;
 import frc.utils.PoseEstimatorSubsystem;
 
