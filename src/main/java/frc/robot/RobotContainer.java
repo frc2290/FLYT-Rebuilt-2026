@@ -125,7 +125,7 @@ public class RobotContainer {
         auto_right.addOption("Left", false);
         auto_choice.addDefaultOption("Trench 2x", new TrenchToNeutralAuto(_poseEstimator, _stateMachine, _intake));
         auto_choice.addOption("Trench to Outpost/Depot", new TrenchToNeutralToOutpost(_poseEstimator, _stateMachine, _intake));
-        auto_choice.addOption("Sit And Shoot", new SitAndShoot(_stateMachine, _poseEstimator));
+        auto_choice.addOption("Sit And Shoot", new SitAndShoot(_stateMachine, _poseEstimator, _driveStateMachine));
 
         if (Robot.isSimulation()) {
             FuelSim instance = FuelSim.getInstance();
