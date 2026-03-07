@@ -196,11 +196,21 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
         // Update pose estimator with drivetrain sensors.
         //poseEstimator.update(rotationSupplier.get(), modulePositionSupplier.get());
 
+        EstimatedRobotPose frontUpdate = frontPhotonRunnable.grabLatestUpdate();
+        EstimatedRobotPose backUpdate = backPhotonRunnable.grabLatestUpdate();
+        EstimatedRobotPose leftUpdate = leftPhotonRunnable.grabLatestUpdate();
+        EstimatedRobotPose rightUpdate = rightPhotonRunnable.grabLatestUpdate();
+
         List<EstimatedRobotPose> updates = new ArrayList<EstimatedRobotPose>();
-        addIfNotNull(updates, frontPhotonRunnable.grabLatestUpdate());
-        addIfNotNull(updates, backPhotonRunnable.grabLatestUpdate());
-        addIfNotNull(updates, leftPhotonRunnable.grabLatestUpdate());
-        addIfNotNull(updates, rightPhotonRunnable.grabLatestUpdate());
+        addIfNotNull(updates, frontUpdate);
+        addIfNotNull(updates, backUpdate);
+        addIfNotNull(updates, leftUpdate);
+        addIfNotNull(updates, rightUpdate);
+
+        Logger.recordOutput("Vision/CameraPoses/Front", toLoggedPoseArray(frontUpdate));
+        Logger.recordOutput("Vision/CameraPoses/Back", toLoggedPoseArray(backUpdate));
+        Logger.recordOutput("Vision/CameraPoses/Left", toLoggedPoseArray(leftUpdate));
+        Logger.recordOutput("Vision/CameraPoses/Right", toLoggedPoseArray(rightUpdate));
 
         Optional<VisionPoseFuser.FusedVisionUpdate> fusedUpdate =
                 VisionPoseFuser.fuse(updates);
@@ -213,7 +223,11 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
 
             drive.addVisionMeasurement(finalPose, update.timestamp(), update.stdDevs());
             sawTag = true;
+            Logger.recordOutput("Vision/FusedPose", new Pose2d[] {finalPose});
         });
+        if (fusedUpdate.isEmpty()) {
+            Logger.recordOutput("Vision/FusedPose", new Pose2d[] {});
+        }
 
         Logger.recordOutput("TargetPose", targetPose);
 
@@ -233,6 +247,14 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
         if (pose != null) {
             updates.add(pose);
         }
+    }
+
+    private static Pose2d[] toLoggedPoseArray(EstimatedRobotPose poseEstimate) {
+        if (poseEstimate == null) {
+            return new Pose2d[] {};
+        }
+
+        return new Pose2d[] {poseEstimate.estimatedPose.toPose2d()};
     }
 
     public boolean isClosestStationRight() {
