@@ -229,8 +229,6 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
             Logger.recordOutput("Vision/FusedPose", new Pose2d[] {});
         }
 
-        Logger.recordOutput("TargetPose", targetPose);
-
         // Set the pose on the dashboard.
         //var dashboardPose = drive.getPose();
         //if (originPosition == kRedAllianceWallRightSide) {
