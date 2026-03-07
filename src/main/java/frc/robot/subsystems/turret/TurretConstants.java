@@ -88,7 +88,7 @@ public class TurretConstants {
             Units.radiansPerSecondToRotationsPerMinute(flywheelGearbox.freeSpeedRadPerSec);
     public static final double flywheelKv =
             12 / (flywheelFreeSpeedRPM * flywheelEncoderVelocityFactor);
-    public static final double flywheelKp = 1.0;
+    public static final double flywheelKp = 2.0;
     public static final double flywheelKi = 0.0;
     public static final double flywheelKd = 0.0;
 
