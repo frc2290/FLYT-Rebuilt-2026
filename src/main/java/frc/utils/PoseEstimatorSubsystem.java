@@ -217,16 +217,26 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
 
         fusedUpdate.ifPresent(update -> {
             Pose2d finalPose = update.pose();
-            if (originPosition != kBlueAllianceWallRightSide) {
-                finalPose = flipAlliance(finalPose);
-            }
+            // if (originPosition != kBlueAllianceWallRightSide) {
+            //     finalPose = flipAlliance(finalPose);
+            // }
 
-            drive.addVisionMeasurement(finalPose, update.timestamp(), update.stdDevs());
-            sawTag = true;
+            // drive.addVisionMeasurement(finalPose, update.timestamp(), update.stdDevs());
+            // sawTag = true;
             Logger.recordOutput("Vision/FusedPose", new Pose2d[] {finalPose});
         });
         if (fusedUpdate.isEmpty()) {
             Logger.recordOutput("Vision/FusedPose", new Pose2d[] {});
+        }
+
+        if (frontUpdate != null) {
+            Pose2d frontPose = frontUpdate.estimatedPose.toPose2d();
+            if (originPosition != kBlueAllianceWallRightSide) {
+                frontPose = flipAlliance(frontPose);
+            }
+
+            drive.addVisionMeasurement(frontPose, frontUpdate.timestampSeconds, VisionPoseFuser.calculateStdDevs(frontUpdate));
+            sawTag = true;
         }
 
         // Set the pose on the dashboard.

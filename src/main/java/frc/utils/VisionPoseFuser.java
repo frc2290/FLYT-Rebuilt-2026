@@ -117,7 +117,7 @@ public class VisionPoseFuser {
     }
 
     /** Calculates dynamic standard deviations using Team 6328's polynomial formula. */
-    private static Matrix<N3, N1> calculateStdDevs(EstimatedRobotPose est) {
+    public static Matrix<N3, N1> calculateStdDevs(EstimatedRobotPose est) {
         var targets = est.targetsUsed;
         int numTags = targets.size();
 
