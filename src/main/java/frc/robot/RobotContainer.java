@@ -125,15 +125,7 @@ public class RobotContainer {
         auto_right.addOption("Left", false);
         auto_choice.addDefaultOption("Trench 2x", new TrenchToNeutralAuto(_poseEstimator, _stateMachine, _intake));
         auto_choice.addOption("Trench to Outpost/Depot", new TrenchToNeutralToOutpost(_poseEstimator, _stateMachine, _intake));
-        auto_choice.addOption("Sit And Shoot", new SitAndShoot(_stateMachine));
-
-        //NamedCommands.registerCommand("IntakeLeftOut", m_intake.intakeOut(IntakeSide.LEFT));
-        //NamedCommands.registerCommand("IntakeRightOut", m_intake.intakeOut(IntakeSide.RIGHT));
-        //NamedCommands.registerCommand("IntakeRun", m_intake.runIntakeCommand());
-        //NamedCommands.registerCommand("IntakeStart", m_intake.startIntakeCommand());
-        //NamedCommands.registerCommand("IntakeStop", m_intake.stopIntakeCommand());
-        //NamedCommands.registerCommand("IntakeLeftOutStart", new SequentialCommandGroup(m_intake.intakeOut(IntakeSide.LEFT), m_intake.startIntakeCommand()));
-        //NamedCommands.registerCommand("IntakeRightOutStart", new SequentialCommandGroup(m_intake.intakeOut(IntakeSide.RIGHT), m_intake.startIntakeCommand()));
+        auto_choice.addOption("Sit And Shoot", new SitAndShoot(_stateMachine, _poseEstimator, _driveStateMachine));
 
         if (Robot.isSimulation()) {
             FuelSim instance = FuelSim.getInstance();
@@ -178,6 +170,8 @@ public class RobotContainer {
                                 new ParallelCommandGroup(
                                     m_intake.runIntakeCommand(),
                                     m_driveStateMachine.tempChangeState(DriveState.SNAKE)));
+
+        m_driverController.axisGreaterThan(2, 0.5).whileTrue(m_intake.wowowowowoIntake());
 
         m_driverController.povLeft().onTrue(m_driveStateMachine.changeState(DriveState.MANUAL));
         m_driverController.povUp().onTrue(m_driveStateMachine.changeState(DriveState.SHOOT_LOCK));

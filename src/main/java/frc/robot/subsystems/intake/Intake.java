@@ -129,9 +129,11 @@ public class Intake extends SubsystemBase {
     }
 
     public Command wowowowowoIntake() {
-        return run(() -> {
+        return startRun(() -> {
+            wowowowowoTicks = 0;
+        }, () -> {
             wowowowowoTicks++;
-            double num = outPosition - (Math.sin(wowowowowoTicks / 15.0) / 2.0 + 0.5) * (outPosition * 0.85);
+            double num = outPosition - (-Math.cos(wowowowowoTicks / 15.0) / 2.0 + 0.5) * (outPosition * 0.85);
             Rotation2d angle = new Rotation2d(degreesToRadians(num));
             boolean direction = Math.cos(num) > 0; // extending if true
             if (!isIn(IntakeSide.LEFT)) {

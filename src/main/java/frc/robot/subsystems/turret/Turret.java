@@ -51,18 +51,28 @@ public class Turret extends SubsystemBase {
 
         SOTFResult result = sotf.calculateRecursiveTOF(targetTranslation, pose.get(), speeds.get());
         sotfYaw = result.yaw;
-        io.setTurnPosition(Rotation2d.fromDegrees(result.yaw).rotateBy(pose.get().getRotation().times(-1)));
+        //io.setTurnPosition(Rotation2d.fromDegrees(result.yaw).rotateBy(pose.get().getRotation().times(-1)));
+        io.setTurnPosition(Rotation2d.fromDegrees(0));
         double turretCurPos = getTurretPos();
-        double turretPointedAt = Rotation2d.fromDegrees(turretCurPos).rotateBy(pose.get().getRotation()).getDegrees();
-        if (result.yaw - 2 < turretPointedAt && turretPointedAt < result.yaw + 2) {
+        Rotation2d turretPointedAt = Rotation2d.fromDegrees(turretCurPos).rotateBy(pose.get().getRotation());
+        Rotation2d targetYaw = Rotation2d.fromDegrees(result.yaw);
+        Rotation2d error = turretPointedAt.minus(targetYaw);
+        if (Math.abs(error.getDegrees()) < 10) {
             turretPointedAtTarget = true;
         } else {
             turretPointedAtTarget = false;
         }
-        io.setShooterSpeed(result.vel * 1.3);
+        // if (result.yaw - 5 < turretPointedAt && turretPointedAt < result.yaw + 5) {
+        //     turretPointedAtTarget = true;
+        // } else {
+        //     turretPointedAtTarget = false;
+        // }
+
+        io.setShooterSpeed(6.549333 * 1.375);
+        //io.setShooterSpeed(result.vel * 1.375);
         //io.setShooterSpeed(8);
         if (!stopShoot) {
-            io.setShotAngle(result.pitch);
+            io.setShotAngle(75);
         } else {
             io.setHoodAngle(0);
         }
@@ -71,6 +81,8 @@ public class Turret extends SubsystemBase {
         Logger.recordOutput("Turret/SOTFPitch", result.pitch);
         Logger.recordOutput("Turret/SOTFTarget", targetTranslation);
         Logger.recordOutput("Turret/SOTFDist", result.dist);
+        Logger.recordOutput("Turret/PointedAtHub", turretPointedAtTarget);
+        Logger.recordOutput("Turret/turretPointedAt", error.getDegrees());
     }
 
     /**
