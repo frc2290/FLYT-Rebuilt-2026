@@ -34,7 +34,7 @@ import edu.wpi.first.wpilibj.RobotBase;
  */
 public final class Constants {
     // BEGIN advantagekit stuff
-    public static final Mode simMode = Mode.SIM;
+    public static final Mode simMode = Mode.REPLAY;
     public static final Mode currentMode = RobotBase.isReal() ? Mode.REAL : simMode;
 
     public static final double boundBuffer = inchesToMeters(15.0);
@@ -98,22 +98,22 @@ public final class Constants {
         // Multi-camera AprilTag rig configuration (robot-to-camera transforms).
         public static final String kForwardCamName = "forward";
         public static final Transform3d kForwardCamTransform = new Transform3d(
-                new Translation3d(0.24765, -0.1524, 0.5334),
-                new Rotation3d(0.0, degreesToRadians(-45.0), 0.0));
+                new Translation3d(inchesToMeters(9.755440), inchesToMeters(6), inchesToMeters(20.420752)),
+                new Rotation3d(0.0, degreesToRadians(-42.0), 0.0));
 
         public static final String kBackwardCamName = "backward";
         public static final Transform3d kBackwardCamTransform = new Transform3d(
-                new Translation3d(-0.3, 0.0, 0.5),
-                new Rotation3d(0.0, degreesToRadians(-35.0), degreesToRadians(180.0)));
+                new Translation3d(inchesToMeters(12.16), inchesToMeters(5.25), inchesToMeters(20.93)),
+                new Rotation3d(0.0, degreesToRadians(-42.0), degreesToRadians(180.0)));
 
         public static final String kLeftCamName = "left";
         public static final Transform3d kLeftCamTransform = new Transform3d(
-                new Translation3d(0.0, 0.3, 0.5),
+                new Translation3d(-0.3175, 0.2921, 0.523875),
                 new Rotation3d(0.0, degreesToRadians(-10.0), degreesToRadians(90.0)));
 
         public static final String kRightCamName = "right";
         public static final Transform3d kRightCamTransform = new Transform3d(
-                new Translation3d(0.0, -0.3, 0.5),
+                new Translation3d(-0.317251, -0.293112, 0.521863),
                 new Rotation3d(0.0, degreesToRadians(-10.0), degreesToRadians(-90.0)));
 
         public static final double FIELD_LENGTH_METERS = 16.541;
@@ -195,16 +195,15 @@ public final class Constants {
         public static final int ATPipelineIndex = 0;
 
         // Vision fusion and std-dev tuning constants.
-        public static final double kVisionMaxTimeSkewSeconds = 0.100;
         public static final double kVisionInvalidStdDev = 1000.0;
         public static final double kVisionRejectVarianceThreshold = 90000.0;
         public static final double kVisionRotationVarianceFusionCutoff = 1000.0;
 
-        public static final double kVisionXyStdDevCoefficient = 0.01;
-        public static final double kVisionThetaStdDevCoefficient = 0.03;
+        public static final double kVisionXyStdDevCoefficient = 0.25;
+        public static final double kVisionThetaStdDevCoefficient = 0.10;
         public static final double kVisionCameraStdDevFactor = 1.0;
-        public static final double kVisionStdDevDistanceExponent = 1.2;
-        public static final double kVisionStdDevTagCountExponent = 2.0;
+        public static final double kVisionStdDevDistanceExponent = 2.0;
+        public static final double kVisionStdDevTagCountExponent = 1.0;
         public static final double kVisionStdDevMin = 0.01;
 
         public static final double kVisionFinalXyStdDevFloor = 0.05;
