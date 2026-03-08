@@ -199,11 +199,11 @@ public final class Constants {
         public static final double kVisionRejectVarianceThreshold = 90000.0;
         public static final double kVisionRotationVarianceFusionCutoff = 1000.0;
 
-        public static final double kVisionXyStdDevCoefficient = 0.01;
-        public static final double kVisionThetaStdDevCoefficient = 0.03;
+        public static final double kVisionXyStdDevCoefficient = 0.25;
+        public static final double kVisionThetaStdDevCoefficient = 0.10;
         public static final double kVisionCameraStdDevFactor = 1.0;
         public static final double kVisionStdDevDistanceExponent = 2.0;
-        public static final double kVisionStdDevTagCountExponent = 2.0;
+        public static final double kVisionStdDevTagCountExponent = 1.0;
         public static final double kVisionStdDevMin = 0.01;
 
         public static final double kVisionFinalXyStdDevFloor = 0.05;
