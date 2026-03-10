@@ -23,6 +23,7 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
+import edu.wpi.first.math.MathUtil;
 import frc.robot.subsystems.intake.IntakeConstants.IntakeSide;
 
 public class IntakeIOSpark implements IntakeIO {
@@ -131,6 +132,7 @@ public class IntakeIOSpark implements IntakeIO {
         deployController.setSetpoint(deploySetpoint + getZeroOffsetAdj(), ControlType.kMAXMotionPositionControl);
 
         // Update drive inputs
+        ifOk(driveSpark, driveEncoder::getPosition, (value) -> inputs.drivePositionMeters = value);
         ifOk(driveSpark, driveEncoder::getVelocity, (value) -> inputs.driveSpeed = value);
         ifOk(
                 driveSpark,
@@ -157,6 +159,11 @@ public class IntakeIOSpark implements IntakeIO {
     @Override
     public void setIntakeSpeed(double speed) {
         driveController.setSetpoint(speed, ControlType.kVelocity);
+    }
+
+    @Override
+    public void setIntakeVoltage(double volts) {
+        driveSpark.setVoltage(MathUtil.clamp(volts, -12.0, 12.0));
     }
 
     @Override
