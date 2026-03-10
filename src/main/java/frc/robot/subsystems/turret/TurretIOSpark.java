@@ -106,7 +106,8 @@ public class TurretIOSpark implements TurretIO {
         turretConfig
             .inverted(turretIsInverted)
             .idleMode(IdleMode.kCoast)
-            .smartCurrentLimit(turretMotorCurrent);
+            .smartCurrentLimit(turretMotorCurrent)
+            .voltageCompensation(12.0);
         turretConfig
             .encoder
             .positionConversionFactor(turretEncoderPositionFactor)
@@ -129,7 +130,8 @@ public class TurretIOSpark implements TurretIO {
         hoodConfig
             .inverted(hoodIsInverted)
             .idleMode(IdleMode.kCoast)
-            .smartCurrentLimit(hoodMotorCurrent);
+            .smartCurrentLimit(hoodMotorCurrent)
+            .voltageCompensation(12.0);
         hoodConfig
             .absoluteEncoder
             .inverted(hoodEncoderInverted)
@@ -155,7 +157,8 @@ public class TurretIOSpark implements TurretIO {
         var flywheelBaseConfig = new SparkFlexConfig();
         flywheelBaseConfig
             .idleMode(IdleMode.kCoast)
-            .smartCurrentLimit(flywheelMotorCurrent);
+            .smartCurrentLimit(flywheelMotorCurrent)
+            .voltageCompensation(12.0);
 
         // Flywheel leader config
         var flywheelLeaderConfig = new SparkFlexConfig();

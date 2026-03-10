@@ -99,7 +99,8 @@ public class ModuleIOSpark implements ModuleIO {
     var driveConfig = new SparkFlexConfig();
     driveConfig
         .idleMode(IdleMode.kBrake)
-        .smartCurrentLimit(driveMotorCurrentLimit);
+        .smartCurrentLimit(driveMotorCurrentLimit)
+        .voltageCompensation(12.0);
     driveConfig
         .encoder
         .positionConversionFactor(driveEncoderPositionFactor)
@@ -133,7 +134,8 @@ public class ModuleIOSpark implements ModuleIO {
     turnConfig
         .inverted(turnInverted)
         .idleMode(IdleMode.kBrake)
-        .smartCurrentLimit(turnMotorCurrentLimit);
+        .smartCurrentLimit(turnMotorCurrentLimit)
+        .voltageCompensation(12.0);
     turnConfig
         .absoluteEncoder
         .inverted(turnEncoderInverted)
