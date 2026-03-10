@@ -106,12 +106,14 @@ public class IntakeIOSpark implements IntakeIO {
                 .pid(deployKp, deployKi, deployKd);
         deployConfig.closedLoop
                 .maxMotion
-                // Conservative starting point for ~0.25s deploy to 80 deg.
-                .cruiseVelocity(8000)
-                .maxAcceleration(50000)
-                .allowedProfileError(1);
-        // deployConfig.closedLoop.feedForward.kV(deployKv);
-        // deployConfig.closedLoop.feedForward.kA(0);
+                // Calculated for a 0.5s, 86-degree move
+                .cruiseVelocity(350)
+                .maxAcceleration(1400)
+                // Keep this loose during tuning to prevent premature profile regeneration
+                .allowedProfileError(20);
+
+        deployConfig.closedLoop.feedForward.kV(deployKv);
+        deployConfig.closedLoop.feedForward.kA(0);
         // driveConfig.signals
         // .absoluteEncoderPositionAlwaysOn(true)
         // .absoluteEncoderPositionPeriodMs((int) (1000.0 / odometryFrequency))
