@@ -22,10 +22,13 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.utils.ShootOnTheFly;
+import frc.utils.ShootOnTheFly.FullShooterParams;
 import frc.utils.FieldConstants.Hub;
 import frc.utils.ShootOnTheFly.SOTFResult;
 
 public class Turret extends SubsystemBase {
+    private static final double shooterVelocityScale = 1.375;
+
     public enum ControlMode {
         VELOCITY,
         VOLTAGE
@@ -41,6 +44,7 @@ public class Turret extends SubsystemBase {
     private double shooterCommandedVoltage = 0.0;
     private ShootOnTheFly sotf = ShootOnTheFly.getInstance();
     private Translation2d targetTranslation = Hub.topCenterPoint.toTranslation2d();
+    private boolean sotfEnabled = true;
 
     private double sotfYaw = 0.0;
     private boolean turretPointedAtTarget = false;
@@ -90,28 +94,35 @@ public class Turret extends SubsystemBase {
         // } else {
         //     turretPointedAtTarget = false;
         // }
+        double activeShooterVelocitySetpointMps = result.vel * shooterVelocityScale;
+        double activeShotAngleSetpointDeg = result.pitch;
 
-        switch (shooterControlMode) {
-            case VELOCITY:
-                io.setShooterSpeed(result.vel * 1.375);
-                break;
-            case VOLTAGE:
-                io.setShooterVoltage(shooterCommandedVoltage);
-                break;
-        }
-        if (!stopShoot) {
-            io.setShotAngle(result.pitch);
-        } else {
-            io.setHoodAngle(0);
+        if (sotfEnabled) {
+            switch (shooterControlMode) {
+                case VELOCITY:
+                    io.setShooterSpeed(stopShoot ? 0.0 : activeShooterVelocitySetpointMps);
+                    break;
+                case VOLTAGE:
+                    io.setShooterVoltage(stopShoot ? 0.0 : shooterCommandedVoltage);
+                    break;
+            }
+            if (!stopShoot) {
+                io.setShotAngle(activeShotAngleSetpointDeg);
+            } else {
+                io.setHoodAngle(0);
+            }
         }
         Logger.recordOutput("Turret/SOTFYaw", result.yaw);
         Logger.recordOutput("Turret/SOTFVel", result.vel);
         Logger.recordOutput("Turret/SOTFPitch", result.pitch);
         Logger.recordOutput("Turret/SOTFTarget", targetTranslation);
         Logger.recordOutput("Turret/SOTFDist", result.dist);
+        Logger.recordOutput("Turret/SOTFEnabled", sotfEnabled);
         Logger.recordOutput("Turret/PointedAtHub", turretPointedAtTarget);
         Logger.recordOutput("Turret/turretPointedAt", error.getDegrees());
         Logger.recordOutput("Turret/ShooterControlMode", shooterControlMode.toString());
+        Logger.recordOutput("Turret/FlywheelVelocitySetpointMps", activeShooterVelocitySetpointMps);
+        Logger.recordOutput("Turret/ShotAngleSetpointDeg", activeShotAngleSetpointDeg);
     }
 
     /**
@@ -149,6 +160,73 @@ public class Turret extends SubsystemBase {
     public void setShooterSpeed(double speed) {
         setShooterControlMode(ControlMode.VELOCITY);
         io.setShooterSpeed(speed);
+    }
+
+    /** Applies fixed shooter/hood setpoints directly. */
+    public void runManualShot(double flywheelVelocityMps, double hoodAngleDeg) {
+        setStopShoot(false);
+        if (shooterControlMode != ControlMode.VELOCITY) {
+            setShooterControlMode(ControlMode.VELOCITY);
+        }
+        io.setShooterSpeed(flywheelVelocityMps);
+        io.setShotAngle(hoodAngleDeg);
+    }
+
+    /** Command factory to run a fixed manual shot. */
+    public Command manualShotCommand(double flywheelVelocityMps, double hoodAngleDeg) {
+        return run(() -> runManualShot(flywheelVelocityMps, hoodAngleDeg))
+                .until(() -> manualShotReady(hoodAngleDeg));
+    }
+
+    /** Enables/disables SOTF setpoint generation in periodic(). */
+    public void setSotfEnabled(boolean enabled) {
+        sotfEnabled = enabled;
+    }
+
+    public boolean isSotfEnabled() {
+        return sotfEnabled;
+    }
+
+    /** True when the measured hood angle is within tolerance of the requested shot angle. */
+    public boolean hoodAtShotSetpoint(double hoodAngleDeg) {
+        if (!inputs.hoodConnected) {
+            return true;
+        }
+        double measuredShotAngleDeg = TurretConstants.hoodShotAngleOffset - inputs.hoodPositionDeg;
+        return Math.abs(measuredShotAngleDeg - hoodAngleDeg) <= TurretConstants.hoodShotAngleToleranceDeg;
+    }
+
+    /** Backwards-compatible alias for manual-shot checks. */
+    public boolean hoodAtManualShotSetpoint(double hoodAngleDeg) {
+        return hoodAtShotSetpoint(hoodAngleDeg);
+    }
+
+    /** True when both flywheel and hood have reached manual-shot readiness. */
+    public boolean manualShotReady(double hoodAngleDeg) {
+        return flywheelAtSpeed() && hoodAtShotSetpoint(hoodAngleDeg);
+    }
+
+    /** Current measured flywheel linear velocity (m/s). */
+    public double getFlywheelVelocityMetersPerSecond() {
+        return inputs.flywheelVelocity;
+    }
+
+    /** Returns the nominal shot speed command used by this turret for a given distance. */
+    public double getShotVelocityForDistanceMeters(double distanceMeters) {
+        FullShooterParams params = TurretConstants.SHOOTER_MAP.get(distanceMeters);
+        if (params == null) {
+            return 0.0;
+        }
+        return params.speedMetersPerSecond() * shooterVelocityScale;
+    }
+
+    /** Returns the nominal shot hood-angle command for a given distance. */
+    public double getShotAngleForDistanceMeters(double distanceMeters) {
+        FullShooterParams params = TurretConstants.SHOOTER_MAP.get(distanceMeters);
+        if (params == null) {
+            return 0.0;
+        }
+        return params.hoodAngle();
     }
 
     /** Get the current flywheel control mode. */
@@ -204,6 +282,10 @@ public class Turret extends SubsystemBase {
      */
     public void setStopShoot(boolean stop) {
         stopShoot = stop;
+    }
+
+    public boolean isStopShootEnabled() {
+        return stopShoot;
     }
 
     /**

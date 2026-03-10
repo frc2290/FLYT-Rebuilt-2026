@@ -294,6 +294,7 @@ public class TurretIOSpark implements TurretIO {
             new DoubleSupplier[] {flywheel1Spark::getAppliedOutput, flywheel1Spark::getBusVoltage},
             (values) -> inputs.flywheelAppliedVolts = values[0] * values[1]);
         ifOk(flywheel1Spark, flywheel1Spark::getOutputCurrent, (value) -> inputs.flywheelCurrentAmps = value);
+        ifOk(flywheel2Spark, flywheel2Spark::getOutputCurrent, (value) -> inputs.flywheelFollowerCurrentAmps = value);
         inputs.flywheelConnected = flywheelConnectedDebounce.calculate(!sparkStickyFault);
     }
 
@@ -341,7 +342,7 @@ public class TurretIOSpark implements TurretIO {
 
     @Override
     public boolean flywheelAtSpeed() {
-        return flywheel1Encoder.getVelocity() > (turretSpeed * 0.8);
+        return flywheel1Encoder.getVelocity() > (turretSpeed * flywheelReadyRatio);
     }
 
 
