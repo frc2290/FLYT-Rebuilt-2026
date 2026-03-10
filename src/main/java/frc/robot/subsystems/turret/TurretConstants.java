@@ -43,7 +43,7 @@ public class TurretConstants {
     public static final boolean hoodEncoderInverted = false;
     public static final double encoderOffset = 0;
     public static final double hoodEncoderZeroOffset = 0.65;
-    public static final double hoodAngleOffset = 7.793;
+    public static final double hoodAngleOffset = 2.34;
     public static final double hoodShotAngleOffset = 74.8;
     // Spark relative encoder is on the turret turn motor.
     // Position factor: motor rotations -> turret mechanism degrees.
@@ -87,8 +87,8 @@ public class TurretConstants {
     public static final double flywheelFreeSpeedRPM =
             Units.radiansPerSecondToRotationsPerMinute(flywheelGearbox.freeSpeedRadPerSec);
     public static final double flywheelKv =
-            1.27 / (flywheelFreeSpeedRPM * flywheelEncoderVelocityFactor);
-    public static final double flywheelKp = 1.0;
+            12 / (flywheelFreeSpeedRPM * flywheelEncoderVelocityFactor);
+    public static final double flywheelKp = 2.0;
     public static final double flywheelKi = 0.0;
     public static final double flywheelKd = 0.0;
 
