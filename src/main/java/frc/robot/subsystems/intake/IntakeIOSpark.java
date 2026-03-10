@@ -1,8 +1,6 @@
 package frc.robot.subsystems.intake;
 
 import static edu.wpi.first.math.util.Units.degreesToRadians;
-import static frc.robot.subsystems.dyerotor.DyeRotorConstants.rotorCanId;
-import static frc.robot.subsystems.dyerotor.DyeRotorConstants.rotorEncoderPositionFactor;
 import static frc.robot.subsystems.intake.IntakeConstants.*;
 import static frc.utils.SparkUtil.ifOk;
 
@@ -25,7 +23,6 @@ import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkFlexConfig;
 import com.revrobotics.spark.config.SparkMaxConfig;
 
-import edu.wpi.first.math.geometry.Rotation2d;
 import frc.robot.subsystems.intake.IntakeConstants.IntakeSide;
 
 public class IntakeIOSpark implements IntakeIO {
@@ -145,11 +142,7 @@ public class IntakeIOSpark implements IntakeIO {
         ifOk(
                 deploySpark,
                 () -> getPosition(),
-                (value) -> inputs.deployPosition = Rotation2d.fromDegrees(value));
-        ifOk(
-                deploySpark,
-                () -> getPosition(),
-                (value) -> inputs.deployPosDeg = value);
+                (value) -> inputs.deployPosition = value);
         ifOk(
                 deploySpark,
                 deployEncoder::getVelocity,
@@ -167,8 +160,8 @@ public class IntakeIOSpark implements IntakeIO {
     }
 
     @Override
-    public void setDeployPosition(Rotation2d rotation) {
-        this.deploySetpoint = rotation.getDegrees();
+    public void setDeployPosition(double angle) {
+        this.deploySetpoint = angle;
     }
 
     public double getPosition() {

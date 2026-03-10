@@ -2,8 +2,6 @@ package frc.robot.subsystems.intake;
 
 import org.littletonrobotics.junction.AutoLog;
 
-import edu.wpi.first.math.geometry.Rotation2d;
-
 public interface IntakeIO {
     @AutoLog
     public static class IntakeIOInputs {
@@ -12,8 +10,7 @@ public interface IntakeIO {
         public double driveAppliedVolts = 0.0;
         public double driveCurrentAmps = 0.0;
 
-        public Rotation2d deployPosition = Rotation2d.kZero;
-        public double deployPosDeg = 0.0;
+        public double deployPosition = 0;
         public double deployVelocityRadPerSec = 0.0;
         public double deployAppliedVolts = 0.0;
         public double deployCurrentAmps = 0.0;
@@ -22,5 +19,5 @@ public interface IntakeIO {
     public default void updateInputs(IntakeIOInputs inputs) {}
     
     public default void setIntakeSpeed(double speed) {}
-    public default void setDeployPosition(Rotation2d rotation) {}
+    public default void setDeployPosition(double rotation) {}
 }
