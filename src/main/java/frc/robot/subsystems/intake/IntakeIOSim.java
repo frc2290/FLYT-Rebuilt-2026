@@ -1,12 +1,13 @@
 package frc.robot.subsystems.intake;
 
+import static edu.wpi.first.math.util.Units.degreesToRadians;
 import static edu.wpi.first.math.util.Units.inchesToMeters;
 import static edu.wpi.first.math.util.Units.radiansToDegrees;
+import static edu.wpi.first.units.Units.Degrees;
 import static frc.robot.subsystems.intake.IntakeConstants.*;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
@@ -67,7 +68,7 @@ public class IntakeIOSim implements IntakeIO {
         inputs.driveCurrentAmps = Math.abs(driveSim.getCurrentDrawAmps());
 
         // Update turn inputs
-        inputs.deployPosition = new Rotation2d(deploySim.getAngularPositionRad());
+        inputs.deployPosition = deploySim.getAngularPosition().in(Degrees);
         inputs.deployVelocityRadPerSec = deploySim.getAngularVelocityRadPerSec();
         inputs.deployAppliedVolts = deployAppliedVolts;
         inputs.deployCurrentAmps = Math.abs(deploySim.getCurrentDrawAmps());
@@ -79,7 +80,7 @@ public class IntakeIOSim implements IntakeIO {
     }
 
     @Override
-    public void setDeployPosition(Rotation2d rotation) {
-        deployController.setSetpoint(rotation.getRadians());
+    public void setDeployPosition(double angle) {
+        deployController.setSetpoint(degreesToRadians(angle));
     }
 }

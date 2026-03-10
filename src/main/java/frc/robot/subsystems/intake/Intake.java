@@ -4,18 +4,17 @@ import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
 
 import edu.wpi.first.math.geometry.Pose3d;
-import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.intake.IntakeConstants.IntakeSide;
 
-import static edu.wpi.first.math.util.Units.degreesToRadians;
 import static edu.wpi.first.math.util.Units.feetToMeters;
+import static edu.wpi.first.math.util.Units.radiansToDegrees;
 import static frc.robot.subsystems.intake.IntakeConstants.*;
 
-import java.io.OutputStream;
+import java.util.Optional;
 
 public class Intake extends SubsystemBase {
     private final IntakeIO ioLeft;
@@ -24,6 +23,8 @@ public class Intake extends SubsystemBase {
     private final IntakeIOInputsAutoLogged inputsRight = new IntakeIOInputsAutoLogged();
 
     private double wowowowowoTicks = 0;
+
+    private Optional<IntakeSide> outSide = Optional.empty();
 
     // Dashboard booleans to disable an intake side in a match
     // TODO IMPLEMENT
@@ -49,19 +50,21 @@ public class Intake extends SubsystemBase {
         Logger.recordOutput("Intake/Components", new Pose3d[] {
                 new Pose3d(0, getPosition(IntakeSide.LEFT) / outPosition * feetToMeters(1), 0, new Rotation3d()),
                 new Pose3d(0, getPosition(IntakeSide.RIGHT) / outPosition * -feetToMeters(1), 0, new Rotation3d()) });
+
+        if (!isIn(IntakeSide.LEFT) && !isIn(IntakeSide.RIGHT)) {
+            // panic???
+            
+        }
     }
 
-    private IntakeIO getIntake(IntakeSide side) {
+    private IntakeIO getIo(IntakeSide side) {
         // i am addicted to ternary operators
         return side == IntakeSide.LEFT ? ioLeft : ioRight;
     }
 
     public double getPosition(IntakeSide side) {
-        if (side == IntakeSide.LEFT) {
-            return inputsLeft.deployPosition.getDegrees();
-        } else {
-            return inputsRight.deployPosition.getDegrees();
-        }
+        // i am addicted to ternary operators pt 2
+        return (side == IntakeSide.LEFT ? inputsLeft : inputsRight).deployPosition;
     }
 
     // when it is FULLY undeployed
@@ -75,15 +78,16 @@ public class Intake extends SubsystemBase {
     }
 
     public void deploy(IntakeSide side, boolean out) {
-        getIntake(side).setDeployPosition(new Rotation2d(degreesToRadians(out ? outPosition : inPosition)));
+        getIo(side).setDeployPosition(out ? outPosition : inPosition);
     }
 
     public void driveRoller(IntakeSide side, double speed) {
-        getIntake(side).setIntakeSpeed(speed);
+        getIo(side).setIntakeSpeed(speed);
     }
 
     public Command intakeIn(IntakeSide side) {
         return run(() -> {
+            outSide = Optional.empty();
             driveRoller(side, rollerSpeed);
             deploy(side, false);
         }).until(() -> {
@@ -129,30 +133,18 @@ public class Intake extends SubsystemBase {
     }
 
     public Command wowowowowoIntake() {
-        return startRun(() -> {
-            wowowowowoTicks = 0;
-        }, () -> {
+        return run(() -> {
             wowowowowoTicks++;
-            double num = outPosition - (-Math.cos(wowowowowoTicks / 15.0) / 2.0 + 0.5) * (outPosition * 0.85);
-            Rotation2d angle = new Rotation2d(degreesToRadians(num));
-            boolean direction = Math.cos(num) > 0; // extending if true
-            if (!isIn(IntakeSide.LEFT)) {
-                driveRoller(IntakeSide.LEFT, rollerSpeed);
-                ioLeft.setDeployPosition(angle);
-            }
-            if (!isIn(IntakeSide.RIGHT)) {
-                driveRoller(IntakeSide.RIGHT, rollerSpeed);
-                ioRight.setDeployPosition(angle);
-            }
+            double angle = outPosition - (Math.sin(wowowowowoTicks / 15.0) / 2.0 + 0.5) * (outPosition * 0.85);
+            outSide.ifPresent(side -> {
+                driveRoller(side, rollerSpeed);
+                getIo(side).setDeployPosition(radiansToDegrees(angle));
+            });
         }).finallyDo(() -> {
-            if (!isIn(IntakeSide.LEFT)) {
-                driveRoller(IntakeSide.LEFT, 0);
-                ioLeft.setDeployPosition(new Rotation2d(degreesToRadians(outPosition)));
-            }
-            if (!isIn(IntakeSide.RIGHT)) {
-                driveRoller(IntakeSide.RIGHT, 0);
-                ioRight.setDeployPosition(new Rotation2d(degreesToRadians(outPosition)));
-            }
+            outSide.ifPresent(side -> {
+                driveRoller(side, 0);
+                getIo(side).setDeployPosition(outPosition);
+            });
         });
     }
 }
