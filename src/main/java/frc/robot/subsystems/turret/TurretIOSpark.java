@@ -23,6 +23,7 @@ import com.revrobotics.spark.config.SparkMaxConfig;
 import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.SparkBase.ControlType;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
@@ -64,6 +65,7 @@ public class TurretIOSpark implements TurretIO {
     private double turretSpeed = 0;
     private double turretHoodAngle = 10;
     private double turretAngleSetpoint = 0;
+    private double shooterVoltageCommand = 0.0;
 
     public TurretIOSpark() {
 
@@ -242,8 +244,6 @@ public class TurretIOSpark implements TurretIO {
         double targetHoodEncoderAngle = (turretHoodAngle + hoodAngleOffset);
         hoodController.setSetpoint(targetHoodEncoderAngle, ControlType.kPosition);
 
-        flywheelController1.setSetpoint(turretSpeed, ControlType.kVelocity);
-
         turretController.setSetpoint(turretAngleSetpoint, ControlType.kPosition);
 
         //turretAngle = getTurretPos();
@@ -326,7 +326,15 @@ public class TurretIOSpark implements TurretIO {
     @Override
     public void setShooterSpeed(double speed) {
         turretSpeed = speed;
+        shooterVoltageCommand = 0.0;
+        flywheelController1.setSetpoint(turretSpeed, ControlType.kVelocity);
     };
+
+    @Override
+    public void setShooterVoltage(double volts) {
+        shooterVoltageCommand = MathUtil.clamp(volts, -12.0, 12.0);
+        flywheel1Spark.setVoltage(shooterVoltageCommand);
+    }
 
     @Override
     public boolean flywheelAtSpeed() {

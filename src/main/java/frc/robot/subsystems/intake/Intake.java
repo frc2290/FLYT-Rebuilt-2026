@@ -1,5 +1,8 @@
 package frc.robot.subsystems.intake;
 
+import static edu.wpi.first.units.Units.Second;
+import static edu.wpi.first.units.Units.Seconds;
+import static edu.wpi.first.units.Units.Volts;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
 
@@ -8,6 +11,7 @@ import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.subsystems.intake.IntakeConstants.IntakeSide;
 
 import static edu.wpi.first.math.util.Units.feetToMeters;
@@ -17,12 +21,23 @@ import static frc.robot.subsystems.intake.IntakeConstants.*;
 import java.util.Optional;
 
 public class Intake extends SubsystemBase {
+    public enum ControlMode {
+        VELOCITY,
+        VOLTAGE
+    }
+
     private final IntakeIO ioLeft;
     private final IntakeIOInputsAutoLogged inputsLeft = new IntakeIOInputsAutoLogged();
     private final IntakeIO ioRight;
     private final IntakeIOInputsAutoLogged inputsRight = new IntakeIOInputsAutoLogged();
+    private final SysIdRoutine leftSysId;
+    private final SysIdRoutine rightSysId;
 
     private double wowowowowoTicks = 0;
+    private ControlMode leftControlMode = ControlMode.VELOCITY;
+    private ControlMode rightControlMode = ControlMode.VELOCITY;
+    private double leftCommandedVoltage = 0.0;
+    private double rightCommandedVoltage = 0.0;
 
     private Optional<IntakeSide> outSide = Optional.empty();
 
@@ -34,6 +49,30 @@ public class Intake extends SubsystemBase {
     public Intake(IntakeIO ioLeft, IntakeIO ioRight) {
         this.ioLeft = ioLeft;
         this.ioRight = ioRight;
+
+        leftSysId = new SysIdRoutine(
+                new SysIdRoutine.Config(
+                        Volts.of(0.75).per(Second),
+                        Volts.of(11.0),
+                        Seconds.of(16),
+                        (state) -> Logger.recordOutput("Intake/LeftSysIdState", state.toString())),
+                new SysIdRoutine.Mechanism(
+                        (voltage) -> leftCommandedVoltage = voltage.in(Volts),
+                        null,
+                        this,
+                        "IntakeLeft"));
+
+        rightSysId = new SysIdRoutine(
+                new SysIdRoutine.Config(
+                        Volts.of(0.75).per(Second),
+                        Volts.of(11.0),
+                        Seconds.of(16),
+                        (state) -> Logger.recordOutput("Intake/RightSysIdState", state.toString())),
+                new SysIdRoutine.Mechanism(
+                        (voltage) -> rightCommandedVoltage = voltage.in(Volts),
+                        null,
+                        this,
+                        "IntakeRight"));
     }
 
     @Override
@@ -46,10 +85,19 @@ public class Intake extends SubsystemBase {
         Logger.recordOutput("Intake/LeftOut", isOut(IntakeSide.LEFT));
         Logger.recordOutput("Intake/RightIn", isIn(IntakeSide.RIGHT));
         Logger.recordOutput("Intake/RightOut", isOut(IntakeSide.RIGHT));
+        Logger.recordOutput("Intake/LeftControlMode", leftControlMode.toString());
+        Logger.recordOutput("Intake/RightControlMode", rightControlMode.toString());
 
         Logger.recordOutput("Intake/Components", new Pose3d[] {
                 new Pose3d(0, getPosition(IntakeSide.LEFT) / outPosition * feetToMeters(1), 0, new Rotation3d()),
                 new Pose3d(0, getPosition(IntakeSide.RIGHT) / outPosition * -feetToMeters(1), 0, new Rotation3d()) });
+
+        if (leftControlMode == ControlMode.VOLTAGE) {
+            ioLeft.setIntakeVoltage(leftCommandedVoltage);
+        }
+        if (rightControlMode == ControlMode.VOLTAGE) {
+            ioRight.setIntakeVoltage(rightCommandedVoltage);
+        }
 
         if (!isIn(IntakeSide.LEFT) && !isIn(IntakeSide.RIGHT)) {
             // panic???
@@ -82,6 +130,7 @@ public class Intake extends SubsystemBase {
     }
 
     public void driveRoller(IntakeSide side, double speed) {
+        setControlMode(side, ControlMode.VELOCITY);
         getIo(side).setIntakeSpeed(speed);
     }
 
@@ -145,6 +194,75 @@ public class Intake extends SubsystemBase {
                 driveRoller(side, 0);
                 getIo(side).setDeployPosition(outPosition);
             });
+        });
+    }
+
+    public ControlMode getControlMode(IntakeSide side) {
+        return side == IntakeSide.LEFT ? leftControlMode : rightControlMode;
+    }
+
+    public void setControlMode(IntakeSide side, ControlMode controlMode) {
+        ControlMode resolved = controlMode == null ? ControlMode.VELOCITY : controlMode;
+        if (side == IntakeSide.LEFT) {
+            leftControlMode = resolved;
+            if (leftControlMode == ControlMode.VELOCITY) {
+                leftCommandedVoltage = 0.0;
+                ioLeft.setIntakeVoltage(0.0);
+            }
+        } else {
+            rightControlMode = resolved;
+            if (rightControlMode == ControlMode.VELOCITY) {
+                rightCommandedVoltage = 0.0;
+                ioRight.setIntakeVoltage(0.0);
+            }
+        }
+    }
+
+    /** Runs a quasistatic SysId test on the LEFT intake roller. */
+    public Command sysIdQuasistaticLeftIntake(SysIdRoutine.Direction direction) {
+        return runOnce(() -> {
+            setControlMode(IntakeSide.LEFT, ControlMode.VOLTAGE);
+            leftCommandedVoltage = 0.0;
+        }).andThen(leftSysId.quasistatic(direction)).finallyDo(() -> {
+            setControlMode(IntakeSide.LEFT, ControlMode.VELOCITY);
+            leftCommandedVoltage = 0.0;
+            stopIntake();
+        });
+    }
+
+    /** Runs a dynamic SysId test on the LEFT intake roller. */
+    public Command sysIdDynamicLeftIntake(SysIdRoutine.Direction direction) {
+        return runOnce(() -> {
+            setControlMode(IntakeSide.LEFT, ControlMode.VOLTAGE);
+            leftCommandedVoltage = 0.0;
+        }).andThen(leftSysId.dynamic(direction)).finallyDo(() -> {
+            setControlMode(IntakeSide.LEFT, ControlMode.VELOCITY);
+            leftCommandedVoltage = 0.0;
+            stopIntake();
+        });
+    }
+
+    /** Runs a quasistatic SysId test on the RIGHT intake roller. */
+    public Command sysIdQuasistaticRightIntake(SysIdRoutine.Direction direction) {
+        return runOnce(() -> {
+            setControlMode(IntakeSide.RIGHT, ControlMode.VOLTAGE);
+            rightCommandedVoltage = 0.0;
+        }).andThen(rightSysId.quasistatic(direction)).finallyDo(() -> {
+            setControlMode(IntakeSide.RIGHT, ControlMode.VELOCITY);
+            rightCommandedVoltage = 0.0;
+            stopIntake();
+        });
+    }
+
+    /** Runs a dynamic SysId test on the RIGHT intake roller. */
+    public Command sysIdDynamicRightIntake(SysIdRoutine.Direction direction) {
+        return runOnce(() -> {
+            setControlMode(IntakeSide.RIGHT, ControlMode.VOLTAGE);
+            rightCommandedVoltage = 0.0;
+        }).andThen(rightSysId.dynamic(direction)).finallyDo(() -> {
+            setControlMode(IntakeSide.RIGHT, ControlMode.VELOCITY);
+            rightCommandedVoltage = 0.0;
+            stopIntake();
         });
     }
 }

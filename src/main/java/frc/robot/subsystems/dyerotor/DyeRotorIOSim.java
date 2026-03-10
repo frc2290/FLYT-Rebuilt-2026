@@ -2,6 +2,7 @@ package frc.robot.subsystems.dyerotor;
 
 import static frc.robot.subsystems.dyerotor.DyeRotorConstants.*;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.math.system.plant.LinearSystemId;
 import edu.wpi.first.wpilibj.simulation.DCMotorSim;
@@ -14,6 +15,8 @@ public class DyeRotorIOSim implements DyeRotorIO {
 
     private double rotorSpeed = 0.0;
     private double feederSpeed = 0.0;
+    private double rotorCommandedVolts = 0.0;
+    private double feederCommandedVolts = 0.0;
 
     public DyeRotorIOSim() {
         rotorSim = new DCMotorSim(
@@ -27,29 +30,47 @@ public class DyeRotorIOSim implements DyeRotorIO {
 
     @Override
     public void updateInputs(DyeRotorIOInputs inputs) {
-// Sim receives mechanism speed targets. 
-// Multiply by kFF to get the required duty cycle (0.0 - 1.0), then scale to 12 Volts.
-        rotorSim.setInputVoltage((rotorSpeed * rotorKv));
-        feederSim.setInputVoltage((feederSpeed * feederKv));
+        // Feedforward speed targets and direct-voltage commands both resolve to this voltage path.
+        rotorSim.setInputVoltage(rotorCommandedVolts);
+        feederSim.setInputVoltage(feederCommandedVolts);
         rotorSim.update(0.02);
         feederSim.update(0.02);
 
         inputs.rotorSpeed = rotorSpeed;
-        inputs.rotorAppliedVolts = rotorSim.getInputVoltage();
+        inputs.rotorEncoderPosition = (rotorSim.getAngularPositionRad() / (2.0 * Math.PI)) * rotorEncoderPositionFactor;
+        inputs.rotorAppliedVolts = rotorCommandedVolts;
+        inputs.rotorEncoderRPM = rotorSim.getAngularVelocityRPM();
         inputs.rotorCurrentAmps = Math.abs(rotorSim.getCurrentDrawAmps());
 
         inputs.feederSpeed = feederSpeed;
-        inputs.feederAppliedVolts = feederSim.getInputVoltage();
+        inputs.feederEncoderPosition =
+                (feederSim.getAngularPositionRad() / (2.0 * Math.PI)) * feederEncoderPositionFactor;
+        inputs.feederAppliedVolts = feederCommandedVolts;
+        inputs.feederEncoderRPM = feederSim.getAngularVelocityRPM();
         inputs.feederCurrentAmps = Math.abs(feederSim.getCurrentDrawAmps());
     }
 
     @Override
     public void setRotorSpeed(double speed) {
         rotorSpeed = speed;
+        rotorCommandedVolts = MathUtil.clamp(rotorSpeed * rotorKv, -12.0, 12.0);
     }
 
     @Override
     public void setFeederSpeed(double speed) {
         feederSpeed = speed;
+        feederCommandedVolts = MathUtil.clamp(feederSpeed * feederKv, -12.0, 12.0);
+    }
+
+    @Override
+    public void setRotorVoltage(double volts) {
+        rotorSpeed = 0.0;
+        rotorCommandedVolts = MathUtil.clamp(volts, -12.0, 12.0);
+    }
+
+    @Override
+    public void setFeederVoltage(double volts) {
+        feederSpeed = 0.0;
+        feederCommandedVolts = MathUtil.clamp(volts, -12.0, 12.0);
     }
 }

@@ -24,6 +24,7 @@ public class IntakeIOSim implements IntakeIO {
     private PIDController deployController = new PIDController(deploySimKp, deploySimKi, deploySimKd);
     private double deployAppliedVolts = 0.0;
     private double driveSpeed = 0.0;
+    private double driveCommandedVolts = 0.0;
 
     public IntakeIOSim(IntakeSide side, TurretIOSim turret) {
         driveSim = new DCMotorSim(
@@ -58,13 +59,14 @@ public class IntakeIOSim implements IntakeIO {
     public void updateInputs(IntakeIOInputs inputs) {
         deployAppliedVolts = deployController.calculate(deploySim.getAngularPositionRad());
 
-        driveSim.setInputVoltage(MathUtil.clamp(driveSpeed * rollerKv, -12.0, 12.0));
+        driveSim.setInputVoltage(driveCommandedVolts);
         deploySim.setInputVoltage(MathUtil.clamp(deployAppliedVolts, -12.0, 12.0));
         driveSim.update(0.02);
         deploySim.update(0.02);
 
+        inputs.drivePositionMeters = (driveSim.getAngularPositionRad() / (2.0 * Math.PI)) * rollerEncoderPositionFactor;
         inputs.driveSpeed = driveSim.getAngularVelocityRPM() * rollerEncoderVelocityFactor;
-        inputs.driveAppliedVolts = driveSim.getInputVoltage();
+        inputs.driveAppliedVolts = driveCommandedVolts;
         inputs.driveCurrentAmps = Math.abs(driveSim.getCurrentDrawAmps());
 
         // Update turn inputs
@@ -77,6 +79,13 @@ public class IntakeIOSim implements IntakeIO {
     @Override
     public void setIntakeSpeed(double speed) {
         driveSpeed = speed;
+        driveCommandedVolts = MathUtil.clamp(driveSpeed * rollerKv, -12.0, 12.0);
+    }
+
+    @Override
+    public void setIntakeVoltage(double volts) {
+        driveSpeed = 0.0;
+        driveCommandedVolts = MathUtil.clamp(volts, -12.0, 12.0);
     }
 
     @Override

@@ -38,6 +38,7 @@ public class TurretIOSim implements TurretIO {
     private double turretSpeed = 0;
     private double turretHoodAngle = 0;
     private double turretAngleSetpoint = 0;
+    private double shooterVoltageCommand = 0.0;
 
     public TurretIOSim(Supplier<Pose2d> poseSupplier, Supplier<ChassisSpeeds> speedSupplier) {
         this.poseSupplier = poseSupplier;
@@ -68,12 +69,19 @@ public class TurretIOSim implements TurretIO {
         turretTurnAppliedVolts = turretTurnController.calculate(turretTurnSim.getAngularPositionRad());
         turretTurnSim.setInputVoltage(MathUtil.clamp(turretTurnAppliedVolts, -12.0, 12.0));
         turretTurnSim.update(0.02);
+        turretShootSim.setInputVoltage(MathUtil.clamp(shooterVoltageCommand, -12.0, 12.0));
+        turretShootSim.update(0.02);
 
         turretAngle = turretTurnSim.getAngularPosition().in(Units.Degrees);
         inputs.turretAngle = turretAngle;
         inputs.turretSpeed = turretSpeed;
         inputs.turretHoodAngle = turretHoodAngle;
         inputs.turretAngleSetpoint = turretAngleSetpoint;
+        inputs.flywheelPositionMeters =
+                (turretShootSim.getAngularPositionRad() / (2.0 * Math.PI)) * flywheelEncoderPositionFactor;
+        inputs.flywheelVelocity = turretShootSim.getAngularVelocityRPM() * flywheelEncoderVelocityFactor;
+        inputs.flywheelAppliedVolts = shooterVoltageCommand;
+        inputs.flywheelCurrentAmps = Math.abs(turretShootSim.getCurrentDrawAmps());
     }
 
     @Override
@@ -90,7 +98,13 @@ public class TurretIOSim implements TurretIO {
     @Override
     public void setShooterSpeed(double speed) {
         turretSpeed = speed;
+        shooterVoltageCommand = MathUtil.clamp(turretSpeed * flywheelKv, -12.0, 12.0);
     };
+
+    @Override
+    public void setShooterVoltage(double volts) {
+        shooterVoltageCommand = MathUtil.clamp(volts, -12.0, 12.0);
+    }
 
     @Override
     public boolean flywheelAtSpeed() {

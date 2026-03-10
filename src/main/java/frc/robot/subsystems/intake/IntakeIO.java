@@ -5,6 +5,8 @@ import org.littletonrobotics.junction.AutoLog;
 public interface IntakeIO {
     @AutoLog
     public static class IntakeIOInputs {
+        // Roller position in meters.
+        public double drivePositionMeters = 0.0;
         // Roller surface speed in m/s.
         public double driveSpeed = 0.0;
         public double driveAppliedVolts = 0.0;
@@ -19,5 +21,6 @@ public interface IntakeIO {
     public default void updateInputs(IntakeIOInputs inputs) {}
     
     public default void setIntakeSpeed(double speed) {}
+    public default void setIntakeVoltage(double volts) {}
     public default void setDeployPosition(double rotation) {}
 }

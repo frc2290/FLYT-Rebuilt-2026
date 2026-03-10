@@ -4,6 +4,9 @@
 
 package frc.robot.subsystems.turret;
 
+import static edu.wpi.first.units.Units.Second;
+import static edu.wpi.first.units.Units.Seconds;
+import static edu.wpi.first.units.Units.Volts;
 import static frc.robot.subsystems.turret.TurretConstants.turretHoodData;
 import static frc.robot.subsystems.turret.TurretConstants.turretRPMData;
 
@@ -17,16 +20,25 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.utils.ShootOnTheFly;
 import frc.utils.FieldConstants.Hub;
 import frc.utils.ShootOnTheFly.SOTFResult;
 
 public class Turret extends SubsystemBase {
+    public enum ControlMode {
+        VELOCITY,
+        VOLTAGE
+    }
+
     private final TurretIO io; // input outs puts
     private final TurretIOInputsAutoLogged inputs = new TurretIOInputsAutoLogged();
+    private final SysIdRoutine sysId;
     private Supplier<Pose2d> pose;
     private Supplier<ChassisSpeeds> speeds;
     private boolean stopShoot = false;
+    private ControlMode shooterControlMode = ControlMode.VELOCITY;
+    private double shooterCommandedVoltage = 0.0;
     private ShootOnTheFly sotf = ShootOnTheFly.getInstance();
     private Translation2d targetTranslation = Hub.topCenterPoint.toTranslation2d();
 
@@ -40,6 +52,17 @@ public class Turret extends SubsystemBase {
         sotf.addShootInterpData(TurretConstants.SHOOTER_MAP);
         sotf.addShootSpeedInterpData(turretRPMData);
         sotf.addShootAngleInterpData(turretHoodData);
+
+        sysId = new SysIdRoutine(
+                new SysIdRoutine.Config(
+                        Volts.of(0.4).per(Second),
+                        Volts.of(6.0),
+                        Seconds.of(30),
+                        (state) -> Logger.recordOutput("Turret/SysIdState", state.toString())),
+                new SysIdRoutine.Mechanism(
+                        (voltage) -> shooterCommandedVoltage = voltage.in(Volts),
+                        null,
+                        this));
     }
 
     @Override
@@ -68,11 +91,16 @@ public class Turret extends SubsystemBase {
         //     turretPointedAtTarget = false;
         // }
 
-        io.setShooterSpeed(6.549333 * 1.375);
-        //io.setShooterSpeed(result.vel * 1.375);
-        //io.setShooterSpeed(8);
+        switch (shooterControlMode) {
+            case VELOCITY:
+                io.setShooterSpeed(result.vel * 1.375);
+                break;
+            case VOLTAGE:
+                io.setShooterVoltage(shooterCommandedVoltage);
+                break;
+        }
         if (!stopShoot) {
-            io.setShotAngle(72);
+            io.setShotAngle(result.pitch);
         } else {
             io.setHoodAngle(0);
         }
@@ -83,6 +111,7 @@ public class Turret extends SubsystemBase {
         Logger.recordOutput("Turret/SOTFDist", result.dist);
         Logger.recordOutput("Turret/PointedAtHub", turretPointedAtTarget);
         Logger.recordOutput("Turret/turretPointedAt", error.getDegrees());
+        Logger.recordOutput("Turret/ShooterControlMode", shooterControlMode.toString());
     }
 
     /**
@@ -118,7 +147,54 @@ public class Turret extends SubsystemBase {
      * @param speed speed in m/s to set the shooter
      */
     public void setShooterSpeed(double speed) {
+        setShooterControlMode(ControlMode.VELOCITY);
         io.setShooterSpeed(speed);
+    }
+
+    /** Get the current flywheel control mode. */
+    public ControlMode getShooterControlMode() {
+        return shooterControlMode;
+    }
+
+    /** Set the flywheel control mode. */
+    public void setShooterControlMode(ControlMode controlMode) {
+        shooterControlMode = controlMode == null ? ControlMode.VELOCITY : controlMode;
+        if (shooterControlMode == ControlMode.VELOCITY) {
+            shooterCommandedVoltage = 0.0;
+            io.setShooterVoltage(0.0);
+        }
+    }
+
+    /** Alias getter for flywheel control mode. */
+    public ControlMode getFlywheelControlMode() {
+        return getShooterControlMode();
+    }
+
+    /** Alias setter for flywheel control mode. */
+    public void setFlywheelControlMode(ControlMode controlMode) {
+        setShooterControlMode(controlMode);
+    }
+
+    /** Runs a quasistatic SysId test on the flywheels in the specified direction. */
+    public Command sysIdQuasistaticFlywheel(SysIdRoutine.Direction direction) {
+        return runOnce(() -> {
+            setShooterControlMode(ControlMode.VOLTAGE);
+            shooterCommandedVoltage = 0.0;
+        }).andThen(sysId.quasistatic(direction)).finallyDo(() -> {
+            setShooterControlMode(ControlMode.VELOCITY);
+            shooterCommandedVoltage = 0.0;
+        });
+    }
+
+    /** Runs a dynamic SysId test on the flywheels in the specified direction. */
+    public Command sysIdDynamicFlywheel(SysIdRoutine.Direction direction) {
+        return runOnce(() -> {
+            setShooterControlMode(ControlMode.VOLTAGE);
+            shooterCommandedVoltage = 0.0;
+        }).andThen(sysId.dynamic(direction)).finallyDo(() -> {
+            setShooterControlMode(ControlMode.VELOCITY);
+            shooterCommandedVoltage = 0.0;
+        });
     }
 
     /**

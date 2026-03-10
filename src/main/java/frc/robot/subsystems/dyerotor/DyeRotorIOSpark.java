@@ -15,6 +15,7 @@ import static frc.utils.SparkUtil.ifOk;
 
 import com.revrobotics.REVLibError;
 import java.util.function.DoubleSupplier;
+import edu.wpi.first.math.MathUtil;
 
 public class DyeRotorIOSpark implements DyeRotorIO {
     // Harware objects
@@ -102,10 +103,8 @@ public class DyeRotorIOSpark implements DyeRotorIO {
 
     @Override
     public void updateInputs(DyeRotorIOInputs inputs) {
-        rotorController.setSetpoint(rotorSpeed, ControlType.kVelocity);
-        feederController.setSetpoint(feederSpeed, ControlType.kVelocity);
-
         inputs.rotorSpeed = rotorSpeed;
+        inputs.rotorEncoderPosition = rotorEnc.getPosition();
         inputs.rotorEncoderRPM = rotorEnc.getVelocity();
         ifOk(
                 rotor,
@@ -114,6 +113,7 @@ public class DyeRotorIOSpark implements DyeRotorIO {
         ifOk(rotor, rotor::getOutputCurrent, (value) -> inputs.rotorCurrentAmps = value);
 
         inputs.feederSpeed = feederSpeed;
+        inputs.feederEncoderPosition = feederEnc.getPosition();
         inputs.feederEncoderRPM = feederEnc.getVelocity();
         ifOk(
                 feeder,
@@ -125,10 +125,24 @@ public class DyeRotorIOSpark implements DyeRotorIO {
     @Override
     public void setRotorSpeed(double speed) {
         rotorSpeed = speed;
+        rotorController.setSetpoint(rotorSpeed, ControlType.kVelocity);
     }
 
     @Override
     public void setFeederSpeed(double speed) {
         feederSpeed = speed;
+        feederController.setSetpoint(feederSpeed, ControlType.kVelocity);
+    }
+
+    @Override
+    public void setRotorVoltage(double volts) {
+        rotorSpeed = 0.0;
+        rotor.setVoltage(MathUtil.clamp(volts, -12.0, 12.0));
+    }
+
+    @Override
+    public void setFeederVoltage(double volts) {
+        feederSpeed = 0.0;
+        feeder.setVoltage(MathUtil.clamp(volts, -12.0, 12.0));
     }
 }
