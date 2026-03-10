@@ -50,7 +50,8 @@ public class DyeRotorIOSpark implements DyeRotorIO {
         rotorConfig
                 .inverted(rotorIsInverted)
                 .idleMode(IdleMode.kBrake)
-                .smartCurrentLimit(rotorMotorCurrent);
+                .smartCurrentLimit(rotorMotorCurrent)
+                .voltageCompensation(12.0);
         rotorConfig
                 .encoder
                 .positionConversionFactor(rotorEncoderPositionFactor)
@@ -73,7 +74,8 @@ public class DyeRotorIOSpark implements DyeRotorIO {
         feederConfig
                 .inverted(feederIsInverted)
                 .idleMode(IdleMode.kBrake)
-                .smartCurrentLimit(feederMotorCurrent);
+                .smartCurrentLimit(feederMotorCurrent)
+                .voltageCompensation(12.0);
         feederConfig
                 .encoder
                 .positionConversionFactor(feederEncoderPositionFactor)

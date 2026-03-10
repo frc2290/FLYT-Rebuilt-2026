@@ -21,7 +21,7 @@ public final class Configs {
       double nominalVoltage = 12.0;
       double drivingVelocityFeedForward = nominalVoltage / DriveConstants.maxSpeedMetersPerSec;
 
-      drivingConfig.idleMode(IdleMode.kBrake).smartCurrentLimit(50);
+      drivingConfig.idleMode(IdleMode.kBrake).smartCurrentLimit(50).voltageCompensation(12.0);
       drivingConfig
           .encoder
           .positionConversionFactor(drivingFactor) // meters
@@ -35,7 +35,7 @@ public final class Configs {
           .feedForward
           .kV(drivingVelocityFeedForward);
 
-      turningConfig.idleMode(IdleMode.kBrake).smartCurrentLimit(20);
+      turningConfig.idleMode(IdleMode.kBrake).smartCurrentLimit(20).voltageCompensation(12.0);
 
       turningConfig
           .absoluteEncoder

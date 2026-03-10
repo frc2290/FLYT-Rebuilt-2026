@@ -49,7 +49,8 @@ public class ClimbIOSpark implements ClimbIO {
         climbConfig
             .inverted(climbIsInverted)
             .idleMode(IdleMode.kCoast)
-            .smartCurrentLimit(climbMotorCurrent);
+            .smartCurrentLimit(climbMotorCurrent)
+            .voltageCompensation(12.0);
         climbConfig
             .encoder
             .positionConversionFactor(climbEncoderPositionFactor)

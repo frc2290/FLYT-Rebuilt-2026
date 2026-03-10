@@ -26,13 +26,15 @@ public class IntakeShooter extends SubsystemBase {
         intakeShootConfig
                 .inverted(false)
                 .idleMode(IdleMode.kCoast)
-                .smartCurrentLimit(60);
+                .smartCurrentLimit(60)
+                .voltageCompensation(12.0);
 
         redirectMotor = new SparkMax(21, MotorType.kBrushless);
         redirectConfig
                 .inverted(false)
                 .idleMode(IdleMode.kBrake)
-                .smartCurrentLimit(60);
+                .smartCurrentLimit(60)
+                .voltageCompensation(12.0);
 
         REVLibError intakeShootErr = intakeShootMotor.configure(
                 intakeShootConfig,
