@@ -22,10 +22,14 @@ import static edu.wpi.first.apriltag.AprilTagFieldLayout.OriginPosition.kRedAlli
 import com.pathplanner.lib.config.RobotConfig;
 import edu.wpi.first.apriltag.AprilTagFieldLayout.OriginPosition;
 // import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
+import edu.wpi.first.math.Matrix;
+import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.numbers.N1;
+import edu.wpi.first.math.numbers.N3;
 // import edu.wpi.first.math.kinematics.SwerveModulePosition;
 // import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
@@ -43,9 +47,6 @@ import frc.robot.subsystems.drive.Drive;
 // import frc.utils.FLYTLib.FLYTDashboard.FlytLogger;
 import frc.utils.PoseUtils.Heading;
 // import java.util.function.Supplier;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Optional;
 import org.photonvision.EstimatedRobotPose;
 
 import org.littletonrobotics.junction.AutoLogOutput;
@@ -201,33 +202,10 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
         EstimatedRobotPose leftUpdate = leftPhotonRunnable.grabLatestUpdate();
         EstimatedRobotPose rightUpdate = rightPhotonRunnable.grabLatestUpdate();
 
-        List<EstimatedRobotPose> updates = new ArrayList<EstimatedRobotPose>();
-        addIfNotNull(updates, frontUpdate);
-        addIfNotNull(updates, backUpdate);
-        addIfNotNull(updates, leftUpdate);
-        addIfNotNull(updates, rightUpdate);
-
-        Logger.recordOutput("Vision/CameraPoses/Front", toLoggedPoseArray(frontUpdate));
-        Logger.recordOutput("Vision/CameraPoses/Back", toLoggedPoseArray(backUpdate));
-        Logger.recordOutput("Vision/CameraPoses/Left", toLoggedPoseArray(leftUpdate));
-        Logger.recordOutput("Vision/CameraPoses/Right", toLoggedPoseArray(rightUpdate));
-
-        Optional<VisionPoseFuser.FusedVisionUpdate> fusedUpdate =
-                VisionPoseFuser.fuse(updates);
-
-        fusedUpdate.ifPresent(update -> {
-            Pose2d finalPose = update.pose();
-            // if (originPosition != kBlueAllianceWallRightSide) {
-            //     finalPose = flipAlliance(finalPose);
-            // }
-
-            // drive.addVisionMeasurement(finalPose, update.timestamp(), update.stdDevs());
-            // sawTag = true;
-            Logger.recordOutput("Vision/FusedPose", new Pose2d[] {finalPose});
-        });
-        if (fusedUpdate.isEmpty()) {
-            Logger.recordOutput("Vision/FusedPose", new Pose2d[] {});
-        }
+        processCameraUpdate(frontUpdate, "Front");
+        processCameraUpdate(backUpdate, "Back");
+        processCameraUpdate(leftUpdate, "Left");
+        processCameraUpdate(rightUpdate, "Right");
 
         if (frontUpdate != null) {
             Pose2d frontPose = frontUpdate.estimatedPose.toPose2d();
@@ -251,18 +229,73 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
         //poseDash.update(Constants.debugMode);
     }
 
-    private static void addIfNotNull(List<EstimatedRobotPose> updates, EstimatedRobotPose pose) {
-        if (pose != null) {
-            updates.add(pose);
+    /** Processes a single camera frame and feeds it to the pose estimator. */
+    private void processCameraUpdate(EstimatedRobotPose update, String cameraName) {
+        if (update == null || update.targetsUsed == null || update.targetsUsed.isEmpty()) {
+            Logger.recordOutput("Vision/CameraPoses/" + cameraName, new Pose2d[] {});
+            return;
         }
+
+        // Apply legacy hard cutoffs only for single-tag solves.
+        if (update.targetsUsed.size() == 1) {
+            var target = update.targetsUsed.get(0);
+            double distMeters = target.getBestCameraToTarget().getTranslation().getNorm();
+            double ambiguity = target.getPoseAmbiguity();
+            if (distMeters > 3.0 || ambiguity > VisionConstants.APRILTAG_AMBIGUITY_THRESHOLD) {
+                Logger.recordOutput("Vision/CameraPoses/" + cameraName, new Pose2d[] {});
+                return;
+            }
+        }
+
+        Matrix<N3, N1> stdDevs = calculateStdDevs(update);
+        double varX = Math.pow(stdDevs.get(0, 0), 2);
+        if (varX >= VisionConstants.kVisionRejectVarianceThreshold) {
+            Logger.recordOutput("Vision/CameraPoses/" + cameraName, new Pose2d[] {});
+            return;
+        }
+
+        Pose2d finalPose = update.estimatedPose.toPose2d();
+        if (originPosition != kBlueAllianceWallRightSide) {
+            finalPose = flipAlliance(finalPose);
+        }
+
+        drive.addVisionMeasurement(finalPose, update.timestampSeconds, stdDevs);
+        sawTag = true;
+        Logger.recordOutput("Vision/CameraPoses/" + cameraName, new Pose2d[] {finalPose});
     }
 
-    private static Pose2d[] toLoggedPoseArray(EstimatedRobotPose poseEstimate) {
-        if (poseEstimate == null) {
-            return new Pose2d[] {};
+    /** Calculates dynamic standard deviations using multiplicative scaling. */
+    private Matrix<N3, N1> calculateStdDevs(EstimatedRobotPose est) {
+        var targets = est.targetsUsed;
+        int numTags = targets.size();
+
+        if (numTags == 0) {
+            return VecBuilder.fill(
+                    VisionConstants.kVisionInvalidStdDev,
+                    VisionConstants.kVisionInvalidStdDev,
+                    VisionConstants.kVisionInvalidStdDev);
         }
 
-        return new Pose2d[] {poseEstimate.estimatedPose.toPose2d()};
+        double avgDist = 0.0;
+        for (var target : targets) {
+            avgDist += target.getBestCameraToTarget().getTranslation().getNorm();
+        }
+        avgDist /= numTags;
+
+        double xyStd = VisionConstants.kVisionXyStdDevCoefficient
+                * Math.pow(avgDist, VisionConstants.kVisionStdDevDistanceExponent)
+                / Math.pow(numTags, VisionConstants.kVisionStdDevTagCountExponent)
+                * VisionConstants.kVisionCameraStdDevFactor;
+
+        double rotStd = VisionConstants.kVisionThetaStdDevCoefficient
+                * Math.pow(avgDist, VisionConstants.kVisionStdDevDistanceExponent)
+                / Math.pow(numTags, VisionConstants.kVisionStdDevTagCountExponent)
+                * VisionConstants.kVisionCameraStdDevFactor;
+
+        xyStd = Math.max(xyStd, VisionConstants.kVisionStdDevMin);
+        rotStd = Math.max(rotStd, VisionConstants.kVisionStdDevMin);
+
+        return VecBuilder.fill(xyStd, xyStd, rotStd);
     }
 
     public boolean isClosestStationRight() {
