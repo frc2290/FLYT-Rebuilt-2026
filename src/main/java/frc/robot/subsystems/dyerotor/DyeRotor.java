@@ -77,16 +77,16 @@ public class DyeRotor extends SubsystemBase {
 
     public void runDyeRotor(boolean run) {
         this.runDyeRotor = run;
-        backdriving = false;
-        jamTimer.stop();
-        jamTimer.reset();
-        backdriveTimer.stop();
-        backdriveTimer.reset();
+        // backdriving = false;
+        // jamTimer.stop();
+        // jamTimer.reset();
+        // backdriveTimer.stop();
+        // backdriveTimer.reset();
 
-        if (!run) {
-            io.setRotorSpeed(0);
-            io.setFeederSpeed(0);
-        }
+        // if (!run) {
+        //     io.setRotorSpeed(0);
+        //     io.setFeederSpeed(0);
+        // }
     }
 
     public Command runDyeRotorCommand(boolean run) {

@@ -207,15 +207,15 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
         processCameraUpdate(leftUpdate, "Left");
         processCameraUpdate(rightUpdate, "Right");
 
-        if (frontUpdate != null) {
-            Pose2d frontPose = frontUpdate.estimatedPose.toPose2d();
-            if (originPosition != kBlueAllianceWallRightSide) {
-                frontPose = flipAlliance(frontPose);
-            }
+        // if (frontUpdate != null) {
+        //     Pose2d frontPose = frontUpdate.estimatedPose.toPose2d();
+        //     if (originPosition != kBlueAllianceWallRightSide) {
+        //         frontPose = flipAlliance(frontPose);
+        //     }
 
-            drive.addVisionMeasurement(frontPose, frontUpdate.timestampSeconds, VisionPoseFuser.calculateStdDevs(frontUpdate));
-            sawTag = true;
-        }
+        //     drive.addVisionMeasurement(frontPose, frontUpdate.timestampSeconds, VisionPoseFuser.calculateStdDevs(frontUpdate));
+        //     sawTag = true;
+        // }
 
         // Set the pose on the dashboard.
         //var dashboardPose = drive.getPose();

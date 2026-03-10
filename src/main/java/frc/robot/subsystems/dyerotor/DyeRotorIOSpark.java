@@ -48,7 +48,7 @@ public class DyeRotorIOSpark implements DyeRotorIO {
         var rotorConfig = new SparkFlexConfig();
         rotorConfig
                 .inverted(rotorIsInverted)
-                .idleMode(IdleMode.kCoast)
+                .idleMode(IdleMode.kBrake)
                 .smartCurrentLimit(rotorMotorCurrent);
         rotorConfig
                 .encoder
@@ -71,7 +71,7 @@ public class DyeRotorIOSpark implements DyeRotorIO {
         var feederConfig = new SparkMaxConfig();
         feederConfig
                 .inverted(feederIsInverted)
-                .idleMode(IdleMode.kCoast)
+                .idleMode(IdleMode.kBrake)
                 .smartCurrentLimit(feederMotorCurrent);
         feederConfig
                 .encoder

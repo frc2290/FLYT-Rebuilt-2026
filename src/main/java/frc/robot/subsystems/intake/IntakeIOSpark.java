@@ -59,7 +59,7 @@ public class IntakeIOSpark implements IntakeIO {
 
         var driveConfig = new SparkMaxConfig();
         driveConfig
-                .idleMode(IdleMode.kCoast)
+                .idleMode(IdleMode.kBrake)
                 .inverted(inverted)
                 .smartCurrentLimit(driveMotorCurrentLimit);
         driveConfig
@@ -88,7 +88,7 @@ public class IntakeIOSpark implements IntakeIO {
         var deployConfig = new SparkFlexConfig();
         deployConfig
                 .inverted(inverted)
-                .idleMode(IdleMode.kCoast)
+                .idleMode(IdleMode.kBrake)
                 .smartCurrentLimit(deployMotorCurrentLimit);
         deployConfig
                 .absoluteEncoder
