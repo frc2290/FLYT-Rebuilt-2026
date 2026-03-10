@@ -85,7 +85,7 @@ public final class DriveConstants {
   public static final double wheelRadiusMeters = 0.0736 / 2.0;
   public static final double wheelDiameterMeters = wheelRadiusMeters * 2.0;
   // Select your active MAXSwerve ratio here.
-  public static final MAXSwerveRatio activeDriveRatio = MAXSwerveRatio.EXTRA_HIGH_5;
+  public static final MAXSwerveRatio activeDriveRatio = MAXSwerveRatio.MEDIUM;
   public static final double driveMotorReduction = activeDriveRatio.getReduction();
   public static final DCMotor driveGearbox = DCMotor.getNeoVortex(1);
   public static final double driveFreeSpeedRPM =
