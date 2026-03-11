@@ -24,9 +24,9 @@ public class DyeRotorConstants {
 
     // --- Encoder & Conversion Factors ---
     public static final double rotorEncoderPositionFactor = 1.0 /rotorGearRatio;
-    public static final double rotorEncoderVelocityFactor = 1.0 /rotorGearRatio;
+    public static final double rotorEncoderVelocityFactor = rotorEncoderPositionFactor / 60.0;
     public static final double feederEncoderPositionFactor = 1.0/feedGearRatio;
-    public static final double feederEncoderVelocityFactor = 1.0/feedGearRatio;
+    public static final double feederEncoderVelocityFactor = feederEncoderPositionFactor / 60.0;
 
     // --- Control Loop Constants (PID & Feedforward) ---
     public static final DCMotor rotorGearbox = DCMotor.getNeoVortex(1);
