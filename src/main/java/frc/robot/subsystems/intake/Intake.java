@@ -151,7 +151,12 @@ public class Intake extends SubsystemBase {
             // driveRoller(side, rollerSpeed);
             deploy(side, true);
         }).until(() -> {
-            return isOut(side);
+            if (isOut(side)) {
+                outSide = Optional.of(side);
+                return true;
+            } else {
+                return false;
+            }
         }));
     }
 
@@ -182,12 +187,14 @@ public class Intake extends SubsystemBase {
     }
 
     public Command wowowowowoIntake() {
-        return run(() -> {
+        return startRun(() -> {
+            wowowowowoTicks = 0;
+        }, () -> {
             wowowowowoTicks++;
-            double angle = outPosition - (Math.sin(wowowowowoTicks / 15.0) / 2.0 + 0.5) * (outPosition * 0.85);
+            double angle = outPosition - (Math.cos(wowowowowoTicks / 15.0) / -2.0 + 0.5) * (outPosition * 0.85);
             outSide.ifPresent(side -> {
                 driveRoller(side, rollerSpeed);
-                getIo(side).setDeployPosition(radiansToDegrees(angle));
+                getIo(side).setDeployPosition(angle);
             });
         }).finallyDo(() -> {
             outSide.ifPresent(side -> {
