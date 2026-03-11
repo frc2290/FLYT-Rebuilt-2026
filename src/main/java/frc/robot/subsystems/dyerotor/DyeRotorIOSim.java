@@ -39,14 +39,14 @@ public class DyeRotorIOSim implements DyeRotorIO {
         inputs.rotorSpeed = rotorSpeed;
         inputs.rotorEncoderPosition = (rotorSim.getAngularPositionRad() / (2.0 * Math.PI)) * rotorEncoderPositionFactor;
         inputs.rotorAppliedVolts = rotorCommandedVolts;
-        inputs.rotorEncoderRPM = rotorSim.getAngularVelocityRPM();
+        inputs.rotorEncoderRPM = rotorSim.getAngularVelocityRPM() / 60.0;
         inputs.rotorCurrentAmps = Math.abs(rotorSim.getCurrentDrawAmps());
 
         inputs.feederSpeed = feederSpeed;
         inputs.feederEncoderPosition =
                 (feederSim.getAngularPositionRad() / (2.0 * Math.PI)) * feederEncoderPositionFactor;
         inputs.feederAppliedVolts = feederCommandedVolts;
-        inputs.feederEncoderRPM = feederSim.getAngularVelocityRPM();
+        inputs.feederEncoderRPM = feederSim.getAngularVelocityRPM() / 60.0;
         inputs.feederCurrentAmps = Math.abs(feederSim.getCurrentDrawAmps());
     }
 
