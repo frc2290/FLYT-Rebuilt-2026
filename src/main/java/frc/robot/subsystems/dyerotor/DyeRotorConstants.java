@@ -24,9 +24,9 @@ public class DyeRotorConstants {
 
     // --- Encoder & Conversion Factors ---
     public static final double rotorEncoderPositionFactor = 1.0 /rotorGearRatio;
-    public static final double rotorEncoderVelocityFactor = 1.0 /rotorGearRatio;
+    public static final double rotorEncoderVelocityFactor = rotorEncoderPositionFactor / 60.0;
     public static final double feederEncoderPositionFactor = 1.0/feedGearRatio;
-    public static final double feederEncoderVelocityFactor = 1.0/feedGearRatio;
+    public static final double feederEncoderVelocityFactor = feederEncoderPositionFactor / 60.0;
 
     // --- Control Loop Constants (PID & Feedforward) ---
     public static final DCMotor rotorGearbox = DCMotor.getNeoVortex(1);
@@ -35,11 +35,11 @@ public class DyeRotorConstants {
             Units.radiansPerSecondToRotationsPerMinute(rotorGearbox.freeSpeedRadPerSec);
     public static final double feederFreeSpeedRPM =
             Units.radiansPerSecondToRotationsPerMinute(feederGearbox.freeSpeedRadPerSec);
-    // kV converts a target RPM into a 0.0 to 12.0 motor voltage command.
+    // kV converts a target rev/sec value into a 0.0 to 12.0 motor voltage command.
     // Formula: 12 volts / (MotorFreeSpeed / GearRatio)
-    // This ensures that commanding the theoretical max mechanism RPM outputs exactly 12.0 (Max Voltage).
-    public static final double rotorKv = 12.0 / (rotorFreeSpeedRPM / rotorGearRatio);
-    public static final double feederKv = 12.0 / (feederFreeSpeedRPM / feedGearRatio);
+    // This ensures that commanding the theoretical max mechanism speed outputs exactly 12.0V.
+    public static final double rotorKv = 12.0 / ((rotorFreeSpeedRPM / 60.0) / rotorGearRatio);
+    public static final double feederKv = 12.0 / ((feederFreeSpeedRPM / 60.0) / feedGearRatio);
     public static final double rotorKp = 0.0;
     public static final double rotorKi = 0.0;
     public static final double rotorKd = 0.0;
@@ -51,5 +51,5 @@ public class DyeRotorConstants {
     // Throughput target used by runDyeRotor(true)
     public static final double defaultTargetBps = 12;
     public static final double overfeedRatio = 1.18; //Rate balls are fed realitive to the rotor speed. Based on Wildstang Calcs
-    public static final double minRotorRpmForOverfeed = 10.0;
+    public static final double minRotorRpsForOverfeed = 10.0 / 60.0;
 }
