@@ -37,7 +37,7 @@ public class IntakeIOSpark implements IntakeIO {
 
     private IntakeSide side;
 
-    private double deploySetpoint = 0.0;
+    private double deploySetpoint = inPosition;
 
     public IntakeIOSpark(IntakeSide side, boolean inverted, double zeroOffset) {
         this.side = side;

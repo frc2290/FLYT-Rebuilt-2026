@@ -23,7 +23,7 @@ public class DyeRotor extends SubsystemBase {
 
     private static final double JAM_DETECT_SECONDS = 0.25;
     private static final double BACKDRIVE_SECONDS = 0.25;
-    private static final double AT_SPEED_RATIO = 0.95;
+    private static final double AT_SPEED_RATIO = 0.50;
 
     private final DyeRotorIO io;
     private final DyeRotorIOInputsAutoLogged inputs = new DyeRotorIOInputsAutoLogged();

@@ -64,7 +64,7 @@ public class IntakeConstants {
     public static final double deploySimKd = 1.0;
 
     // --- Subsystem Behaviors & Targets ---
-    public static final double inPosition = 0;
+    public static final double inPosition = 5;
     public static final double outPosition = 86;
     public static final double positionBuffer = 5;
     // Intake roller surface speed command in m/s.
