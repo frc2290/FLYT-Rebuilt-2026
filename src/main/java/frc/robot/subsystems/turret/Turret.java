@@ -94,16 +94,16 @@ public class Turret extends SubsystemBase {
         // } else {
         //     turretPointedAtTarget = false;
         // }
-        double activeShooterVelocitySetpointMps = result.vel * shooterVelocityScale;
+        double activeShooterVelocitySetpointMps = 0.0;//result.vel * shooterVelocityScale;
         double activeShotAngleSetpointDeg = result.pitch;
 
         if (sotfEnabled) {
             switch (shooterControlMode) {
                 case VELOCITY:
-                    io.setShooterSpeed(stopShoot ? 0.0 : activeShooterVelocitySetpointMps);
+                    io.setShooterSpeed(stopShoot ? 0.0 : 0.0);//activeShooterVelocitySetpointMps);
                     break;
                 case VOLTAGE:
-                    io.setShooterVoltage(stopShoot ? 0.0 : shooterCommandedVoltage);
+                    io.setShooterVoltage(stopShoot ? 0.0 : 0.0);//shooterCommandedVoltage);
                     break;
             }
             if (!stopShoot) {

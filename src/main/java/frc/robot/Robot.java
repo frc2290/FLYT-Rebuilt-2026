@@ -7,6 +7,7 @@ package frc.robot;
 import org.littletonrobotics.junction.LogFileUtil;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
+import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 import org.littletonrobotics.junction.networktables.NT4Publisher;
 import org.littletonrobotics.junction.wpilog.WPILOGReader;
 import org.littletonrobotics.junction.wpilog.WPILOGWriter;
@@ -19,6 +20,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
 import frc.robot.subsystems.StateMachines.DriveStateMachine;
 import frc.robot.subsystems.StateMachines.StateMachine;
 import frc.robot.subsystems.StateMachines.DriveStateMachine.DriveState;
@@ -82,6 +84,8 @@ public class Robot extends LoggedRobot {
     /** Coordinates all autonomous and teleop driving modes. */
     private final StateMachine m_stateMachine;
     private final DriveStateMachine m_driveStateMachine;
+
+    LoggedDashboardChooser<Command> sys_id_commands = new LoggedDashboardChooser<>("SysID");
 
     public Robot() {
         Logger.recordMetadata("GitSHA", BuildConstants.GIT_SHA);
@@ -306,11 +310,40 @@ public class Robot extends LoggedRobot {
 
         // Cancels all running commands at the start of test mode.
         CommandScheduler.getInstance().cancelAll();
+
+        sys_id_commands.addDefaultOption("Drive Quasi Forward", m_robotDrive.sysIdQuasistatic(Direction.kForward));
+        sys_id_commands.addOption("Drive Quasi Reverse", m_robotDrive.sysIdQuasistatic(Direction.kReverse));
+        sys_id_commands.addOption("Drive Dynamic Forward", m_robotDrive.sysIdDynamic(Direction.kForward));
+        sys_id_commands.addOption("Drive Dynamic Reverse", m_robotDrive.sysIdDynamic(Direction.kReverse));
+        sys_id_commands.addOption("Turret Flywheel Quasi Forward", m_turret.sysIdQuasistaticFlywheel(Direction.kForward));
+        sys_id_commands.addOption("Turret Flywheel Quasi Reverse", m_turret.sysIdQuasistaticFlywheel(Direction.kReverse));
+        sys_id_commands.addOption("Turret Flywheel Dynamic Forward", m_turret.sysIdDynamicFlywheel(Direction.kForward));
+        sys_id_commands.addOption("Turret Flywheel Dynamic Reverse", m_turret.sysIdDynamicFlywheel(Direction.kReverse));
+        sys_id_commands.addOption("Intake Left Quasi Forward", m_intake.sysIdQuasistaticLeftIntake(Direction.kForward));
+        sys_id_commands.addOption("Intake Left Quasi Reverse", m_intake.sysIdQuasistaticLeftIntake(Direction.kReverse));
+        sys_id_commands.addOption("Intake Left Dynamic Forward", m_intake.sysIdDynamicLeftIntake(Direction.kForward));
+        sys_id_commands.addOption("Intake Left Dynamic Reverse", m_intake.sysIdDynamicLeftIntake(Direction.kReverse));
+        sys_id_commands.addOption("Intake Right Quasi Forward", m_intake.sysIdQuasistaticRightIntake(Direction.kForward));
+        sys_id_commands.addOption("Intake Right Quasi Reverse", m_intake.sysIdQuasistaticRightIntake(Direction.kReverse));
+        sys_id_commands.addOption("Intake Right Dynamic Forward", m_intake.sysIdDynamicRightIntake(Direction.kForward));
+        sys_id_commands.addOption("Intake Right Dynamic Reverse", m_intake.sysIdDynamicRightIntake(Direction.kReverse));
+        sys_id_commands.addOption("Dye Rotor Rotor Quasi Forward", m_dyeRotor.sysIdQuasistaticRotor(Direction.kForward));
+        sys_id_commands.addOption("Dye Rotor Rotor Quasi Reverse", m_dyeRotor.sysIdQuasistaticRotor(Direction.kReverse));
+        sys_id_commands.addOption("Dye Rotor Rotor Dynamic Forward", m_dyeRotor.sysIdDynamicRotor(Direction.kForward));
+        sys_id_commands.addOption("Dye Rotor Rotor Dynamic Reverse", m_dyeRotor.sysIdDynamicRotor(Direction.kReverse));
+        sys_id_commands.addOption("Dye Rotor Feeder Quasi Forward", m_dyeRotor.sysIdQuasistaticFeeder(Direction.kForward));
+        sys_id_commands.addOption("Dye Rotor Feeder Quasi Reverse", m_dyeRotor.sysIdQuasistaticFeeder(Direction.kReverse));
+        sys_id_commands.addOption("Dye Rotor Feeder Dynamic Forward", m_dyeRotor.sysIdDynamicFeeder(Direction.kForward));
+        sys_id_commands.addOption("Dye Rotor Feeder Dynamic Reverse", m_dyeRotor.sysIdDynamicFeeder(Direction.kReverse));
     }
 
     /** This function is called periodically during test mode. */
     @Override
     public void testPeriodic() {
+        Command test_command = sys_id_commands.get();
+        if (test_command != null) {
+            m_driver.start().onTrue(test_command);
+        }
     }
 
     @Override
