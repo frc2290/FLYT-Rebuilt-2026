@@ -99,8 +99,8 @@ public class DyeRotor extends SubsystemBase {
             return;
         }
 
-        double targetRotorRpm = (defaultTargetBps * 60.0) / ballsPerRotation;
-        boolean atTargetSpeed = Math.abs(inputs.rotorEncoderRPM) >= (targetRotorRpm * AT_SPEED_RATIO);
+        double targetRotorRps = defaultTargetBps / ballsPerRotation;
+        boolean atTargetSpeed = Math.abs(inputs.rotorEncoderRPM) >= (targetRotorRps * AT_SPEED_RATIO);
 
         if (!atTargetSpeed) {
             if (!jamTimer.isRunning()) {
@@ -156,7 +156,7 @@ public class DyeRotor extends SubsystemBase {
      */
     public void setTargetBPS(double targetBPS) {
         // 1) DYE ROTOR KINEMATICS
-        double rotorSpeed = (targetBPS * 60.0) / ballsPerRotation;
+        double rotorSpeed = targetBPS / ballsPerRotation;
 
         // 2) FEED WHEEL KINEMATICS (PURE ROLLING + OVERFEED)
         double feedMultiplier =
@@ -164,7 +164,7 @@ public class DyeRotor extends SubsystemBase {
         double feedSpeedAbs = rotorSpeed * feedMultiplier;
         double feedSpeed = feedSpeedAbs - rotorSpeed;
 
-        // 3) COMMAND MECHANISM RPM DIRECTLY
+        // 3) COMMAND MECHANISM REV/SEC DIRECTLY
         // Spark encoder conversion factors apply motor->mechanism gear ratio scaling.
         io.setRotorSpeed(rotorSpeed);
         io.setFeederSpeed(feedSpeed);
@@ -189,20 +189,20 @@ public class DyeRotor extends SubsystemBase {
     }
 
     /**
-     * Returns measured overfeed ratio from current rotor/feeder RPM.
+     * Returns measured overfeed ratio from current rotor/feeder rev/sec.
      *
      * <p>Empty when rotor speed is too low for a stable ratio estimate.
      */
     public OptionalDouble getMeasuredOverfeedRatio() {
-        double rotorRpm = inputs.rotorEncoderRPM;
-        if (Math.abs(rotorRpm) < minRotorRpmForOverfeed) {
+        double rotorRps = inputs.rotorEncoderRPM;
+        if (Math.abs(rotorRps) < minRotorRpsForOverfeed) {
             return OptionalDouble.empty();
         }
 
         // setTargetBPS() commands feederSpeed = feedSpeedAbs - rotorSpeed.
         // Reconstruct feedSpeedAbs from measured speeds.
-        double feedSpeedAbsRpm = inputs.feederEncoderRPM + rotorRpm;
-        double feedMultiplierMeasured = Math.abs(feedSpeedAbsRpm / rotorRpm);
+        double feedSpeedAbsRps = inputs.feederEncoderRPM + rotorRps;
+        double feedMultiplierMeasured = Math.abs(feedSpeedAbsRps / rotorRps);
         double measuredOverfeedRatio = feedMultiplierMeasured
                 * (Math.PI * feedWheelRadiusInches)
                 / (ballsPerRotation * fuelDiameterInches);
