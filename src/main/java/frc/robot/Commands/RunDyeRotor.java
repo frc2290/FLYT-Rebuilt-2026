@@ -63,9 +63,9 @@ public class RunDyeRotor extends Command {
             return;
         }
 
-        double targetRotorRpm = (defaultTargetBps * 60.0) / ballsPerRotation;
-        double measuredRotorRpm = Math.abs(dyeRotor.getRotorSpeed());
-        boolean atTargetSpeed = measuredRotorRpm >= (targetRotorRpm * AT_SPEED_RATIO);
+        double targetRotorRps = defaultTargetBps / ballsPerRotation;
+        double measuredRotorRps = Math.abs(dyeRotor.getRotorSpeed());
+        boolean atTargetSpeed = measuredRotorRps >= (targetRotorRps * AT_SPEED_RATIO);
 
         if (!atTargetSpeed) {
             if (!jamTimer.isRunning()) {
