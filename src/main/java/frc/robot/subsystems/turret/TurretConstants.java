@@ -22,7 +22,7 @@ public class TurretConstants {
     public static final boolean flywheelIsInverted = false;
     public static final int turretMotorCurrent = 40;
     public static final int hoodMotorCurrent = 40;
-    public static final int flywheelMotorCurrent = 40;
+    public static final int flywheelMotorCurrent = 60;
     public static final int turretCurrentLimit = 50;
 
     // --- Physical Dimensions & Mechanics ---
@@ -89,7 +89,7 @@ public class TurretConstants {
             Units.radiansPerSecondToRotationsPerMinute(flywheelGearbox.freeSpeedRadPerSec);
     public static final double flywheelKv =
             12 / (flywheelFreeSpeedRPM * flywheelEncoderVelocityFactor);
-    public static final double flywheelKp = 2.0;
+    public static final double flywheelKp = 1.0;
     public static final double flywheelKi = 0.0;
     public static final double flywheelKd = 0.0;
     public static final double flywheelReadyRatio = 0.8;
