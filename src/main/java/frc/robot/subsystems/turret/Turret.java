@@ -27,7 +27,7 @@ import frc.utils.FieldConstants.Hub;
 import frc.utils.ShootOnTheFly.SOTFResult;
 
 public class Turret extends SubsystemBase {
-    private static final double shooterVelocityScale = 1.375;
+    private static final double shooterVelocityScale = 1.45;
 
     public enum ControlMode {
         VELOCITY,
