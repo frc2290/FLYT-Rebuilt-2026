@@ -18,7 +18,6 @@ package frc.robot.subsystems.StateMachines;
 
 import org.littletonrobotics.junction.Logger;
 
-import edu.wpi.first.math.filter.SlewRateLimiter;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -28,9 +27,9 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.subsystems.drive.Drive;
+import frc.robot.subsystems.drive.DriveConstants;
 import frc.robot.subsystems.intake.IntakeConstants.IntakeSide;
 import frc.robot.Commands.DriveCommandFactory;
-import frc.robot.Commands.DriveCommandFactory.DriverInputs;
 import frc.utils.FlytDashboard;
 import frc.utils.PoseEstimatorSubsystem;
 import frc.utils.FieldConstants.LinesHorizontal;
@@ -59,8 +58,6 @@ public class DriveStateMachine extends SubsystemBase {
     private DriveState prevDriveState = DriveState.CANCELLED;
     private IntakeSide snakeDirection = IntakeSide.LEFT;
     private Command currentCommand = null;
-    private SlewRateLimiter snakeLimiter = new SlewRateLimiter(10);
-
     private double sotfHeading = 0.0;
 
     public DriveStateMachine(
@@ -95,17 +92,8 @@ public class DriveStateMachine extends SubsystemBase {
             case CANCELLED      -> driveCommandFactory.createCancelledCommand();
             case MANUAL         -> driveCommandFactory.createManualDriveCommand();
             case ASSIST         -> driveCommandFactory.createTrenchBumpCommand();
-            case SNAKE          -> driveCommandFactory.createHeadingLockCommand(() -> {
-                DriverInputs inputs = driveCommandFactory.sampleDriverInputs();
-                double forward = inputs.xSpeed;
-                double strafe = -inputs.ySpeed;
-                if (forward != 0 || strafe != 0) {
-                    // s stands for sign
-                    float s = snakeDirection == IntakeSide.LEFT ? -1 : 1;
-                    return Math.toDegrees(Math.atan2(s * forward, s * strafe)) % 360;
-                }
-                return snakeLimiter.calculate(pose.getDegrees());
-            });
+            case SNAKE          -> driveCommandFactory.createSnakeDriveCommand(
+                () -> Rotation2d.fromDegrees(snakeDirection == IntakeSide.LEFT ? 90.0 : -90.0));
             case TRENCH         -> driveCommandFactory.createHeadingLockCommand(() -> Math.round(pose.getDegrees() / 90.0) * 90.0);
             case BUMP           -> driveCommandFactory.createHeadingLockCommand(() -> (Math.round(pose.getDegrees() / 90.0 - 0.5) * 90.0 + 45) % 360);
             case CLIMB_RELATIVE -> driveCommandFactory.createHeadingLockCommand(() -> 0.0);
