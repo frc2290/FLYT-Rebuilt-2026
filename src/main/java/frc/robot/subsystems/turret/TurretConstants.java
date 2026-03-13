@@ -147,4 +147,33 @@ public class TurretConstants {
         SHOOTER_MAP.put(6.7500, new FullShooterParams(8.834536, 48.554559, 1.189882));
         SHOOTER_MAP.put(7.0000, new FullShooterParams(8.973582, 47.758843, 1.194848));
     };
+
+    public static final class SotfConstants {
+        public static final double defaultLoopDtSeconds = 0.02;
+        public static final double minLoopDtSeconds = 1.0e-4;
+        public static final double maxLoopDtSeconds = 0.1;
+
+        public static final double latencyCompensationSeconds = 0.30;
+        public static final double minDistanceMeters = 1.0e-6;
+        public static final double minDerivativeDistanceDeltaMeters = 1.0e-9;
+        public static final double minDragConstantMagnitude = 1.0e-6;
+
+        public static final int maxRecursiveIterations = 5;
+        public static final double recursiveDragConstant = 0.5;
+
+        public static final int maxNewtonIterations = 15;
+        public static final double newtonToleranceSeconds = 0.001;
+        public static final double newtonMinDerivativeMagnitude = 0.01;
+        public static final double tofDerivativeStepMeters = 0.01;
+
+        public static final double maxValidDistanceMeters = 10.0;
+        public static final double pointAtTargetToleranceDeg = 10.0;
+
+        // Shooter physical offset from turret center, meters.
+        public static final double turretShooterOffsetX = 0.0;
+        public static final double turretShooterOffsetY = 0.0;
+
+        private SotfConstants() {
+        }
+    }
 }

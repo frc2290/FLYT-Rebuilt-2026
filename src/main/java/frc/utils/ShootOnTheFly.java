@@ -1,23 +1,72 @@
 package frc.utils;
 
-import org.littletonrobotics.junction.Logger;
+import static frc.robot.subsystems.turret.TurretConstants.SotfConstants.defaultLoopDtSeconds;
+import static frc.robot.subsystems.turret.TurretConstants.SotfConstants.latencyCompensationSeconds;
+import static frc.robot.subsystems.turret.TurretConstants.SotfConstants.maxNewtonIterations;
+import static frc.robot.subsystems.turret.TurretConstants.SotfConstants.maxRecursiveIterations;
+import static frc.robot.subsystems.turret.TurretConstants.SotfConstants.maxValidDistanceMeters;
+import static frc.robot.subsystems.turret.TurretConstants.SotfConstants.minDerivativeDistanceDeltaMeters;
+import static frc.robot.subsystems.turret.TurretConstants.SotfConstants.minDistanceMeters;
+import static frc.robot.subsystems.turret.TurretConstants.SotfConstants.minDragConstantMagnitude;
+import static frc.robot.subsystems.turret.TurretConstants.SotfConstants.minLoopDtSeconds;
+import static frc.robot.subsystems.turret.TurretConstants.SotfConstants.newtonMinDerivativeMagnitude;
+import static frc.robot.subsystems.turret.TurretConstants.SotfConstants.newtonToleranceSeconds;
+import static frc.robot.subsystems.turret.TurretConstants.SotfConstants.recursiveDragConstant;
+import static frc.robot.subsystems.turret.TurretConstants.SotfConstants.tofDerivativeStepMeters;
+import static frc.robot.subsystems.turret.TurretConstants.SotfConstants.turretShooterOffsetX;
+import static frc.robot.subsystems.turret.TurretConstants.SotfConstants.turretShooterOffsetY;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.interpolation.InterpolatingTreeMap;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 
 public class ShootOnTheFly {
     public static ShootOnTheFly instance = null;
-    private LinearInterpolator shootAngleInterp = new LinearInterpolator();
-    private LinearInterpolator shootSpeedInterp = new LinearInterpolator();
+
+    private final LinearInterpolator shootAngleInterp = new LinearInterpolator();
+    private final LinearInterpolator shootSpeedInterp = new LinearInterpolator();
 
     public record FullShooterParams(double speedMetersPerSecond, double hoodAngle, double timeOfFlight) {
     }
 
-    private InterpolatingTreeMap<Double, FullShooterParams> SHOOTER_MAP;
+    private static class TargetKinematics {
+        private final Translation2d toGoal;
+        private final Translation2d totalShooterVelocity;
+
+        private TargetKinematics(Translation2d toGoal, Translation2d totalShooterVelocity) {
+            this.toGoal = toGoal;
+            this.totalShooterVelocity = totalShooterVelocity;
+        }
+    }
+
+    private static class ConvergenceResult {
+        private final boolean converged;
+        private final int iterationsUsed;
+        private final double tof;
+        private final double projectedDistance;
+        private final Translation2d finalBallGoal;
+
+        private ConvergenceResult(boolean converged, int iterationsUsed, double tof, double projectedDistance,
+                Translation2d finalBallGoal) {
+            this.converged = converged;
+            this.iterationsUsed = iterationsUsed;
+            this.tof = tof;
+            this.projectedDistance = projectedDistance;
+            this.finalBallGoal = finalBallGoal;
+        }
+    }
+
+    private InterpolatingTreeMap<Double, FullShooterParams> shooterMap;
+    private double prevVx = 0.0;
+    private double prevVy = 0.0;
+    private double prevOmega = 0.0;
+    private boolean hasPreviousVelocityState = false;
+    private double previousTofRecursive = -1.0;
+    private double previousTofNewton = -1.0;
 
     public static FullShooterParams interpolateParams(FullShooterParams startValue, FullShooterParams endValue,
             double t) {
@@ -32,17 +81,27 @@ public class ShootOnTheFly {
         public double pitch; // hoodAngle
         public double vel; // exitVelocity
         public double dist; // distance
+        public boolean isValid;
 
         public SOTFResult(double yaw, double pitch, double vel, double dist) {
+            this(yaw, pitch, vel, dist, true);
+        }
+
+        public SOTFResult(double yaw, double pitch, double vel, double dist, boolean isValid) {
             this.yaw = yaw;
             this.pitch = pitch;
             this.vel = vel;
             this.dist = dist;
+            this.isValid = isValid;
+        }
+
+        public static SOTFResult invalid() {
+            return new SOTFResult(0.0, 0.0, 0.0, 0.0, false);
         }
     }
 
     public void addShootInterpData(InterpolatingTreeMap<Double, FullShooterParams> shooterMap) {
-        SHOOTER_MAP = shooterMap;
+        this.shooterMap = shooterMap;
     }
 
     public void addShootAngleInterpData(double[][] data) {
@@ -62,128 +121,90 @@ public class ShootOnTheFly {
     }
 
     public SOTFResult calculateRecursiveTOF(Translation2d goalLocation, Pose2d robotPose, ChassisSpeeds robotSpeeds) {
-        Translation2d robotVelocity = getFieldRelativeVelocity(robotSpeeds, robotPose);
+        return calculateRecursiveTOF(
+                goalLocation,
+                robotPose,
+                robotSpeeds,
+                new Rotation2d(),
+                0.0,
+                defaultLoopDtSeconds);
+    }
 
-        double latencyCompensation = 0.3;
-        Translation2d futurePos = robotPose.getTranslation().plus(
-                robotVelocity.times(latencyCompensation));
-
-        // robot-relative goal position
-        Translation2d toGoal = goalLocation.minus(futurePos);
-        // the calculated final goal position relative to the robot
-        Translation2d ballGoal = toGoal;
-
-        FullShooterParams params = null;
-        double distance = ballGoal.getNorm();
-        double k = 0.5; // linear drag constant, tune with testing, K can not equal 0!!
-
-        // the reason this is done is because when you want to apply the velocity
-        // corrections, you also need to know how long the ball will be in the air for.
-        // this is important because that allows us to take the velocity of the robot
-        // and convert it into an actual position we can use to point towards and get
-        // the distance of for the LUT
-        for (int i = 0; i < 5; i++) {
-            params = SHOOTER_MAP.get(distance);
-            double tof = params.timeOfFlight();
-            double alphaTof = (1.0 - Math.exp(-k * tof)) / k;
-            // the reason the TOF is negative isn't for the TOF, but rather the velocity.
-            // here, instead of wanting field-relative robot velocity, we want the
-            // robot-relative goal velocity, which will be the opposite.
-            ballGoal = toGoal.plus(robotVelocity.times(-alphaTof));
-            distance = ballGoal.getNorm();
+    public SOTFResult calculateRecursiveTOF(Translation2d goalLocation, Pose2d robotPose, ChassisSpeeds robotSpeeds,
+            Rotation2d currentTurretAngle, double turretOmegaRadPerSecond, double dt) {
+        if (!isShooterMapReady()) {
+            previousTofRecursive = -1.0;
+            return SOTFResult.invalid();
         }
 
-        // we get the params one more time with the updated distance...
-        params = SHOOTER_MAP.get(distance);
-        // ...and then return the params and direction
-        return new SOTFResult(ballGoal.getAngle().getDegrees(), params.hoodAngle(), params.speedMetersPerSecond(), distance);
+        TargetKinematics targetKinematics =
+                buildTargetKinematics(goalLocation, robotPose, robotSpeeds, currentTurretAngle, turretOmegaRadPerSecond, dt);
+        if (targetKinematics == null) {
+            previousTofRecursive = -1.0;
+            return SOTFResult.invalid();
+        }
+
+        ConvergenceResult convergence =
+                solveRecursiveTOF(targetKinematics.toGoal, targetKinematics.totalShooterVelocity, previousTofRecursive);
+        if (!isConvergenceValid(convergence)) {
+            previousTofRecursive = -1.0;
+            return SOTFResult.invalid();
+        }
+
+        previousTofRecursive = convergence.tof;
+        return buildFinalResult(convergence);
+    }
+
+    public SOTFResult calculateNewtonTOF(Translation2d goalLocation, Pose2d robotPose, ChassisSpeeds robotSpeeds) {
+        return calculateNewtonTOF(
+                goalLocation,
+                robotPose,
+                robotSpeeds,
+                new Rotation2d(),
+                0.0,
+                defaultLoopDtSeconds);
+    }
+
+    public SOTFResult calculateNewtonTOF(Translation2d goalLocation, Pose2d robotPose, ChassisSpeeds robotSpeeds,
+            Rotation2d currentTurretAngle, double turretOmegaRadPerSecond, double dt) {
+        if (!isShooterMapReady()) {
+            previousTofNewton = -1.0;
+            return SOTFResult.invalid();
+        }
+
+        TargetKinematics targetKinematics =
+                buildTargetKinematics(goalLocation, robotPose, robotSpeeds, currentTurretAngle, turretOmegaRadPerSecond, dt);
+        if (targetKinematics == null) {
+            previousTofNewton = -1.0;
+            return SOTFResult.invalid();
+        }
+
+        ConvergenceResult convergence =
+                solveNewtonTOF(targetKinematics.toGoal, targetKinematics.totalShooterVelocity, previousTofNewton);
+        if (!isConvergenceValid(convergence)) {
+            previousTofNewton = -1.0;
+            return SOTFResult.invalid();
+        }
+
+        previousTofNewton = convergence.tof;
+        return buildFinalResult(convergence);
     }
 
     public SOTFResult calculateTOF(Translation2d goalLocation, Pose2d robotPose, ChassisSpeeds robotSpeeds) {
-        Translation2d robotVelocity = getFieldRelativeVelocity(robotSpeeds, robotPose);
-        double latencyCompensation = 0.3;
+        return calculateTOF(goalLocation, robotPose, robotSpeeds, defaultLoopDtSeconds);
+    }
 
-        // 1. Project future position
-        Translation2d futurePos = robotPose.getTranslation().plus(
-                robotVelocity.times(latencyCompensation));
-
-        // 2. Get target vector
-        Translation2d toGoal = goalLocation.minus(futurePos);
-        double distance = toGoal.getNorm();
-        Translation2d targetDirection = toGoal.div(distance);
-
-        // 3. Look up baseline velocity from table
-        FullShooterParams baseline = SHOOTER_MAP.get(distance);
-        double baselineVelocity = distance / baseline.timeOfFlight();
-
-        // 4. Build target velocity vector
-        Translation2d targetVelocity = targetDirection.times(baselineVelocity);
-
-        // 5. THE MAGIC: subtract robot velocity
-        Translation2d shotVelocity = targetVelocity.minus(robotVelocity);
-
-        // 6. Extract results
-        Rotation2d turretAngle = shotVelocity.getAngle();
-        double requiredVelocity = shotVelocity.getNorm();
-
-        // Both Calculation
-        // FullShooterParams baseline = SHOOTER_MAP.get(distance);
-        // double baselineVelocity = distance / baseline.timeOfFlight;
-        double velocityRatio = requiredVelocity / baselineVelocity;
-
-        // Split the correction: sqrt gives equal "contribution" from each
-        double speedFactor = Math.sqrt(velocityRatio);
-        double hoodFactor = Math.sqrt(velocityRatio);
-
-        // Apply shooter speed scaling (m/s)
-        double adjustedSpeedMetersPerSecond = baseline.speedMetersPerSecond() * speedFactor;
-
-        // Apply hood adjustment (changes horizontal component)
-        double totalVelocity = baselineVelocity / Math.cos(Math.toRadians(baseline.hoodAngle()));
-        double targetHorizFromHood = baselineVelocity * hoodFactor;
-        double ratio = MathUtil.clamp(targetHorizFromHood / totalVelocity, 0.0, 1.0);
-        double adjustedHood = Math.toDegrees(Math.acos(ratio));
-
-        return new SOTFResult(turretAngle.getDegrees(), adjustedHood, adjustedSpeedMetersPerSecond, distance);
-        // return new ShooterCommand(adjustedSpeedMetersPerSecond, adjustedHood);
+    public SOTFResult calculateTOF(Translation2d goalLocation, Pose2d robotPose, ChassisSpeeds robotSpeeds,
+            double dt) {
+        return calculateNewtonTOF(goalLocation, robotPose, robotSpeeds, new Rotation2d(), 0.0, dt);
     }
 
     public SOTFResult calculate(Translation2d goalLocation, Pose2d robotPose, ChassisSpeeds robotSpeed) {
-        double latency = 0.15; // Tuned constant
-        Translation2d futurePos = robotPose.getTranslation().plus(
-                getFieldRelativeVelocity(robotSpeed, robotPose).times(latency));
+        return calculate(goalLocation, robotPose, robotSpeed, defaultLoopDtSeconds);
+    }
 
-        // 2. GET TARGET VECTOR
-        Translation2d targetVec = goalLocation.minus(futurePos);
-        double dist = targetVec.getNorm();
-        Logger.recordOutput("SOTF Dist", dist);
-
-        // 3. CALCULATE IDEAL SHOT (Stationary)
-        // Note: This returns HORIZONTAL velocity component
-        // idealSpeed_Horizontal = Total_Speed * cos(release_angle);
-        double interpSpeed = shootSpeedInterp.getInterpolatedValue(dist);
-        double interpAngle = shootAngleInterp.getInterpolatedValue(dist);
-        Logger.recordOutput("SOTF Speed", interpSpeed);
-        Logger.recordOutput("SOTF Angle", interpAngle);
-        double idealHorizontalSpeed = interpSpeed * Math.cos(Math.toRadians(interpAngle));
-        Logger.recordOutput("SOTF HorzSpeed", idealHorizontalSpeed);
-
-        // 4. VECTOR SUBTRACTION
-        Translation2d robotVelVec = getFieldRelativeVelocity(robotSpeed, robotPose);
-        Translation2d shotVec = targetVec.div(dist).times(idealHorizontalSpeed).minus(robotVelVec);
-
-        // 5. CONVERT TO CONTROLS
-        double turretAngle = shotVec.getAngle().getDegrees();
-        double newHorizontalSpeed = shotVec.getNorm();
-
-        // 6. SOLVE FOR NEW PITCH/RPM
-        // Assuming constant total exit velocity, variable hood:
-        double totalExitVelocity = 8.0; // m/s
-        // Clamp to avoid domain errors if we need more speed than possible
-        double ratio = Math.min(newHorizontalSpeed / totalExitVelocity, 1.0);
-        double newPitch = Math.acos(ratio);
-
-        return new SOTFResult(turretAngle, Math.toDegrees(newPitch), totalExitVelocity, dist);
+    public SOTFResult calculate(Translation2d goalLocation, Pose2d robotPose, ChassisSpeeds robotSpeed, double dt) {
+        return calculateNewtonTOF(goalLocation, robotPose, robotSpeed, new Rotation2d(), 0.0, dt);
     }
 
     public static ShootOnTheFly getInstance() {
@@ -196,8 +217,218 @@ public class ShootOnTheFly {
     private ShootOnTheFly() {
     }
 
+    private TargetKinematics buildTargetKinematics(Translation2d goalLocation, Pose2d robotPose, ChassisSpeeds robotSpeeds,
+            Rotation2d currentTurretAngle, double turretOmegaRadPerSecond, double dt) {
+        double loopDt = dt > minLoopDtSeconds ? dt : defaultLoopDtSeconds;
+
+        double ax = 0.0;
+        double ay = 0.0;
+        double aOmega = 0.0;
+        if (hasPreviousVelocityState) {
+            ax = (robotSpeeds.vxMetersPerSecond - prevVx) / loopDt;
+            ay = (robotSpeeds.vyMetersPerSecond - prevVy) / loopDt;
+            aOmega = (robotSpeeds.omegaRadiansPerSecond - prevOmega) / loopDt;
+        }
+
+        prevVx = robotSpeeds.vxMetersPerSecond;
+        prevVy = robotSpeeds.vyMetersPerSecond;
+        prevOmega = robotSpeeds.omegaRadiansPerSecond;
+        hasPreviousVelocityState = true;
+
+        double latencySeconds = latencyCompensationSeconds;
+        double dx = robotSpeeds.vxMetersPerSecond * latencySeconds + 0.5 * ax * latencySeconds * latencySeconds;
+        double dy = robotSpeeds.vyMetersPerSecond * latencySeconds + 0.5 * ay * latencySeconds * latencySeconds;
+        double dTheta = robotSpeeds.omegaRadiansPerSecond * latencySeconds
+                + 0.5 * aOmega * latencySeconds * latencySeconds;
+
+        Pose2d futureRobotPose = robotPose.exp(new Twist2d(dx, dy, dTheta));
+        Translation2d futureRobotCenter = futureRobotPose.getTranslation();
+        Translation2d fieldVelocity = getFieldRelativeVelocity(robotSpeeds, robotPose);
+
+        Rotation2d absoluteTurretAngle = futureRobotPose.getRotation().plus(currentTurretAngle);
+        Translation2d shooterOffsetField = new Translation2d(turretShooterOffsetX, turretShooterOffsetY)
+                .rotateBy(absoluteTurretAngle);
+        Translation2d futureShooterPos = futureRobotCenter.plus(shooterOffsetField);
+
+        double totalOmega = robotSpeeds.omegaRadiansPerSecond + turretOmegaRadPerSecond;
+        Translation2d tangentialVelocity = new Translation2d(
+                -shooterOffsetField.getY() * totalOmega,
+                shooterOffsetField.getX() * totalOmega);
+        Translation2d totalShooterVelocity = fieldVelocity.plus(tangentialVelocity);
+
+        Translation2d toGoal = goalLocation.minus(futureShooterPos);
+        double initialDistance = toGoal.getNorm();
+        if (!Double.isFinite(initialDistance) || initialDistance < minDistanceMeters) {
+            return null;
+        }
+
+        return new TargetKinematics(toGoal, totalShooterVelocity);
+    }
+
+    private ConvergenceResult solveRecursiveTOF(Translation2d toGoal, Translation2d totalShooterVelocity,
+            double warmStartTof) {
+        double initialDistance = toGoal.getNorm();
+        double tof = warmStartTof > 0.0 ? warmStartTof : getInterpolatedTof(initialDistance);
+        if (!Double.isFinite(tof) || tof <= 0.0) {
+            return new ConvergenceResult(false, 0, tof, initialDistance, toGoal);
+        }
+
+        int iterationsUsed = 0;
+        boolean converged = false;
+        double projectedDistance = initialDistance;
+        Translation2d finalBallGoal = toGoal;
+
+        for (int i = 0; i < maxRecursiveIterations; i++) {
+            iterationsUsed = i + 1;
+
+            double alphaTof = getDragAdjustedTof(tof);
+            Translation2d ballGoal = toGoal.minus(totalShooterVelocity.times(alphaTof));
+            double distance = ballGoal.getNorm();
+            if (!Double.isFinite(distance) || distance < minDistanceMeters) {
+                break;
+            }
+
+            double lookupTof = getInterpolatedTof(distance);
+            if (!Double.isFinite(lookupTof) || lookupTof <= 0.0) {
+                break;
+            }
+
+            double f = lookupTof - tof;
+            tof = lookupTof;
+            finalBallGoal = ballGoal;
+            projectedDistance = distance;
+
+            if (Math.abs(f) < newtonToleranceSeconds) {
+                converged = true;
+                break;
+            }
+        }
+
+        return new ConvergenceResult(converged, iterationsUsed, tof, projectedDistance, finalBallGoal);
+    }
+
+    private ConvergenceResult solveNewtonTOF(Translation2d toGoal, Translation2d totalShooterVelocity, double warmStartTof) {
+        double initialDistance = toGoal.getNorm();
+        double tof = warmStartTof > 0.0 ? warmStartTof : getInterpolatedTof(initialDistance);
+        if (!Double.isFinite(tof) || tof <= 0.0) {
+            return new ConvergenceResult(false, 0, tof, initialDistance, toGoal);
+        }
+
+        int iterationsUsed = 0;
+        boolean converged = false;
+        double projectedDistance = initialDistance;
+        Translation2d finalBallGoal = toGoal;
+
+        for (int i = 0; i < maxNewtonIterations; i++) {
+            iterationsUsed = i + 1;
+
+            double alphaTof = getDragAdjustedTof(tof);
+            Translation2d ballGoal = toGoal.minus(totalShooterVelocity.times(alphaTof));
+            double projDist = ballGoal.getNorm();
+            if (!Double.isFinite(projDist) || projDist < minDistanceMeters) {
+                break;
+            }
+
+            double lookupTof = getInterpolatedTof(projDist);
+            if (!Double.isFinite(lookupTof) || lookupTof <= 0.0) {
+                break;
+            }
+
+            double f = lookupTof - tof;
+            finalBallGoal = ballGoal;
+            projectedDistance = projDist;
+            if (Math.abs(f) < newtonToleranceSeconds) {
+                converged = true;
+                break;
+            }
+
+            double dPrime = -(ballGoal.getX() * totalShooterVelocity.getX()
+                    + ballGoal.getY() * totalShooterVelocity.getY()) / projDist;
+            double gPrime = getTofDerivative(projDist);
+            if (!Double.isFinite(gPrime)) {
+                break;
+            }
+
+            double fPrime = gPrime * dPrime - 1.0;
+            if (Math.abs(fPrime) < newtonMinDerivativeMagnitude) {
+                tof = lookupTof;
+                continue;
+            }
+
+            double updatedTOF = tof - (f / fPrime);
+            if (!Double.isFinite(updatedTOF) || updatedTOF <= 0.0) {
+                break;
+            }
+            tof = updatedTOF;
+        }
+
+        return new ConvergenceResult(converged, iterationsUsed, tof, projectedDistance, finalBallGoal);
+    }
+
+    private SOTFResult buildFinalResult(ConvergenceResult convergence) {
+        if (!isConvergenceValid(convergence)) {
+            return SOTFResult.invalid();
+        }
+
+        FullShooterParams params = shooterMap.get(convergence.projectedDistance);
+        if (params == null) {
+            return SOTFResult.invalid();
+        }
+        Rotation2d solvedYaw = convergence.finalBallGoal.getAngle();
+
+        return new SOTFResult(
+                solvedYaw.getDegrees(),
+                params.hoodAngle(),
+                params.speedMetersPerSecond(),
+                convergence.projectedDistance,
+                true);
+    }
+
+    private boolean isConvergenceValid(ConvergenceResult convergence) {
+        return convergence != null
+                && convergence.converged
+                && Double.isFinite(convergence.tof)
+                && convergence.tof > 0.0
+                && Double.isFinite(convergence.projectedDistance)
+                && convergence.projectedDistance > 0.0
+                && convergence.projectedDistance <= maxValidDistanceMeters;
+    }
+
+    private boolean isShooterMapReady() {
+        return shooterMap != null && shooterMap.get(0.0) != null;
+    }
+
+    private double getInterpolatedTof(double distanceMeters) {
+        FullShooterParams params = shooterMap.get(distanceMeters);
+        return params != null ? params.timeOfFlight() : Double.NaN;
+    }
+
+    private double getTofDerivative(double distanceMeters) {
+        double h = tofDerivativeStepMeters;
+        double upperDist = distanceMeters + h;
+        double lowerDist = Math.max(0.0, distanceMeters - h);
+        double tHigh = getInterpolatedTof(upperDist);
+        double tLow = getInterpolatedTof(lowerDist);
+        if (!Double.isFinite(tHigh) || !Double.isFinite(tLow)) {
+            return Double.NaN;
+        }
+        double deltaDist = upperDist - lowerDist;
+        if (deltaDist <= minDerivativeDistanceDeltaMeters) {
+            return Double.NaN;
+        }
+        return (tHigh - tLow) / deltaDist;
+    }
+
+    private double getDragAdjustedTof(double tof) {
+        if (Math.abs(recursiveDragConstant) < minDragConstantMagnitude) {
+            return tof;
+        }
+        return (1.0 - Math.exp(-recursiveDragConstant * tof)) / recursiveDragConstant;
+    }
+
     private Translation2d getFieldRelativeVelocity(ChassisSpeeds robotSpeeds, Pose2d robotPose) {
         return new Translation2d(robotSpeeds.vxMetersPerSecond, robotSpeeds.vyMetersPerSecond)
                 .rotateBy(robotPose.getRotation());
     }
+
 }

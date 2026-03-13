@@ -18,6 +18,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
@@ -48,6 +49,7 @@ public class Turret extends SubsystemBase {
 
     private double sotfYaw = 0.0;
     private boolean turretPointedAtTarget = false;
+    private double previousLoopTimestampSec = Timer.getFPGATimestamp();
 
     public Turret(TurretIO turretIO, Supplier<Pose2d> pose, Supplier<ChassisSpeeds> speeds) {
         this.io = turretIO;
@@ -75,38 +77,54 @@ public class Turret extends SubsystemBase {
         io.updateInputs(inputs);
         Logger.processInputs("Turret", inputs);
 
+        Pose2d currentPose = pose.get();
+        ChassisSpeeds currentSpeeds = speeds.get();
+        Rotation2d currentTurretAngle = Rotation2d.fromDegrees(getTurretPos());
 
-        SOTFResult result = sotf.calculateRecursiveTOF(targetTranslation, pose.get(), speeds.get());
-        sotfYaw = result.yaw;
-        //io.setTurnPosition(Rotation2d.fromDegrees(result.yaw).rotateBy(pose.get().getRotation().times(-1)));
-        io.setTurnPosition(Rotation2d.fromDegrees(0));
-        double turretCurPos = getTurretPos();
-        Rotation2d turretPointedAt = Rotation2d.fromDegrees(turretCurPos).rotateBy(pose.get().getRotation());
+        double timestampSec = Timer.getFPGATimestamp();
+        double dt = timestampSec - previousLoopTimestampSec;
+        previousLoopTimestampSec = timestampSec;
+        if (dt <= TurretConstants.SotfConstants.minLoopDtSeconds || dt > TurretConstants.SotfConstants.maxLoopDtSeconds) {
+            dt = TurretConstants.SotfConstants.defaultLoopDtSeconds;
+        }
+
+        double turretOmegaRadPerSecond = Math.toRadians(inputs.turretVelocity);
+        SOTFResult result = sotf.calculateNewtonTOF(
+                targetTranslation,
+                currentPose,
+                currentSpeeds,
+                currentTurretAngle,
+                turretOmegaRadPerSecond,
+                dt);
+        if (result.isValid) {
+            sotfYaw = result.yaw;
+        }
+
+        Rotation2d turretPointedAt = currentTurretAngle.rotateBy(currentPose.getRotation());
         Rotation2d targetYaw = Rotation2d.fromDegrees(result.yaw);
         Rotation2d error = turretPointedAt.minus(targetYaw);
-        if (Math.abs(error.getDegrees()) < 10) {
-            turretPointedAtTarget = true;
-        } else {
-            turretPointedAtTarget = false;
+        turretPointedAtTarget = result.isValid
+                && Math.abs(error.getDegrees()) < TurretConstants.SotfConstants.pointAtTargetToleranceDeg;
+
+        if (sotfEnabled && result.isValid) {
+            Rotation2d turretTargetRelative = targetYaw.minus(currentPose.getRotation());
+            io.setTurnPosition(turretTargetRelative);
         }
-        // if (result.yaw - 5 < turretPointedAt && turretPointedAt < result.yaw + 5) {
-        //     turretPointedAtTarget = true;
-        // } else {
-        //     turretPointedAtTarget = false;
-        // }
-        double activeShooterVelocitySetpointMps = 0.0;//result.vel * shooterVelocityScale;
-        double activeShotAngleSetpointDeg = result.pitch;
+
+        double activeShooterVelocitySetpointMps = result.isValid ? result.vel * shooterVelocityScale : 0.0;
+        double activeShotAngleSetpointDeg = result.isValid ? result.pitch : 0.0;
 
         if (sotfEnabled) {
+            boolean canShoot = !stopShoot && result.isValid;
             switch (shooterControlMode) {
                 case VELOCITY:
-                    io.setShooterSpeed(stopShoot ? 0.0 : 0.0);//activeShooterVelocitySetpointMps);
+                    io.setShooterSpeed(canShoot ? activeShooterVelocitySetpointMps : 0.0);
                     break;
                 case VOLTAGE:
-                    io.setShooterVoltage(stopShoot ? 0.0 : 0.0);//shooterCommandedVoltage);
+                    io.setShooterVoltage(canShoot ? shooterCommandedVoltage : 0.0);
                     break;
             }
-            if (!stopShoot) {
+            if (canShoot) {
                 io.setShotAngle(activeShotAngleSetpointDeg);
             } else {
                 io.setHoodAngle(0);
@@ -117,6 +135,8 @@ public class Turret extends SubsystemBase {
         Logger.recordOutput("Turret/SOTFPitch", result.pitch);
         Logger.recordOutput("Turret/SOTFTarget", targetTranslation);
         Logger.recordOutput("Turret/SOTFDist", result.dist);
+        Logger.recordOutput("Turret/SOTFValid", result.isValid);
+        Logger.recordOutput("Turret/SOTFLoopDtSec", dt);
         Logger.recordOutput("Turret/SOTFEnabled", sotfEnabled);
         Logger.recordOutput("Turret/PointedAtHub", turretPointedAtTarget);
         Logger.recordOutput("Turret/turretPointedAt", error.getDegrees());
