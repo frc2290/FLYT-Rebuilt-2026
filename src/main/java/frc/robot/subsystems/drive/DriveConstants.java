@@ -101,6 +101,10 @@ public final class DriveConstants {
   public static final double maxSpeedMetersPerSec =
       driveFreeSpeedRPM * driveEncoderVelocityFactor * wheelRadiusMeters;
 
+  // Snake mode heading bias configuration
+  public static final double snakeHeadingBias = 0.1; // 10% stick magnitude equivalent
+  public static final double snakeHeadingSlewRateRadPerSec = Math.toRadians(180.0);
+
   // Drive PID configuration
   public static final double driveKp = 0.017;
   public static final double driveKd = 0.0;

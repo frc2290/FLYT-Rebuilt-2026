@@ -30,9 +30,11 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Constants.OIConstants;
 import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.subsystems.drive.Drive;
+import frc.robot.subsystems.drive.DriveConstants;
 import frc.utils.FieldConstants.LinesHorizontal;
 import frc.utils.FieldConstants.LinesVertical;
 import frc.utils.FieldConstants;
+import frc.utils.AngleSlewRateLimiter;
 import frc.utils.PoseEstimatorSubsystem;
 import frc.utils.StickExpo;
 
@@ -68,6 +70,8 @@ public final class DriveCommandFactory {
   private final PIDController yPid;
   private final StickExpo translationExpo = new StickExpo(3.0);
   private final StickExpo rotationExpo = new StickExpo(3.0);
+  private final AngleSlewRateLimiter snakeLimiter =
+      new AngleSlewRateLimiter(DriveConstants.snakeHeadingSlewRateRadPerSec);
 
   /**
    * Constructs a drive command factory that can create commands using the shared drivetrain, pose
@@ -232,6 +236,54 @@ public final class DriveCommandFactory {
           double rotSpeed = rotPid.calculate(poseEstimator.getDegrees(), headingTarget);
           drive.drive(inputs.xSpeed, inputs.ySpeed, rotSpeed, true);
         });
+  }
+
+  /**
+   * Creates the snake-drive heading lock behavior using a generic heading offset.
+   *
+   * <p>The heading target is generated from driver translation intent plus an offset-face-aligned
+   * bias vector, then rate-limited to prevent abrupt setpoint jumps.
+   *
+   * @param headingOffsetSupplier Supplies the desired "leading face" offset from chassis front.
+   */
+  public Command createSnakeDriveCommand(Supplier<Rotation2d> headingOffsetSupplier) {
+    Objects.requireNonNull(headingOffsetSupplier);
+
+    return runDriveCommand(
+            inputs -> {
+              if (applyManualRotationOverride(inputs)) {
+                return;
+              }
+
+              // Standard field-relative translation inputs: +X is forward, +Y is left.
+              double fwd = inputs.xSpeed;
+              double str = inputs.ySpeed;
+
+              // Determine the requested leading-face heading relative to chassis front.
+              Rotation2d currentHeading = poseEstimator.getCurrentRotation();
+              Rotation2d intakeOffset = headingOffsetSupplier.get();
+              Rotation2d intakeHeading = currentHeading.plus(intakeOffset);
+
+              // Bias motion in the direction the selected leading face is pointing.
+              double biasedFwd =
+                  fwd + DriveConstants.snakeHeadingBias * intakeHeading.getCos();
+              double biasedStr =
+                  str + DriveConstants.snakeHeadingBias * intakeHeading.getSin();
+
+              Rotation2d targetVelocityAngle;
+              if (Math.hypot(biasedFwd, biasedStr) < 1e-6) {
+                targetVelocityAngle = intakeHeading;
+              } else {
+                targetVelocityAngle = new Rotation2d(biasedFwd, biasedStr);
+              }
+
+              // Convert leading-face velocity angle back to a chassis-front heading target.
+              Rotation2d rawTargetHeading = targetVelocityAngle.minus(intakeOffset);
+              double headingTarget = snakeLimiter.calculate(rawTargetHeading).getDegrees();
+              double rotSpeed = rotPid.calculate(poseEstimator.getDegrees(), headingTarget);
+              drive.drive(inputs.xSpeed, inputs.ySpeed, rotSpeed, true);
+            })
+        .beforeStarting(() -> snakeLimiter.reset(poseEstimator.getCurrentRotation()));
   }
 
   /**
