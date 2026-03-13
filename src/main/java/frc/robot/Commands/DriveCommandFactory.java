@@ -21,14 +21,11 @@ import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.interpolation.Interpolator;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Constants.OIConstants;
-import frc.robot.subsystems.DriveSubsystem;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveConstants;
 import frc.utils.FieldConstants.LinesHorizontal;
@@ -38,11 +35,8 @@ import frc.utils.AngleSlewRateLimiter;
 import frc.utils.PoseEstimatorSubsystem;
 import frc.utils.StickExpo;
 
-import java.lang.reflect.Field;
 import java.util.Arrays;
-import java.util.Comparator;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.OptionalDouble;
 import java.util.function.Consumer;
 import java.util.function.DoubleSupplier;
@@ -58,7 +52,7 @@ import org.littletonrobotics.junction.Logger;
  * ready-to-run command that mirrors the legacy behaviors (manual drive, heading locks, pose holds,
  * etc.) so the rest of the robot code can request the right behavior without duplicating logic. The
  * helpers intentionally stay lightweight—each command is built with a small lambda that calls
- * {@link DriveSubsystem#drive} directly—so it is easy to extend with future drive modes.
+ * {@link Drive#driveVelocity} directly—so it is easy to extend with future drive modes.
  */
 public final class DriveCommandFactory {
 
@@ -82,15 +76,18 @@ public final class DriveCommandFactory {
     this.drive = Objects.requireNonNull(drive);
     this.poseEstimator = Objects.requireNonNull(poseEstimator);
     this.driverController = Objects.requireNonNull(driverController);
+
+    double maxLinearSpeedMetersPerSec = this.drive.getMaxLinearSpeedMetersPerSec();
+    double maxAngularSpeedRadPerSec = this.drive.getMaxAngularSpeedRadPerSec();
+
     // this.rotPid = drive.getRotPidController();
     // this.xPid = drive.getXPidController();
     // this.yPid = drive.getYPidController();
-    this.rotPid = new PIDController(0.015, 0.0, 0.0); // 0.015 0 0
+    // Retuned for physical outputs (rad/s and m/s) instead of percent outputs.
+    this.rotPid = new PIDController(0.015 * maxAngularSpeedRadPerSec, 0.0, 0.0);
     this.rotPid.enableContinuousInput(0, 360);
-    this.xPid = new PIDController(1, 0.0, 0.085); // 2 0.0 0.5
-    this.yPid = new PIDController(1, 0.0, 0.085); // 2 0.0 0.5
-
-
+    this.xPid = new PIDController(1.0 * maxLinearSpeedMetersPerSec, 0.0, 0.085 * maxLinearSpeedMetersPerSec);
+    this.yPid = new PIDController(1.0 * maxLinearSpeedMetersPerSec, 0.0, 0.085 * maxLinearSpeedMetersPerSec);
   }
 
   /** Small helper that bundles the driver stick inputs for a single loop of command execution. */
@@ -146,13 +143,38 @@ public final class DriveCommandFactory {
     return Commands.run(() -> controller.accept(sampleDriverInputs()), drive);
   }
 
+  private double toLinearSpeed(double percentInput) {
+    return percentInput * drive.getMaxLinearSpeedMetersPerSec();
+  }
+
+  private double toAngularSpeed(double percentInput) {
+    return percentInput * drive.getMaxAngularSpeedRadPerSec();
+  }
+
+  private double clampLinearSpeed(double linearSpeedMetersPerSec) {
+    return MathUtil.clamp(
+        linearSpeedMetersPerSec,
+        -drive.getMaxLinearSpeedMetersPerSec(),
+        drive.getMaxLinearSpeedMetersPerSec());
+  }
+
+  private double clampAngularSpeed(double angularSpeedRadPerSec) {
+    return MathUtil.clamp(
+        angularSpeedRadPerSec,
+        -drive.getMaxAngularSpeedRadPerSec(),
+        drive.getMaxAngularSpeedRadPerSec());
+  }
+
   /**
    * Applies manual rotation if the driver moves the right stick. Returns true when the manual
    * override has been applied so the caller can exit early.
    */
   private boolean applyManualRotationOverride(DriverInputs inputs) {
     if (inputs.rotSpeed != 0.0) {
-      drive.drive(inputs.xSpeed, inputs.ySpeed, inputs.rotSpeed, true);
+      double vx = toLinearSpeed(inputs.xSpeed);
+      double vy = toLinearSpeed(inputs.ySpeed);
+      double omega = toAngularSpeed(inputs.rotSpeed);
+      drive.driveVelocity(vx, vy, omega, true);
       return true;
     }
     return false;
@@ -165,7 +187,7 @@ public final class DriveCommandFactory {
    * state machine needs the drivetrain to coast.
    */
   public Command createCancelledCommand() {
-    return Commands.run(() -> drive.drive(0.0, 0.0, 0.0, true), drive);
+    return Commands.run(() -> drive.driveVelocity(0.0, 0.0, 0.0, true), drive);
   }
 
   /**
@@ -176,9 +198,12 @@ public final class DriveCommandFactory {
    */
   public Command createManualDriveCommand() {
     return runDriveCommand(
-        inputs ->
-            // Pass the field-relative speeds straight to the drivetrain.
-            drive.drive(inputs.xSpeed, inputs.ySpeed, inputs.rotSpeed, true));
+        inputs -> {
+          double vx = toLinearSpeed(inputs.xSpeed);
+          double vy = toLinearSpeed(inputs.ySpeed);
+          double omega = toAngularSpeed(inputs.rotSpeed);
+          drive.driveVelocity(vx, vy, omega, true);
+        });
   }
 
   /**
@@ -204,14 +229,14 @@ public final class DriveCommandFactory {
           // These PID calculations intentionally mirror the autonomous follower.
           Pose2d curPos = poseEstimator.getCurrentPose();
           double rotSpeed =
-              rotPid.calculate(curPos.getRotation().getDegrees(), targetPose.getRotation().getDegrees());
-          double xCommand =
-              xPid.calculate(curPos.getX(), targetPose.getX());
-          double yCommand =
-              yPid.calculate(curPos.getY(), targetPose.getY());
+              clampAngularSpeed(
+                  rotPid.calculate(
+                      curPos.getRotation().getDegrees(), targetPose.getRotation().getDegrees()));
+          double xCommand = clampLinearSpeed(xPid.calculate(curPos.getX(), targetPose.getX()));
+          double yCommand = clampLinearSpeed(yPid.calculate(curPos.getY(), targetPose.getY()));
 
           // Drive toward the path planner target while still using field-relative speeds.
-          drive.drive(xCommand, yCommand, rotSpeed, true);
+          drive.driveVelocity(xCommand, yCommand, rotSpeed, true);
         });
   }
 
@@ -233,8 +258,10 @@ public final class DriveCommandFactory {
 
           double headingTarget = headingSupplier.getAsDouble();
           // System.out.println(headingTarget);
-          double rotSpeed = rotPid.calculate(poseEstimator.getDegrees(), headingTarget);
-          drive.drive(inputs.xSpeed, inputs.ySpeed, rotSpeed, true);
+          double rotSpeed = clampAngularSpeed(rotPid.calculate(poseEstimator.getDegrees(), headingTarget));
+          double vx = toLinearSpeed(inputs.xSpeed);
+          double vy = toLinearSpeed(inputs.ySpeed);
+          drive.driveVelocity(vx, vy, rotSpeed, true);
         });
   }
 
@@ -280,8 +307,11 @@ public final class DriveCommandFactory {
               // Convert leading-face velocity angle back to a chassis-front heading target.
               Rotation2d rawTargetHeading = targetVelocityAngle.minus(intakeOffset);
               double headingTarget = snakeLimiter.calculate(rawTargetHeading).getDegrees();
-              double rotSpeed = rotPid.calculate(poseEstimator.getDegrees(), headingTarget);
-              drive.drive(inputs.xSpeed, inputs.ySpeed, rotSpeed, true);
+              double rotSpeed =
+                  clampAngularSpeed(rotPid.calculate(poseEstimator.getDegrees(), headingTarget));
+              double vx = toLinearSpeed(inputs.xSpeed);
+              double vy = toLinearSpeed(inputs.ySpeed);
+              drive.driveVelocity(vx, vy, rotSpeed, true);
             })
         .beforeStarting(() -> snakeLimiter.reset(poseEstimator.getCurrentRotation()));
   }
@@ -314,16 +344,17 @@ public final class DriveCommandFactory {
 
           // Drive the robot's X/Y toward the pose using the same PID controllers the autos use.
           double rotSpeed =
-              rotPid.calculate(poseEstimator.getDegrees(), targetPose.getRotation().getDegrees());
+              clampAngularSpeed(
+                  rotPid.calculate(poseEstimator.getDegrees(), targetPose.getRotation().getDegrees()));
           double xCorrection =
-              xPid.calculate(poseEstimator.getCurrentPose().getX(), targetPose.getX());
+              clampLinearSpeed(xPid.calculate(poseEstimator.getCurrentPose().getX(), targetPose.getX()));
           double yCorrection =
-              yPid.calculate(poseEstimator.getCurrentPose().getY(), targetPose.getY());
+              clampLinearSpeed(yPid.calculate(poseEstimator.getCurrentPose().getY(), targetPose.getY()));
 
           // Blend in a fraction of the driver's manual input so they can creep around the target.
-          double xCommand = xCorrection + inputs.xSpeed * manualBlend;
-          double yCommand = yCorrection + inputs.ySpeed * manualBlend;
-          drive.drive(xCommand, yCommand, rotSpeed, true);
+          double xCommand = clampLinearSpeed(xCorrection + toLinearSpeed(inputs.xSpeed) * manualBlend);
+          double yCommand = clampLinearSpeed(yCorrection + toLinearSpeed(inputs.ySpeed) * manualBlend);
+          drive.driveVelocity(xCommand, yCommand, rotSpeed, true);
         });
   }
 
@@ -358,8 +389,10 @@ public final class DriveCommandFactory {
                 new Pose2d(targetPose.getTranslation(), Rotation2d.fromDegrees(headingTarget)));
           }
 
-          double rotSpeed = rotPid.calculate(poseEstimator.getDegrees(), headingTarget);
-          drive.drive(inputs.xSpeed, inputs.ySpeed, rotSpeed, true);
+          double rotSpeed = clampAngularSpeed(rotPid.calculate(poseEstimator.getDegrees(), headingTarget));
+          double vx = toLinearSpeed(inputs.xSpeed);
+          double vy = toLinearSpeed(inputs.ySpeed);
+          drive.driveVelocity(vx, vy, rotSpeed, true);
         });
   }
 
@@ -399,10 +432,28 @@ public final class DriveCommandFactory {
           double weight = 0.8;
           double targetY;
           targetY = Arrays.stream(targets).reduce((x, y) -> Math.abs(x - soonY) < Math.abs(y - soonY) ? x : y).orElse(targets[0]);
-          ySpeed = OptionalDouble.of(MathUtil.interpolate(inputs.ySpeed, yPid.calculate(currentPose.getY(), targetY), weight));
-          rotSpeed = OptionalDouble.of(MathUtil.interpolate(inputs.rotSpeed, rotPid.calculate(poseEstimator.getDegrees(), Math.round(poseEstimator.getDegrees() / 90.0) * 90.0), weight));
+          ySpeed = OptionalDouble.of(
+              clampLinearSpeed(
+                  MathUtil.interpolate(
+                      toLinearSpeed(inputs.ySpeed),
+                      clampLinearSpeed(yPid.calculate(currentPose.getY(), targetY)),
+                      weight)));
+          rotSpeed = OptionalDouble.of(
+              clampAngularSpeed(
+                  MathUtil.interpolate(
+                      toAngularSpeed(inputs.rotSpeed),
+                      clampAngularSpeed(
+                          rotPid.calculate(
+                              poseEstimator.getDegrees(),
+                              Math.round(poseEstimator.getDegrees() / 90.0) * 90.0)),
+                      weight)));
 
-          drive.drive(inputs.xSpeed, ySpeed.orElse(inputs.ySpeed), rotSpeed.orElse(inputs.rotSpeed), true);
+          double vx = toLinearSpeed(inputs.xSpeed);
+          drive.driveVelocity(
+              vx,
+              ySpeed.orElse(toLinearSpeed(inputs.ySpeed)),
+              rotSpeed.orElse(toAngularSpeed(inputs.rotSpeed)),
+              true);
         }
     );
   }
@@ -455,7 +506,10 @@ public final class DriveCommandFactory {
           }
 
           // the driving
-          drive.drive(driveAngle.getCos() * inputMagnitude, driveAngle.getSin() * inputMagnitude, inputs.rotSpeed, true);
+          double vx = toLinearSpeed(driveAngle.getCos() * inputMagnitude);
+          double vy = toLinearSpeed(driveAngle.getSin() * inputMagnitude);
+          double omega = toAngularSpeed(inputs.rotSpeed);
+          drive.driveVelocity(vx, vy, omega, true);
         });
   }
 }
