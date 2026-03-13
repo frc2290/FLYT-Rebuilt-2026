@@ -361,27 +361,22 @@ public class Drive extends SubsystemBase {
     }
 
     /**
-     * Method to drive the robot using joystick info.
+     * Drives the robot using physical velocity commands.
      *
-     * @param xSpeed        Speed of the robot in the x direction (forward).
-     * @param ySpeed        Speed of the robot in the y direction (sideways).
-     * @param rot           Angular rate of the robot.
-     * @param fieldRelative Whether the provided x and y speeds are relative to the
-     *                      field.
+     * @param vxMetersPerSec Forward velocity in meters/sec.
+     * @param vyMetersPerSec Sideways velocity in meters/sec.
+     * @param omegaRadPerSec Angular velocity in radians/sec.
+     * @param fieldRelative  Whether the provided velocities are field relative.
      */
-    public void drive(double xSpeed, double ySpeed, double rot, boolean fieldRelative) {
-        // Convert the commanded speeds into the correct units for the drivetrain
-        double xSpeedDelivered = xSpeed * maxSpeedMetersPerSec * 0.5;
-        double ySpeedDelivered = ySpeed * maxSpeedMetersPerSec * 0.5;
-        double rotDelivered = rot * maxAngularSpeed * 0.5;
+    public void driveVelocity(
+            double vxMetersPerSec, double vyMetersPerSec, double omegaRadPerSec, boolean fieldRelative) {
+        ChassisSpeeds desiredSpeeds =
+                fieldRelative
+                        ? ChassisSpeeds.fromFieldRelativeSpeeds(
+                                vxMetersPerSec, vyMetersPerSec, omegaRadPerSec, getDriveFieldHeading())
+                        : new ChassisSpeeds(vxMetersPerSec, vyMetersPerSec, omegaRadPerSec);
 
-        // Create the ChassisSpeeds object
-        ChassisSpeeds desiredSpeeds = fieldRelative
-                ? ChassisSpeeds.fromFieldRelativeSpeeds(
-                        xSpeedDelivered, ySpeedDelivered, rotDelivered, getDriveFieldHeading())
-                : new ChassisSpeeds(xSpeedDelivered, ySpeedDelivered, rotDelivered);
-
-        // Pass to runVelocity to handle discretization, kinematics, desaturation, and logging
+        // runVelocity handles discretization and wheel-speed desaturation.
         runVelocity(desiredSpeeds);
     }
 }
