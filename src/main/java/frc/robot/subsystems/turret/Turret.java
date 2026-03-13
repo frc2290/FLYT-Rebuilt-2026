@@ -135,6 +135,10 @@ public class Turret extends SubsystemBase {
         Logger.recordOutput("Turret/SOTFPitch", result.pitch);
         Logger.recordOutput("Turret/SOTFTarget", targetTranslation);
         Logger.recordOutput("Turret/SOTFDist", result.dist);
+        Logger.recordOutput("Turret/SOTFYawVelocityRadPerSec", result.yawVelocityRadPerSec);
+        Logger.recordOutput("Turret/SOTFYawAccelerationRadPerSec2", result.yawAccelerationRadPerSec2);
+        Logger.recordOutput("Turret/SOTFPitchVelocityDegPerSec", result.pitchVelocityDegPerSec);
+        Logger.recordOutput("Turret/SOTFFlywheelAccelerationMps2", result.flywheelAccelerationMetersPerSec2);
         Logger.recordOutput("Turret/SOTFValid", result.isValid);
         Logger.recordOutput("Turret/SOTFLoopDtSec", dt);
         Logger.recordOutput("Turret/SOTFEnabled", sotfEnabled);

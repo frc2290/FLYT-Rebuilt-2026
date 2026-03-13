@@ -36,10 +36,13 @@ public class ShootOnTheFly {
     private static class TargetKinematics {
         private final Translation2d toGoal;
         private final Translation2d totalShooterVelocity;
+        private final Translation2d totalShooterAcceleration;
 
-        private TargetKinematics(Translation2d toGoal, Translation2d totalShooterVelocity) {
+        private TargetKinematics(Translation2d toGoal, Translation2d totalShooterVelocity,
+                Translation2d totalShooterAcceleration) {
             this.toGoal = toGoal;
             this.totalShooterVelocity = totalShooterVelocity;
+            this.totalShooterAcceleration = totalShooterAcceleration;
         }
     }
 
@@ -82,21 +85,35 @@ public class ShootOnTheFly {
         public double vel; // exitVelocity
         public double dist; // distance
         public boolean isValid;
+        public double yawVelocityRadPerSec;
+        public double yawAccelerationRadPerSec2;
+        public double pitchVelocityDegPerSec;
+        public double flywheelAccelerationMetersPerSec2;
 
         public SOTFResult(double yaw, double pitch, double vel, double dist) {
-            this(yaw, pitch, vel, dist, true);
+            this(yaw, pitch, vel, dist, true, 0.0, 0.0, 0.0, 0.0);
         }
 
         public SOTFResult(double yaw, double pitch, double vel, double dist, boolean isValid) {
+            this(yaw, pitch, vel, dist, isValid, 0.0, 0.0, 0.0, 0.0);
+        }
+
+        public SOTFResult(double yaw, double pitch, double vel, double dist, boolean isValid,
+                double yawVelocityRadPerSec, double yawAccelerationRadPerSec2, double pitchVelocityDegPerSec,
+                double flywheelAccelerationMetersPerSec2) {
             this.yaw = yaw;
             this.pitch = pitch;
             this.vel = vel;
             this.dist = dist;
             this.isValid = isValid;
+            this.yawVelocityRadPerSec = yawVelocityRadPerSec;
+            this.yawAccelerationRadPerSec2 = yawAccelerationRadPerSec2;
+            this.pitchVelocityDegPerSec = pitchVelocityDegPerSec;
+            this.flywheelAccelerationMetersPerSec2 = flywheelAccelerationMetersPerSec2;
         }
 
         public static SOTFResult invalid() {
-            return new SOTFResult(0.0, 0.0, 0.0, 0.0, false);
+            return new SOTFResult(0.0, 0.0, 0.0, 0.0, false, 0.0, 0.0, 0.0, 0.0);
         }
     }
 
@@ -152,7 +169,7 @@ public class ShootOnTheFly {
         }
 
         previousTofRecursive = convergence.tof;
-        return buildFinalResult(convergence);
+        return buildFinalResult(convergence, targetKinematics);
     }
 
     public SOTFResult calculateNewtonTOF(Translation2d goalLocation, Pose2d robotPose, ChassisSpeeds robotSpeeds) {
@@ -187,7 +204,7 @@ public class ShootOnTheFly {
         }
 
         previousTofNewton = convergence.tof;
-        return buildFinalResult(convergence);
+        return buildFinalResult(convergence, targetKinematics);
     }
 
     public SOTFResult calculateTOF(Translation2d goalLocation, Pose2d robotPose, ChassisSpeeds robotSpeeds) {
@@ -256,13 +273,21 @@ public class ShootOnTheFly {
                 shooterOffsetField.getX() * totalOmega);
         Translation2d totalShooterVelocity = fieldVelocity.plus(tangentialVelocity);
 
+        // Field-frame shooter acceleration includes chassis linear acceleration and
+        // rigid-body rotational terms from the turret/shooter offset.
+        Translation2d fieldAcceleration = new Translation2d(ax, ay).rotateBy(robotPose.getRotation());
+        Translation2d rotationalAcceleration = new Translation2d(
+                -shooterOffsetField.getX() * totalOmega * totalOmega - shooterOffsetField.getY() * aOmega,
+                -shooterOffsetField.getY() * totalOmega * totalOmega + shooterOffsetField.getX() * aOmega);
+        Translation2d totalShooterAcceleration = fieldAcceleration.plus(rotationalAcceleration);
+
         Translation2d toGoal = goalLocation.minus(futureShooterPos);
         double initialDistance = toGoal.getNorm();
         if (!Double.isFinite(initialDistance) || initialDistance < minDistanceMeters) {
             return null;
         }
 
-        return new TargetKinematics(toGoal, totalShooterVelocity);
+        return new TargetKinematics(toGoal, totalShooterVelocity, totalShooterAcceleration);
     }
 
     private ConvergenceResult solveRecursiveTOF(Translation2d toGoal, Translation2d totalShooterVelocity,
@@ -365,8 +390,8 @@ public class ShootOnTheFly {
         return new ConvergenceResult(converged, iterationsUsed, tof, projectedDistance, finalBallGoal);
     }
 
-    private SOTFResult buildFinalResult(ConvergenceResult convergence) {
-        if (!isConvergenceValid(convergence)) {
+    private SOTFResult buildFinalResult(ConvergenceResult convergence, TargetKinematics kinematics) {
+        if (!isConvergenceValid(convergence) || kinematics == null) {
             return SOTFResult.invalid();
         }
 
@@ -374,14 +399,43 @@ public class ShootOnTheFly {
         if (params == null) {
             return SOTFResult.invalid();
         }
-        Rotation2d solvedYaw = convergence.finalBallGoal.getAngle();
+        Translation2d r = convergence.finalBallGoal;
+        double dist = convergence.projectedDistance;
+        if (!Double.isFinite(dist) || dist < minDistanceMeters) {
+            return SOTFResult.invalid();
+        }
+
+        Translation2d shooterVelocity = kinematics.totalShooterVelocity;
+        Translation2d shooterAcceleration = kinematics.totalShooterAcceleration;
+
+        // Relative target kinematics in the shooter frame:
+        // rDot = -v_shooter and rDDot = -a_shooter.
+        double radialVelocity = -((r.getX() * shooterVelocity.getX()) + (r.getY() * shooterVelocity.getY())) / dist;
+        double tangentialVelocity = -((r.getX() * shooterVelocity.getY()) - (r.getY() * shooterVelocity.getX())) / dist;
+        double yawVelocity = tangentialVelocity / dist;
+
+        double tangentialAcceleration =
+                -((r.getX() * shooterAcceleration.getY()) - (r.getY() * shooterAcceleration.getX())) / dist;
+        double yawAcceleration = (tangentialAcceleration - (2.0 * radialVelocity * yawVelocity)) / dist;
+
+        double pitchSlope = getPitchDerivative(dist);
+        double pitchVelocity = Double.isFinite(pitchSlope) ? pitchSlope * radialVelocity : 0.0;
+
+        double speedSlope = getSpeedDerivative(dist);
+        double flywheelAcceleration = Double.isFinite(speedSlope) ? speedSlope * radialVelocity : 0.0;
+
+        Rotation2d solvedYaw = r.getAngle();
 
         return new SOTFResult(
                 solvedYaw.getDegrees(),
                 params.hoodAngle(),
                 params.speedMetersPerSecond(),
-                convergence.projectedDistance,
-                true);
+                dist,
+                true,
+                yawVelocity,
+                yawAcceleration,
+                pitchVelocity,
+                flywheelAcceleration);
     }
 
     private boolean isConvergenceValid(ConvergenceResult convergence) {
@@ -417,6 +471,48 @@ public class ShootOnTheFly {
             return Double.NaN;
         }
         return (tHigh - tLow) / deltaDist;
+    }
+
+    private double getPitchDerivative(double distanceMeters) {
+        if (!shootAngleInterp.isInitialized()) {
+            return Double.NaN;
+        }
+        double h = tofDerivativeStepMeters;
+        double upperDist = distanceMeters + h;
+        double lowerDist = Math.max(0.0, distanceMeters - h);
+        double deltaDist = upperDist - lowerDist;
+        if (deltaDist <= minDerivativeDistanceDeltaMeters) {
+            return Double.NaN;
+        }
+
+        double pHigh = shootAngleInterp.getInterpolatedValue(upperDist);
+        double pLow = shootAngleInterp.getInterpolatedValue(lowerDist);
+        if (!Double.isFinite(pHigh) || !Double.isFinite(pLow)) {
+            return Double.NaN;
+        }
+
+        return (pHigh - pLow) / deltaDist;
+    }
+
+    private double getSpeedDerivative(double distanceMeters) {
+        if (!shootSpeedInterp.isInitialized()) {
+            return Double.NaN;
+        }
+        double h = tofDerivativeStepMeters;
+        double upperDist = distanceMeters + h;
+        double lowerDist = Math.max(0.0, distanceMeters - h);
+        double deltaDist = upperDist - lowerDist;
+        if (deltaDist <= minDerivativeDistanceDeltaMeters) {
+            return Double.NaN;
+        }
+
+        double sHigh = shootSpeedInterp.getInterpolatedValue(upperDist);
+        double sLow = shootSpeedInterp.getInterpolatedValue(lowerDist);
+        if (!Double.isFinite(sHigh) || !Double.isFinite(sLow)) {
+            return Double.NaN;
+        }
+
+        return (sHigh - sLow) / deltaDist;
     }
 
     private double getDragAdjustedTof(double tof) {
