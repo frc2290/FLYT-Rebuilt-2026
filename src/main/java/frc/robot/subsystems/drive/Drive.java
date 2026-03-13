@@ -375,17 +375,13 @@ public class Drive extends SubsystemBase {
         double ySpeedDelivered = ySpeed * maxSpeedMetersPerSec * 0.5;
         double rotDelivered = rot * maxAngularSpeed * 0.5;
 
-        var swerveModuleStates = kinematics.toSwerveModuleStates(
-                fieldRelative
-                        ? ChassisSpeeds.fromFieldRelativeSpeeds(xSpeedDelivered, ySpeedDelivered, rotDelivered,
-                                getDriveFieldHeading())
-                        : new ChassisSpeeds(xSpeedDelivered, ySpeedDelivered, rotDelivered));
-        SwerveDriveKinematics.desaturateWheelSpeeds(
-                swerveModuleStates, DriveConstants.maxSpeedMetersPerSec);
+        // Create the ChassisSpeeds object
+        ChassisSpeeds desiredSpeeds = fieldRelative
+                ? ChassisSpeeds.fromFieldRelativeSpeeds(
+                        xSpeedDelivered, ySpeedDelivered, rotDelivered, getDriveFieldHeading())
+                : new ChassisSpeeds(xSpeedDelivered, ySpeedDelivered, rotDelivered);
 
-        modules[0].runSetpoint(swerveModuleStates[0]);
-        modules[1].runSetpoint(swerveModuleStates[1]);
-        modules[2].runSetpoint(swerveModuleStates[2]);
-        modules[3].runSetpoint(swerveModuleStates[3]);
+        // Pass to runVelocity to handle discretization, kinematics, desaturation, and logging
+        runVelocity(desiredSpeeds);
     }
 }
