@@ -62,7 +62,7 @@ public class IntakeIOSpark implements IntakeIO {
         driveConfig
                 .idleMode(IdleMode.kBrake)
                 .inverted(!inverted)
-                .smartCurrentLimit(driveMotorCurrentLimit)
+                .smartCurrentLimit(driveMotorCurrentLimit, 60)
                 .voltageCompensation(12.0);
         driveConfig
                 .encoder
@@ -91,7 +91,7 @@ public class IntakeIOSpark implements IntakeIO {
         deployConfig
                 .inverted(inverted)
                 .idleMode(IdleMode.kBrake)
-                .smartCurrentLimit(deployMotorCurrentLimit)
+                .smartCurrentLimit(deployMotorCurrentLimit, 60)
                 .voltageCompensation(12.0);
         deployConfig
                 .absoluteEncoder
