@@ -84,8 +84,8 @@ public class TurretIOSpark implements TurretIO {
         // Setup RoboRio Absolute encoders
         // Initializes duty cycle encoders on DIO pins 0 and 1.
         // get() returns position in rotations [0, 1].
-        turnEncoder1 = new DutyCycleEncoder(0, 1, 0.2664760066619002);
-        turnEncoder2 = new DutyCycleEncoder(1, 1, 0.2869740071743502);
+        turnEncoder1 = new DutyCycleEncoder(0, 1, 0.7585857439646436);
+        turnEncoder2 = new DutyCycleEncoder(1, 1, 0.3013946075348652);
 
         // Gets if the encoders are connected, IMPLEMENT LATER
         turnEncoder1.isConnected();
@@ -302,11 +302,11 @@ public class TurretIOSpark implements TurretIO {
     @Override
     public void setTurnPosition(Rotation2d rotation) {
         double targetRotation = rotation.getDegrees();
-        if (targetRotation > 75) {
-            targetRotation = 75;
+        if (targetRotation > 45) {
+            targetRotation = 45;
         }
-        if (targetRotation < -75) {
-            targetRotation = -75;
+        if (targetRotation < -45) {
+            targetRotation = -45;
         }
         turretAngleSetpoint = targetRotation;
     }

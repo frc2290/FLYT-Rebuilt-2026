@@ -14,6 +14,7 @@ import java.util.function.Supplier;
 
 import org.littletonrobotics.junction.Logger;
 
+import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -28,7 +29,7 @@ import frc.utils.FieldConstants.Hub;
 import frc.utils.ShootOnTheFly.SOTFResult;
 
 public class Turret extends SubsystemBase {
-    private static final double shooterVelocityScale = 1.45;
+    private static final double shooterVelocityScale = 1.35;
 
     public enum ControlMode {
         VELOCITY,
@@ -164,6 +165,7 @@ public class Turret extends SubsystemBase {
      * @param angle angle in degrees to set the hood
      */
     public void setHoodAngle(double angle) {
+        angle = MathUtil.clamp(angle, 0, 30);
         io.setHoodAngle(angle);
     }
 
