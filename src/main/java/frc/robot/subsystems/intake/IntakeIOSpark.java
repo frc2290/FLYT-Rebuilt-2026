@@ -17,11 +17,9 @@ import com.revrobotics.spark.SparkBase.ControlType;
 import com.revrobotics.spark.SparkClosedLoopController;
 import com.revrobotics.spark.SparkFlex;
 import com.revrobotics.spark.SparkLowLevel.MotorType;
-import com.revrobotics.spark.SparkMax;
 import com.revrobotics.spark.config.AbsoluteEncoderConfig;
 import com.revrobotics.spark.config.SparkBaseConfig.IdleMode;
 import com.revrobotics.spark.config.SparkFlexConfig;
-import com.revrobotics.spark.config.SparkMaxConfig;
 
 import edu.wpi.first.math.MathUtil;
 import frc.robot.subsystems.intake.IntakeConstants.IntakeSide;
@@ -41,7 +39,7 @@ public class IntakeIOSpark implements IntakeIO {
 
     public IntakeIOSpark(IntakeSide side, boolean inverted, double zeroOffset) {
         this.side = side;
-        driveSpark = new SparkMax(
+        driveSpark = new SparkFlex(
                 switch (side) {
                     case LEFT -> leftDriveCanId;
                     case RIGHT -> rightDriveCanId;
@@ -58,7 +56,7 @@ public class IntakeIOSpark implements IntakeIO {
         driveController = driveSpark.getClosedLoopController();
         deployController = deploySpark.getClosedLoopController();
 
-        var driveConfig = new SparkMaxConfig();
+        var driveConfig = new SparkFlexConfig();
         driveConfig
                 .idleMode(IdleMode.kBrake)
                 .inverted(!inverted)
@@ -68,7 +66,7 @@ public class IntakeIOSpark implements IntakeIO {
                 .encoder
                 .positionConversionFactor(rollerEncoderPositionFactor)
                 .velocityConversionFactor(rollerEncoderVelocityFactor)
-                .uvwAverageDepth(2);
+                .quadratureAverageDepth(2);
         driveConfig
                 .closedLoop
                 .feedbackSensor(FeedbackSensor.kPrimaryEncoder)

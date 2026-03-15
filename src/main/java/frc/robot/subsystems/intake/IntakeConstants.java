@@ -26,7 +26,7 @@ public class IntakeConstants {
     public static final int deployMotorCurrentLimit = 40;
 
     // --- Physical Dimensions & Mechanics ---
-    public static final double driveMotorReduction = (11.0 / 29.0) * (18.0 / 20.0);
+    public static final double driveMotorReduction = (11.0 / 29.0) * (18.0 / 30) * (25.0 / 20.0); //Todo: Verify these reductions with actual pulley.
     public static final double deployMotorToEncoderReduction = 84.0 / 7.0;
     public static final double deployEncoderToLinkageReduction = 48.0 / 16.0;
     public static final double deployMotorReduction =
@@ -42,7 +42,7 @@ public class IntakeConstants {
     public static final double rollerEncoderVelocityFactor = rollerEncoderPositionFactor / 60.0;
 
     // --- Control Loop Constants (PID & Feedforward) ---
-    public static final DCMotor rollerGearbox = DCMotor.getNEO(1);
+    public static final DCMotor rollerGearbox = DCMotor.getNeoVortex(1);
     public static final double rollerFreeSpeedRPM =
             Units.radiansPerSecondToRotationsPerMinute(rollerGearbox.freeSpeedRadPerSec);
     public static final double rollerKv = 12.0 / (rollerFreeSpeedRPM * rollerEncoderVelocityFactor);
