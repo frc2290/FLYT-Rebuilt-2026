@@ -119,7 +119,7 @@ public class Turret extends SubsystemBase {
             boolean canShoot = !stopShoot && result.isValid;
             switch (shooterControlMode) {
                 case VELOCITY:
-                    io.setShooterSpeed(canShoot ? activeShooterVelocitySetpointMps : 0.0);
+                    io.setShooterSpeed(canShoot ? activeShooterVelocitySetpointMps : activeShooterVelocitySetpointMps);
                     break;
                 case VOLTAGE:
                     io.setShooterVoltage(canShoot ? shooterCommandedVoltage : 0.0);

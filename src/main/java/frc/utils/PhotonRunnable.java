@@ -22,7 +22,10 @@ import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFieldLayout.OriginPosition;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Transform3d;
+import edu.wpi.first.wpilibj.Filesystem;
 import frc.utils.PoseUtils.Heading;
+
+import java.io.IOException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
 import org.photonvision.EstimatedRobotPose;
@@ -36,7 +39,7 @@ public class PhotonRunnable implements Runnable {
 
     private final PhotonPoseEstimator photonPoseEstimator;
     private final PhotonCamera photonCamera;
-    private final AprilTagFieldLayout layout;
+    private AprilTagFieldLayout layout;
     private final String cameraName;
 
     /** Latest pose estimate published from the PhotonVision thread. */
@@ -54,7 +57,12 @@ public class PhotonRunnable implements Runnable {
         cameraName = cam_name;
         this.photonCamera = new PhotonCamera(cameraName);
         // Keep layout origin fixed to blue; alliance flipping is handled in PoseEstimatorSubsystem.
-        layout = FieldConstants.AprilTagLayoutType.OFFICIAL.getLayout();
+        try {
+            layout = new AprilTagFieldLayout(Filesystem.getDeployDirectory().getAbsolutePath() + "/field_calibration.json");r
+        } catch (IOException e) {
+            e.printStackTrace();
+            layout = FieldConstants.AprilTagLayoutType.OFFICIAL.getLayout();
+        }
         layout.setOrigin(OriginPosition.kBlueAllianceWallRightSide);
 
         this.photonPoseEstimator = new PhotonPoseEstimator(

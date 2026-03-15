@@ -301,14 +301,7 @@ public class TurretIOSpark implements TurretIO {
 
     @Override
     public void setTurnPosition(Rotation2d rotation) {
-        double targetRotation = rotation.getDegrees();
-        if (targetRotation > 45) {
-            targetRotation = 45;
-        }
-        if (targetRotation < -45) {
-            targetRotation = -45;
-        }
-        turretAngleSetpoint = targetRotation;
+        turretAngleSetpoint = MathUtil.clamp(rotation.getDegrees(), -45, 45);
     }
 
 
