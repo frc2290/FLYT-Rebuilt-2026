@@ -17,7 +17,7 @@ import frc.utils.FuelSim;
 
 public class IntakeIOSim implements IntakeIO {
     private final DCMotorSim driveSim;
-    private final DCMotor driveGearbox = DCMotor.getNEO(1);
+    private final DCMotor driveGearbox = DCMotor.getNeoVortex(1);
     private final DCMotorSim deploySim;
     private final DCMotor deployGearbox = DCMotor.getNEO(1);
 

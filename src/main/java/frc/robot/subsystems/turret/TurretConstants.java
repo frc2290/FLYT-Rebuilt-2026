@@ -34,9 +34,9 @@ public class TurretConstants {
     public static final double numTeethPulley2 = 26.0;
     public static final double numTeethMotor = 11.0;
     public static final double turretTurnReduction = 7 / 1;
-    public static final double turretShootReduction = 24.0 / 35.0;
-    public static final double hoodMotorToEncoderReduction = (23.0 / 1.0) * (32.0 / 15.0);
-    public static final double hoodEncoderToHoodReduction = 335.0 / 45.0;
+    public static final double turretShootReduction = 20.0 / 40.0;
+    public static final double hoodMotorToEncoderReduction = (33.0 / 11.0) * (23.0);
+    public static final double hoodEncoderToHoodReduction = 1.0;
     public static final double turretHoodReduction = hoodMotorToEncoderReduction * hoodEncoderToHoodReduction;
 
     // --- Encoder & Conversion Factors ---
