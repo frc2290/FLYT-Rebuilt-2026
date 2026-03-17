@@ -32,8 +32,10 @@ public interface TurretIO {
     public default void updateInputs(TurretIOInputs inputs) {};
 
     public default void setTurnPosition(Rotation2d rotation) {};
+    public default void setTurnVoltage(double volts) {};
     public default void shootFuel() {};
     public default void setHoodAngle(double angle) {};
+    public default double getHoodAngle() { return 0.0; };
     public default void setShooterSpeed(double speed) {};
     public default void setShooterVoltage(double volts) {};
     public default void setShotAngle(double angle) {};

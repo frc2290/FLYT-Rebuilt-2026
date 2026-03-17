@@ -283,6 +283,11 @@ public class TurretIOSpark implements TurretIO {
         turretController.setSetpoint(clampedAngleDeg, ControlType.kPosition);
     }
 
+    @Override
+    public void setTurnVoltage(double volts) {
+        turretSpark.setVoltage(MathUtil.clamp(volts, -12.0, 12.0));
+    }
+
 
     @Override
     public void setHoodAngle(double angle) {
@@ -290,6 +295,7 @@ public class TurretIOSpark implements TurretIO {
         hoodController.setSetpoint(targetHoodEncoderAngle, ControlType.kPosition);
     };
 
+    @Override
     public double getHoodAngle() {
         return hoodEncoder.getPosition() - hoodAngleOffset;
     }

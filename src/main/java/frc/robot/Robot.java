@@ -319,6 +319,10 @@ public class Robot extends LoggedRobot {
         sys_id_commands.addOption("Turret Flywheel Quasi Reverse", m_turret.sysIdQuasistaticFlywheel(Direction.kReverse));
         sys_id_commands.addOption("Turret Flywheel Dynamic Forward", m_turret.sysIdDynamicFlywheel(Direction.kForward));
         sys_id_commands.addOption("Turret Flywheel Dynamic Reverse", m_turret.sysIdDynamicFlywheel(Direction.kReverse));
+        sys_id_commands.addOption("Turret Turn Quasi Forward", m_turret.sysIdQuasistaticTurn(Direction.kForward));
+        sys_id_commands.addOption("Turret Turn Quasi Reverse", m_turret.sysIdQuasistaticTurn(Direction.kReverse));
+        sys_id_commands.addOption("Turret Turn Dynamic Forward", m_turret.sysIdDynamicTurn(Direction.kForward));
+        sys_id_commands.addOption("Turret Turn Dynamic Reverse", m_turret.sysIdDynamicTurn(Direction.kReverse));
         sys_id_commands.addOption("Intake Left Quasi Forward", m_intake.sysIdQuasistaticLeftIntake(Direction.kForward));
         sys_id_commands.addOption("Intake Left Quasi Reverse", m_intake.sysIdQuasistaticLeftIntake(Direction.kReverse));
         sys_id_commands.addOption("Intake Left Dynamic Forward", m_intake.sysIdDynamicLeftIntake(Direction.kForward));

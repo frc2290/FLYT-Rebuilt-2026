@@ -30,6 +30,8 @@ public class TurretIOSim implements TurretIO {
     private final PIDController turretHoodController = new PIDController(turretHoodSimP, 0, 0);
 
     private double turretTurnAppliedVolts = 0.0;
+    private double turnVoltageCommand = 0.0;
+    private boolean turnVoltageOverride = false;
 
     private Supplier<Pose2d> poseSupplier;
     private Supplier<ChassisSpeeds> speedSupplier;
@@ -66,7 +68,11 @@ public class TurretIOSim implements TurretIO {
         // turretTurnAppliedVolts =
         // turretTurnController.calculate(turretTurnSim.getAngularPositionRad(),
         // Radians.convertFrom(hub, Units.Degrees));
-        turretTurnAppliedVolts = turretTurnController.calculate(turretTurnSim.getAngularPositionRad());
+        if (turnVoltageOverride) {
+            turretTurnAppliedVolts = turnVoltageCommand;
+        } else {
+            turretTurnAppliedVolts = turretTurnController.calculate(turretTurnSim.getAngularPositionRad());
+        }
         turretTurnSim.setInputVoltage(MathUtil.clamp(turretTurnAppliedVolts, -12.0, 12.0));
         turretTurnSim.update(0.02);
         turretShootSim.setInputVoltage(MathUtil.clamp(shooterVoltageCommand, -12.0, 12.0));
@@ -86,14 +92,26 @@ public class TurretIOSim implements TurretIO {
 
     @Override
     public void setTurnPosition(Rotation2d rotation) {
+        turnVoltageOverride = false;
         turretTurnController.setSetpoint(rotation.getRadians());
         turretAngleSetpoint = rotation.getDegrees();
+    }
+
+    @Override
+    public void setTurnVoltage(double volts) {
+        turnVoltageOverride = true;
+        turnVoltageCommand = MathUtil.clamp(volts, -12.0, 12.0);
     }
 
     @Override
     public void setHoodAngle(double angle) {
         turretHoodAngle = angle;
     };
+
+    @Override
+    public double getHoodAngle() {
+        return turretHoodAngle;
+    }
 
     @Override
     public void setShooterSpeed(double speed) {
