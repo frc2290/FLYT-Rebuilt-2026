@@ -84,8 +84,8 @@ public class TurretIOSpark implements TurretIO {
         // Setup RoboRio Absolute encoders
         // Initializes duty cycle encoders on DIO pins 0 and 1.
         // get() returns position in rotations [0, 1].
-        turnEncoder1 = new DutyCycleEncoder(0, 1, 0.7585857439646436);
-        turnEncoder2 = new DutyCycleEncoder(1, 1, 0.3013946075348652);
+        turnEncoder1 = new DutyCycleEncoder(0, 1, 0.8392072209801805);
+        turnEncoder2 = new DutyCycleEncoder(1, 1, 0.7671258191781455);
 
         // Gets if the encoders are connected, IMPLEMENT LATER
         turnEncoder1.isConnected();
@@ -157,8 +157,8 @@ public class TurretIOSpark implements TurretIO {
         var flywheelBaseConfig = new SparkFlexConfig();
         flywheelBaseConfig
             .idleMode(IdleMode.kCoast)
-            .smartCurrentLimit(flywheelMotorCurrent)
-            .voltageCompensation(12.0);
+            .smartCurrentLimit(flywheelMotorCurrent);
+            //.voltageCompensation(12.0);
 
         // Flywheel leader config
         var flywheelLeaderConfig = new SparkFlexConfig();
@@ -176,6 +176,7 @@ public class TurretIOSpark implements TurretIO {
             .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
             .pid(flywheelKp, flywheelKi, flywheelKd);
         flywheelLeaderConfig.closedLoop.feedForward.kV(flywheelKv);
+        flywheelLeaderConfig.closedLoop.feedForward.kS(flywheelKs);
 
         // Flywheel follower config
         var flywheelFollowerConfig = new SparkFlexConfig();
@@ -317,7 +318,7 @@ public class TurretIOSpark implements TurretIO {
     @Override
     public void setShotAngle(double angle) {
         double targetHoodAngle = hoodShotAngleOffset - angle;
-        setHoodAngle(targetHoodAngle);
+        setHoodAngle(MathUtil.clamp(targetHoodAngle, 15, 78.5));
     }
 
     @Override

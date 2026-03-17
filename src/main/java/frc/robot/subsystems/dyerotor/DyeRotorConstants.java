@@ -50,6 +50,6 @@ public class DyeRotorConstants {
     // --- Subsystem Behaviors & Targets ---
     // Throughput target used by runDyeRotor(true)
     public static final double defaultTargetBps = 12;
-    public static final double overfeedRatio = 1.18; //Rate balls are fed realitive to the rotor speed. Based on Wildstang Calcs
+    public static final double overfeedRatio = 1.3; //Rate balls are fed realitive to the rotor speed. Based on Wildstang Calcs
     public static final double minRotorRpsForOverfeed = 10.0 / 60.0;
 }

@@ -126,7 +126,7 @@ public class Robot extends LoggedRobot {
                                new ModuleIOSpark(2),
                                new ModuleIOSpark(3));
                 m_poseEstimator = new PoseEstimatorSubsystem(m_robotDrive);
-                m_intake = new Intake(new IntakeIOSpark(IntakeSide.LEFT, false, 0.5), new IntakeIOSpark(IntakeSide.RIGHT, true, 0.25));
+                m_intake = new Intake(new IntakeIOSpark(IntakeSide.LEFT, false, 0.45), new IntakeIOSpark(IntakeSide.RIGHT, true, 0.5));
                 // m_dyeRotor = new DyeRotor(new DyeRotorIOSpark());
                 m_dyeRotor = new DyeRotor(new DyeRotorIOSpark());
                 m_turret = new Turret(new TurretIOSpark(),
