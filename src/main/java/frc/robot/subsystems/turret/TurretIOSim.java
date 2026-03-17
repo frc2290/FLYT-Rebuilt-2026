@@ -73,15 +73,15 @@ public class TurretIOSim implements TurretIO {
         turretShootSim.update(0.02);
 
         turretAngle = turretTurnSim.getAngularPosition().in(Units.Degrees);
-        inputs.turretAngle = turretAngle;
-        inputs.turretSpeed = turretSpeed;
-        inputs.turretHoodAngle = turretHoodAngle;
-        inputs.turretAngleSetpoint = turretAngleSetpoint;
+        inputs.turretConnected = true;
         inputs.flywheelPositionMeters =
                 (turretShootSim.getAngularPositionRad() / (2.0 * Math.PI)) * flywheelEncoderPositionFactor;
         inputs.flywheelVelocity = turretShootSim.getAngularVelocityRPM() * flywheelEncoderVelocityFactor;
         inputs.flywheelAppliedVolts = shooterVoltageCommand;
         inputs.flywheelCurrentAmps = Math.abs(turretShootSim.getCurrentDrawAmps());
+        inputs.hoodConnected = true;
+        inputs.hoodPositionDeg = turretHoodAngle;
+        inputs.flywheelConnected = true;
     }
 
     @Override
@@ -107,8 +107,25 @@ public class TurretIOSim implements TurretIO {
     }
 
     @Override
-    public boolean flywheelAtSpeed() {
+    public boolean turretAtSetpoint() {
+        double errorDeg = MathUtil.inputModulus(turretAngleSetpoint - turretAngle, -180.0, 180.0);
+        return Math.abs(errorDeg) <= turretAllowedClosedLoopErrorDeg;
+    }
+
+    @Override
+    public boolean hoodAtSetpoint() {
         return true;
+    }
+
+    @Override
+    public boolean flywheelAtSetpoint() {
+        double measuredVelocity = turretShootSim.getAngularVelocityRPM() * flywheelEncoderVelocityFactor;
+        return Math.abs(measuredVelocity - turretSpeed) <= flywheelAllowedClosedLoopErrorMps;
+    }
+
+    @Override
+    public boolean flywheelAtSpeed() {
+        return flywheelAtSetpoint();
     }
 
     public void simIntake() {

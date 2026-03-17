@@ -15,6 +15,7 @@ import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -39,6 +40,9 @@ public class Turret extends SubsystemBase {
     private final TurretIO io; // input outs puts
     private final TurretIOInputsAutoLogged inputs = new TurretIOInputsAutoLogged();
     private final SysIdRoutine sysId;
+    private final Debouncer azimuthAtPositionDebouncer = new Debouncer(0.05, Debouncer.DebounceType.kRising);
+    private final Debouncer hoodAtPositionDebouncer = new Debouncer(0.05, Debouncer.DebounceType.kRising);
+    private final Debouncer flywheelAtSpeedDebouncer = new Debouncer(0.1, Debouncer.DebounceType.kRising);
     private Supplier<Pose2d> pose;
     private Supplier<ChassisSpeeds> speeds;
     private boolean stopShoot = false;
@@ -51,6 +55,12 @@ public class Turret extends SubsystemBase {
     private double sotfYaw = 0.0;
     private boolean turretPointedAtTarget = false;
     private double previousLoopTimestampSec = Timer.getFPGATimestamp();
+    private double activeShooterVelocitySetpointMps = 0.0;
+    private double activeShotAngleSetpointDeg = 0.0;
+    private double activeAzimuthSetpointDeg = 0.0;
+    private boolean azimuthAtPositionState = false;
+    private boolean hoodAtPositionState = false;
+    private boolean flywheelAtSpeedState = false;
 
     public Turret(TurretIO turretIO, Supplier<Pose2d> pose, Supplier<ChassisSpeeds> speeds) {
         this.io = turretIO;
@@ -97,32 +107,35 @@ public class Turret extends SubsystemBase {
                 currentTurretAngle,
                 turretOmegaRadPerSecond,
                 dt);
-        if (result.isValid) {
-            sotfYaw = result.yaw;
-        }
+        sotfYaw = result.yaw;
 
         Rotation2d turretPointedAt = currentTurretAngle.rotateBy(currentPose.getRotation());
         Rotation2d targetYaw = Rotation2d.fromDegrees(result.yaw);
-        Rotation2d error = turretPointedAt.minus(targetYaw);
-        turretPointedAtTarget = result.isValid
-                && Math.abs(error.getDegrees()) < TurretConstants.SotfConstants.pointAtTargetToleranceDeg;
-
-        if (sotfEnabled && result.isValid) {
-            Rotation2d turretTargetRelative = targetYaw.minus(currentPose.getRotation());
-            io.setTurnPosition(turretTargetRelative);
-        }
-
-        double activeShooterVelocitySetpointMps = result.isValid ? result.vel * shooterVelocityScale : 0.0;
-        double activeShotAngleSetpointDeg = result.isValid ? result.pitch : 0.0;
+        turretPointedAtTarget = MathUtil.isNear(
+                result.yaw,
+                turretPointedAt.getDegrees(),
+                TurretConstants.SotfConstants.pointAtTargetToleranceDeg,
+                -180.0,
+                180.0);
+        double turretYawErrorDeg = MathUtil.inputModulus(result.yaw - turretPointedAt.getDegrees(), -180.0, 180.0);
 
         if (sotfEnabled) {
-            boolean canShoot = !stopShoot && result.isValid;
+            Rotation2d turretTargetRelative = targetYaw.minus(currentPose.getRotation());
+            io.setTurnPosition(turretTargetRelative);
+            activeAzimuthSetpointDeg = turretTargetRelative.getDegrees();
+        }
+
+        activeShooterVelocitySetpointMps = result.vel * shooterVelocityScale;
+        activeShotAngleSetpointDeg = result.pitch;
+
+        if (sotfEnabled) {
+            boolean canShoot = !stopShoot;
             switch (shooterControlMode) {
                 case VELOCITY:
-                    io.setShooterSpeed(canShoot ? activeShooterVelocitySetpointMps : activeShooterVelocitySetpointMps);
+                    io.setShooterSpeed(activeShooterVelocitySetpointMps);
                     break;
                 case VOLTAGE:
-                    io.setShooterVoltage(canShoot ? shooterCommandedVoltage : 0.0);
+                    io.setShooterVoltage(shooterCommandedVoltage);
                     break;
             }
             if (canShoot) {
@@ -131,6 +144,9 @@ public class Turret extends SubsystemBase {
                 io.setHoodAngle(0);
             }
         }
+        azimuthAtPositionState = azimuthAtPositionDebouncer.calculate(inputs.turretConnected && io.turretAtSetpoint());
+        hoodAtPositionState = hoodAtPositionDebouncer.calculate(inputs.hoodConnected && io.hoodAtSetpoint());
+        flywheelAtSpeedState = flywheelAtSpeedDebouncer.calculate(inputs.flywheelConnected && io.flywheelAtSetpoint());
         Logger.recordOutput("Turret/SOTFYaw", result.yaw);
         Logger.recordOutput("Turret/SOTFVel", result.vel);
         Logger.recordOutput("Turret/SOTFPitch", result.pitch);
@@ -144,10 +160,15 @@ public class Turret extends SubsystemBase {
         Logger.recordOutput("Turret/SOTFLoopDtSec", dt);
         Logger.recordOutput("Turret/SOTFEnabled", sotfEnabled);
         Logger.recordOutput("Turret/PointedAtHub", turretPointedAtTarget);
-        Logger.recordOutput("Turret/turretPointedAt", error.getDegrees());
+        Logger.recordOutput("Turret/turretPointedAt", turretYawErrorDeg);
         Logger.recordOutput("Turret/ShooterControlMode", shooterControlMode.toString());
+        Logger.recordOutput("Turret/AzimuthSetpointDeg", activeAzimuthSetpointDeg);
         Logger.recordOutput("Turret/FlywheelVelocitySetpointMps", activeShooterVelocitySetpointMps);
         Logger.recordOutput("Turret/ShotAngleSetpointDeg", activeShotAngleSetpointDeg);
+        Logger.recordOutput("Turret/AzimuthAtPosition", azimuthAtPositionState);
+        Logger.recordOutput("Turret/HoodAtPosition", hoodAtPositionState);
+        Logger.recordOutput("Turret/FlywheelAtSpeed", flywheelAtSpeedState);
+        Logger.recordOutput("Turret/AtShootingSetpoints", isAtShootingSetpoints());
     }
 
     /**
@@ -176,6 +197,7 @@ public class Turret extends SubsystemBase {
      */
     public void setTurnPosition(Rotation2d rotation) {
         io.setTurnPosition(rotation);
+        activeAzimuthSetpointDeg = rotation.getDegrees();
     }
 
     /**
@@ -186,6 +208,7 @@ public class Turret extends SubsystemBase {
     public void setShooterSpeed(double speed) {
         setShooterControlMode(ControlMode.VELOCITY);
         io.setShooterSpeed(speed);
+        activeShooterVelocitySetpointMps = speed;
     }
 
     /** Applies fixed shooter/hood setpoints directly. */
@@ -196,6 +219,8 @@ public class Turret extends SubsystemBase {
         }
         io.setShooterSpeed(flywheelVelocityMps);
         io.setShotAngle(hoodAngleDeg);
+        activeShooterVelocitySetpointMps = flywheelVelocityMps;
+        activeShotAngleSetpointDeg = hoodAngleDeg;
     }
 
     /** Command factory to run a fixed manual shot. */
@@ -218,8 +243,7 @@ public class Turret extends SubsystemBase {
         if (!inputs.hoodConnected) {
             return true;
         }
-        double measuredShotAngleDeg = TurretConstants.hoodShotAngleOffset - inputs.hoodPositionDeg;
-        return Math.abs(measuredShotAngleDeg - hoodAngleDeg) <= TurretConstants.hoodShotAngleToleranceDeg;
+        return isHoodAtPosition();
     }
 
     /** Backwards-compatible alias for manual-shot checks. */
@@ -229,7 +253,7 @@ public class Turret extends SubsystemBase {
 
     /** True when both flywheel and hood have reached manual-shot readiness. */
     public boolean manualShotReady(double hoodAngleDeg) {
-        return flywheelAtSpeed() && hoodAtShotSetpoint(hoodAngleDeg);
+        return isFlywheelAtSpeed() && hoodAtShotSetpoint(hoodAngleDeg);
     }
 
     /** Current measured flywheel linear velocity (m/s). */
@@ -322,7 +346,7 @@ public class Turret extends SubsystemBase {
     }
 
     public boolean flywheelAtSpeed() {
-        return io.flywheelAtSpeed();
+        return isFlywheelAtSpeed();
     }
 
     public double getSotfYaw() {
@@ -335,5 +359,21 @@ public class Turret extends SubsystemBase {
 
     public boolean isTurretPointedAtTarget() {
         return turretPointedAtTarget;
+    }
+
+    public boolean isAzimuthAtPosition() {
+        return azimuthAtPositionState;
+    }
+
+    public boolean isHoodAtPosition() {
+        return hoodAtPositionState;
+    }
+
+    public boolean isFlywheelAtSpeed() {
+        return flywheelAtSpeedState;
+    }
+
+    public boolean isAtShootingSetpoints() {
+        return isAzimuthAtPosition() && isHoodAtPosition() && isFlywheelAtSpeed();
     }
 }

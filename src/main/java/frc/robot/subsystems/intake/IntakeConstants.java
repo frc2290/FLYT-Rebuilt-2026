@@ -49,6 +49,7 @@ public class IntakeConstants {
     public static final double rollerKp = 0.5;
     public static final double rollerKi = 0.0;
     public static final double rollerKd = 0.0;
+    public static final double rollerAllowedClosedLoopErrorMetersPerSec = 0.1;
     public static final DCMotor deployGearbox = DCMotor.getNeoVortex(1);
     public static final double deployFreeSpeedRPM =
             Units.radiansPerSecondToRotationsPerMinute(deployGearbox.freeSpeedRadPerSec);
@@ -67,8 +68,13 @@ public class IntakeConstants {
     public static final double inPosition = 5;
     public static final double outPosition = 86;
     public static final double positionBuffer = 5;
+    public static final double deployAllowedClosedLoopErrorDeg = positionBuffer;
     // Intake roller surface speed command in m/s.
     public static final double rollerSpeed = 3;
+    // Agitation constants
+    public static final double agitateFrequencyHz = 0.5; // About 1 full bounce every 1.88 seconds
+    public static final double agitateOutPosition = outPosition;
+    public static final double agitateInPosition = outPosition * 0.15;
     public static final double leftZeroOffsetAdj = 18.0;
     public static final double rightZeroOffsetAdj = 27.0;
 }

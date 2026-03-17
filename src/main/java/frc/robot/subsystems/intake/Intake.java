@@ -6,8 +6,10 @@ import static edu.wpi.first.units.Units.Volts;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
 
+import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -30,10 +32,21 @@ public class Intake extends SubsystemBase {
     private final IntakeIOInputsAutoLogged inputsLeft = new IntakeIOInputsAutoLogged();
     private final IntakeIO ioRight;
     private final IntakeIOInputsAutoLogged inputsRight = new IntakeIOInputsAutoLogged();
+    private final Debouncer deployLeftAtPositionDebouncer = new Debouncer(0.05, Debouncer.DebounceType.kRising);
+    private final Debouncer deployRightAtPositionDebouncer = new Debouncer(0.05, Debouncer.DebounceType.kRising);
+    private final Debouncer rollerLeftAtSpeedDebouncer = new Debouncer(0.05, Debouncer.DebounceType.kRising);
+    private final Debouncer rollerRightAtSpeedDebouncer = new Debouncer(0.05, Debouncer.DebounceType.kRising);
     private final SysIdRoutine leftSysId;
     private final SysIdRoutine rightSysId;
 
-    private double wowowowowoTicks = 0;
+    private double leftDeployTarget = inPosition;
+    private double rightDeployTarget = inPosition;
+    private double leftCommandedRollerSpeed = 0.0;
+    private double rightCommandedRollerSpeed = 0.0;
+    private boolean leftDeployAtPositionState = false;
+    private boolean rightDeployAtPositionState = false;
+    private boolean leftRollerAtSpeedState = false;
+    private boolean rightRollerAtSpeedState = false;
     private ControlMode leftControlMode = ControlMode.VELOCITY;
     private ControlMode rightControlMode = ControlMode.VELOCITY;
     private double leftCommandedVoltage = 0.0;
@@ -79,6 +92,12 @@ public class Intake extends SubsystemBase {
     public void periodic() {
         ioLeft.updateInputs(inputsLeft);
         ioRight.updateInputs(inputsRight);
+        leftDeployAtPositionState = deployLeftAtPositionDebouncer.calculate(ioLeft.deployAtSetpoint());
+        rightDeployAtPositionState = deployRightAtPositionDebouncer.calculate(ioRight.deployAtSetpoint());
+        leftRollerAtSpeedState = rollerLeftAtSpeedDebouncer.calculate(
+                leftControlMode == ControlMode.VELOCITY && ioLeft.rollerAtSetpoint());
+        rightRollerAtSpeedState = rollerRightAtSpeedDebouncer.calculate(
+                rightControlMode == ControlMode.VELOCITY && ioRight.rollerAtSetpoint());
         Logger.processInputs("Intake/Left", inputsLeft);
         Logger.processInputs("Intake/Right", inputsRight);
         Logger.recordOutput("Intake/LeftIn", isIn(IntakeSide.LEFT));
@@ -87,6 +106,12 @@ public class Intake extends SubsystemBase {
         Logger.recordOutput("Intake/RightOut", isOut(IntakeSide.RIGHT));
         Logger.recordOutput("Intake/LeftControlMode", leftControlMode.toString());
         Logger.recordOutput("Intake/RightControlMode", rightControlMode.toString());
+        Logger.recordOutput("Intake/LeftDeployTarget", getDeployTarget(IntakeSide.LEFT));
+        Logger.recordOutput("Intake/RightDeployTarget", getDeployTarget(IntakeSide.RIGHT));
+        Logger.recordOutput("Intake/LeftDeployAtPosition", leftDeployAtPositionState);
+        Logger.recordOutput("Intake/RightDeployAtPosition", rightDeployAtPositionState);
+        Logger.recordOutput("Intake/LeftRollerAtSpeed", leftRollerAtSpeedState);
+        Logger.recordOutput("Intake/RightRollerAtSpeed", rightRollerAtSpeedState);
 
         Logger.recordOutput("Intake/Components", new Pose3d[] {
                 new Pose3d(0, getPosition(IntakeSide.LEFT) / outPosition * feetToMeters(1), 0, new Rotation3d()),
@@ -126,11 +151,22 @@ public class Intake extends SubsystemBase {
     }
 
     public void deploy(IntakeSide side, boolean out) {
-        getIo(side).setDeployPosition(out ? outPosition : inPosition);
+        double target = out ? outPosition : inPosition;
+        if (side == IntakeSide.LEFT) {
+            leftDeployTarget = target;
+        } else {
+            rightDeployTarget = target;
+        }
+        getIo(side).setDeployPosition(target, true);
     }
 
     public void driveRoller(IntakeSide side, double speed) {
         setControlMode(side, ControlMode.VELOCITY);
+        if (side == IntakeSide.LEFT) {
+            leftCommandedRollerSpeed = speed;
+        } else {
+            rightCommandedRollerSpeed = speed;
+        }
         getIo(side).setIntakeSpeed(speed);
     }
 
@@ -186,20 +222,22 @@ public class Intake extends SubsystemBase {
         return Commands.run(this::runIntake).finallyDo(this::stopIntake);
     }
 
-    public Command wowowowowoIntake() {
+    public Command agitateIntake() {
+        Timer agitateTimer = new Timer();
         return startRun(() -> {
-            wowowowowoTicks = 0;
+            agitateTimer.restart();
         }, () -> {
-            wowowowowoTicks++;
-            double angle = outPosition - (Math.cos(wowowowowoTicks / 15.0) / -2.0 + 0.5) * (outPosition * 0.85);
+            double wave = 0.5 + 0.5 * Math.cos(2 * Math.PI * agitateFrequencyHz * agitateTimer.get());
+            double angle = agitateInPosition + (wave * (agitateOutPosition - agitateInPosition));
             outSide.ifPresent(side -> {
                 driveRoller(side, rollerSpeed);
-                getIo(side).setDeployPosition(angle);
+                getIo(side).setDeployPosition(angle, false);
             });
         }).finallyDo(() -> {
+            agitateTimer.stop();
             outSide.ifPresent(side -> {
                 driveRoller(side, 0);
-                getIo(side).setDeployPosition(outPosition);
+                getIo(side).setDeployPosition(outPosition, true);
             });
         });
     }
@@ -215,12 +253,16 @@ public class Intake extends SubsystemBase {
             if (leftControlMode == ControlMode.VELOCITY) {
                 leftCommandedVoltage = 0.0;
                 ioLeft.setIntakeVoltage(0.0);
+            } else {
+                leftCommandedRollerSpeed = 0.0;
             }
         } else {
             rightControlMode = resolved;
             if (rightControlMode == ControlMode.VELOCITY) {
                 rightCommandedVoltage = 0.0;
                 ioRight.setIntakeVoltage(0.0);
+            } else {
+                rightCommandedRollerSpeed = 0.0;
             }
         }
     }
@@ -271,5 +313,23 @@ public class Intake extends SubsystemBase {
             rightCommandedVoltage = 0.0;
             stopIntake();
         });
+    }
+
+    public boolean isDeployAtPosition(IntakeSide side) {
+        if (side == IntakeSide.LEFT) {
+            return leftDeployAtPositionState;
+        }
+        return rightDeployAtPositionState;
+    }
+
+    public boolean isRollerAtSpeed(IntakeSide side) {
+        if (side == IntakeSide.LEFT) {
+            return leftRollerAtSpeedState;
+        }
+        return rightRollerAtSpeedState;
+    }
+
+    private double getDeployTarget(IntakeSide side) {
+        return side == IntakeSide.LEFT ? leftDeployTarget : rightDeployTarget;
     }
 }

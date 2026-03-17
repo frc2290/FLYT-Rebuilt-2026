@@ -52,4 +52,11 @@ public class DyeRotorConstants {
     public static final double defaultTargetBps = 12;
     public static final double overfeedRatio = 1.18; //Rate balls are fed realitive to the rotor speed. Based on Wildstang Calcs
     public static final double minRotorRpsForOverfeed = 10.0 / 60.0;
+    public static final double jamDetectSeconds = 0.25;
+    public static final double backdriveSeconds = 0.25;
+    public static final double atSpeedRatio = 0.50;
+
+    // Hardcoded readiness tolerances (derived from a 50% atSpeedRatio at 12 BPS)
+    public static final double rotorReadyToleranceRps = 0.75;
+    public static final double feederReadyToleranceRps = 15.63;
 }

@@ -7,11 +7,6 @@ import edu.wpi.first.math.geometry.Rotation2d;
 public interface TurretIO {
     @AutoLog
     public static class TurretIOInputs {
-        public double turretAngle = 0;
-        public double turretSpeed = 0;
-        public double turretHoodAngle = 0;
-        public double turretAngleSetpoint = 0;
-
         public boolean turretConnected = false;
         public double turretPosition = 0.0;
         public double turretVelocity = 0.0;
@@ -42,5 +37,8 @@ public interface TurretIO {
     public default void setShooterSpeed(double speed) {};
     public default void setShooterVoltage(double volts) {};
     public default void setShotAngle(double angle) {};
-    public default boolean flywheelAtSpeed() { return false; };
+    public default boolean turretAtSetpoint() { return false; };
+    public default boolean hoodAtSetpoint() { return false; };
+    public default boolean flywheelAtSetpoint() { return false; };
+    public default boolean flywheelAtSpeed() { return flywheelAtSetpoint(); };
 }

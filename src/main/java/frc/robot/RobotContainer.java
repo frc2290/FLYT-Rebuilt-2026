@@ -171,7 +171,7 @@ public class RobotContainer {
                                     m_intake.runIntakeCommand(),
                                     m_driveStateMachine.tempChangeState(DriveState.SNAKE)));
 
-        m_driverController.axisGreaterThan(2, 0.5).whileTrue(m_intake.wowowowowoIntake());
+        m_driverController.axisGreaterThan(2, 0.5).whileTrue(m_intake.agitateIntake());
 
         m_driverController.povLeft().onTrue(m_driveStateMachine.changeState(DriveState.MANUAL));
         m_driverController.povUp().onTrue(m_driveStateMachine.changeState(DriveState.SHOOT_LOCK));
@@ -185,7 +185,7 @@ public class RobotContainer {
         // In alliance zone it will stop shooting and in neutral it will start shuttling fuel
         m_operatorController.a().onTrue(m_stateMachine.setShooterOverrideCommand(true)).onFalse(m_stateMachine.setShooterOverrideCommand(false));
 
-        m_operatorController.b().whileTrue(m_intake.wowowowowoIntake());
+        m_operatorController.b().whileTrue(m_intake.agitateIntake());
 
         // END OPERATOR BUTTONS
     }
