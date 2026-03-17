@@ -36,13 +36,11 @@ public class DyeRotorIOSim implements DyeRotorIO {
         rotorSim.update(0.02);
         feederSim.update(0.02);
 
-        inputs.rotorSpeed = rotorSpeed;
         inputs.rotorEncoderPosition = (rotorSim.getAngularPositionRad() / (2.0 * Math.PI)) * rotorEncoderPositionFactor;
         inputs.rotorAppliedVolts = rotorCommandedVolts;
         inputs.rotorEncoderRPM = rotorSim.getAngularVelocityRPM() / 60.0;
         inputs.rotorCurrentAmps = Math.abs(rotorSim.getCurrentDrawAmps());
 
-        inputs.feederSpeed = feederSpeed;
         inputs.feederEncoderPosition =
                 (feederSim.getAngularPositionRad() / (2.0 * Math.PI)) * feederEncoderPositionFactor;
         inputs.feederAppliedVolts = feederCommandedVolts;
@@ -72,5 +70,17 @@ public class DyeRotorIOSim implements DyeRotorIO {
     public void setFeederVoltage(double volts) {
         feederSpeed = 0.0;
         feederCommandedVolts = MathUtil.clamp(volts, -12.0, 12.0);
+    }
+
+    @Override
+    public boolean rotorAtSetpoint() {
+        double measuredRps = rotorSim.getAngularVelocityRPM() / 60.0;
+        return Math.abs(measuredRps - rotorSpeed) <= rotorReadyToleranceRps;
+    }
+
+    @Override
+    public boolean feederAtSetpoint() {
+        double measuredRps = feederSim.getAngularVelocityRPM() / 60.0;
+        return Math.abs(measuredRps - feederSpeed) <= feederReadyToleranceRps;
     }
 }
