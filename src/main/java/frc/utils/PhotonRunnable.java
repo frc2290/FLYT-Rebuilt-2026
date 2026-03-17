@@ -58,7 +58,7 @@ public class PhotonRunnable implements Runnable {
         this.photonCamera = new PhotonCamera(cameraName);
         // Keep layout origin fixed to blue; alliance flipping is handled in PoseEstimatorSubsystem.
         try {
-            layout = new AprilTagFieldLayout(Filesystem.getDeployDirectory().getAbsolutePath() + "/field_calibration.json");r
+            layout = new AprilTagFieldLayout(Filesystem.getDeployDirectory().getAbsolutePath() + "/field_calibration.json");
         } catch (IOException e) {
             e.printStackTrace();
             layout = FieldConstants.AprilTagLayoutType.OFFICIAL.getLayout();

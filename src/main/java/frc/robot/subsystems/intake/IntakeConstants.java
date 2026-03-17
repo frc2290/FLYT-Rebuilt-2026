@@ -26,7 +26,7 @@ public class IntakeConstants {
     public static final int deployMotorCurrentLimit = 40;
 
     // --- Physical Dimensions & Mechanics ---
-    public static final double driveMotorReduction = (11.0 / 29.0) * (18.0 / 25.0) * (30. / 20.0);
+    public static final double driveMotorReduction = (11.0 / 29.0) * (18.0 / 25.0) * (30.0 / 20.0) / 5;
     public static final double deployMotorToEncoderReduction = 84.0 / 7.0;
     public static final double deployEncoderToLinkageReduction = 48.0 / 16.0;
     public static final double deployMotorReduction =
@@ -69,6 +69,6 @@ public class IntakeConstants {
     public static final double positionBuffer = 5;
     // Intake roller surface speed command in m/s.
     public static final double rollerSpeed = 3;
-    public static final double leftZeroOffsetAdj = 18.0;
-    public static final double rightZeroOffsetAdj = 27.0;
+    public static final double leftZeroOffsetAdj = 17.2;
+    public static final double rightZeroOffsetAdj = 16.3;
 }

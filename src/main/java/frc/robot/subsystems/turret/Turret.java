@@ -29,7 +29,7 @@ import frc.utils.FieldConstants.Hub;
 import frc.utils.ShootOnTheFly.SOTFResult;
 
 public class Turret extends SubsystemBase {
-    private static final double shooterVelocityScale = 1.35;
+    private static final double shooterVelocityScale = 1.3;
 
     public enum ControlMode {
         VELOCITY,
@@ -122,7 +122,7 @@ public class Turret extends SubsystemBase {
                     io.setShooterSpeed(canShoot ? activeShooterVelocitySetpointMps : activeShooterVelocitySetpointMps);
                     break;
                 case VOLTAGE:
-                    io.setShooterVoltage(canShoot ? shooterCommandedVoltage : 0.0);
+                    io.setShooterVoltage(shooterCommandedVoltage);
                     break;
             }
             if (canShoot) {
@@ -148,6 +148,7 @@ public class Turret extends SubsystemBase {
         Logger.recordOutput("Turret/ShooterControlMode", shooterControlMode.toString());
         Logger.recordOutput("Turret/FlywheelVelocitySetpointMps", activeShooterVelocitySetpointMps);
         Logger.recordOutput("Turret/ShotAngleSetpointDeg", activeShotAngleSetpointDeg);
+        Logger.recordOutput("Turret/shooterCommandedVoltage", shooterCommandedVoltage);
     }
 
     /**
