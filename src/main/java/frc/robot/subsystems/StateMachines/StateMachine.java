@@ -44,6 +44,7 @@ public class StateMachine extends SubsystemBase {
 
     private boolean hubActive = true;
     private Timer hubTimer = new Timer();
+    private static final double kHubActiveWarningSeconds = 5.0;
 
     private boolean isOnLeftSide = false; // left = high x, right = low x
     private FieldZone fieldZone = FieldZone.ALLIANCE;
@@ -123,6 +124,90 @@ public class StateMachine extends SubsystemBase {
         // if we're red, hubActive = !blueActive. otherwise (if we're blue,
         // or if there's no driverstation), hubActive = blueActive.
         hubActive = blueActive ^ DriverStation.getAlliance().equals(Optional.of(Alliance.Red));
+    }
+
+    private boolean hubActiveAtTime(double timeSeconds, String gameData, Optional<Alliance> alliance) {
+        if (gameData == null || gameData.isEmpty()) {
+            return true;
+        }
+
+        if (timeSeconds < 10.0 || timeSeconds >= 110.0) {
+            return true;
+        }
+
+        boolean evenShift;
+        if ((timeSeconds >= 10.0 && timeSeconds < 35.0) || (timeSeconds >= 60.0 && timeSeconds < 85.0)) {
+            evenShift = false;
+        } else if ((timeSeconds >= 35.0 && timeSeconds < 60.0) || (timeSeconds >= 85.0 && timeSeconds < 110.0)) {
+            evenShift = true;
+        } else {
+            return true;
+        }
+
+        boolean blueActive;
+        switch (gameData.charAt(0)) {
+            case 'B':
+                blueActive = evenShift;
+                break;
+            case 'R':
+                blueActive = !evenShift;
+                break;
+            default:
+                return true;
+        }
+
+        boolean isRedAlliance = alliance.equals(Optional.of(Alliance.Red));
+        return blueActive ^ isRedAlliance;
+    }
+
+    /**
+     * Returns how many seconds until the hub becomes active for our alliance. Returns 0 if the hub is
+     * already active. Returns +infinity if the game-specific message is missing.
+     */
+    public double getHubSecondsUntilActive() {
+        String gameData = DriverStation.getGameSpecificMessage();
+        if (gameData == null || gameData.isEmpty()) {
+            return Double.POSITIVE_INFINITY;
+        }
+
+        double now = hubTimer.get();
+        Optional<Alliance> alliance = DriverStation.getAlliance();
+        if (hubActiveAtTime(now, gameData, alliance)) {
+            return 0.0;
+        }
+
+        double[] boundaries = {10.0, 35.0, 60.0, 85.0, 110.0};
+        double eps = 1e-3;
+        for (double boundary : boundaries) {
+            if (boundary <= now) {
+                continue;
+            }
+            if (hubActiveAtTime(boundary + eps, gameData, alliance)) {
+                return boundary - now;
+            }
+        }
+
+        if (now < 110.0) {
+            return 110.0 - now;
+        }
+        return 0.0;
+    }
+
+    /** True when the hub is currently inactive, but will become active within 5 seconds. */
+    public boolean isHubAboutToBecomeActive() {
+        return isHubAboutToBecomeActive(kHubActiveWarningSeconds);
+    }
+
+    /** True when the hub is currently inactive, but will become active within {@code warningSeconds}. */
+    public boolean isHubAboutToBecomeActive(double warningSeconds) {
+        if (warningSeconds <= 0.0) {
+            return false;
+        }
+        if (hubActive) {
+            return false;
+        }
+        double secondsUntilActive = getHubSecondsUntilActive();
+        return secondsUntilActive > 0.0 && secondsUntilActive <= warningSeconds;
     }
 
     private void updateZones() {
@@ -237,6 +322,10 @@ public class StateMachine extends SubsystemBase {
 
     public Command setShooterOverrideCommand(boolean shootOverride) {
         return runOnce(() -> setShootOverride(shootOverride));
+    }
+
+    public boolean isHubActive() {
+        return hubActive;
     }
 
     /**
