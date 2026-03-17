@@ -42,9 +42,9 @@ public class TurretConstants {
     // --- Encoder & Conversion Factors ---
     public static final boolean hoodEncoderInverted = false;
     public static final double encoderOffset = 0;
-    public static final double hoodEncoderZeroOffset = 0.9;
-    public static final double hoodAngleOffset = 5.28;
-    public static final double hoodShotAngleOffset = 74.8;
+    public static final double hoodEncoderZeroOffset = 0.8;
+    public static final double hoodAngleOffset = 10.0;
+    public static final double hoodShotAngleOffset = 78.5;
     public static final double hoodShotAngleToleranceDeg = 2.0;
     public static final double turretAllowedClosedLoopErrorDeg = 10.0;
     public static final double hoodAllowedClosedLoopErrorDeg = hoodShotAngleToleranceDeg;
@@ -82,7 +82,7 @@ public class TurretConstants {
             Units.radiansPerSecondToRotationsPerMinute(hoodGearbox.freeSpeedRadPerSec);
     public static final double hoodKv = 12.0
             / ((hoodFreeSpeedRPM / hoodMotorToEncoderReduction) * hoodEncoderVelocityFactor);
-    public static final double hoodKp = 0.1;
+    public static final double hoodKp = 0.01;
     public static final double hoodKi = 0.0;
     public static final double hoodKd = 0.0;
 
@@ -90,10 +90,11 @@ public class TurretConstants {
     public static final DCMotor flywheelGearbox = DCMotor.getNeoVortex(1);
     public static final double flywheelFreeSpeedRPM =
             Units.radiansPerSecondToRotationsPerMinute(flywheelGearbox.freeSpeedRadPerSec);
-    public static final double flywheelKv =
-            12 / (flywheelFreeSpeedRPM * flywheelEncoderVelocityFactor);
-    public static final double flywheelKp = 1.0;
-    public static final double flywheelKi = 0.0;
+    public static final double flywheelKv = 0.4567;
+    public static final double flywheelKs = 0.10545;
+            //12 / (flywheelFreeSpeedRPM * flywheelEncoderVelocityFactor);
+    public static final double flywheelKp = 0.2;
+    public static final double flywheelKi = 0.0015;
     public static final double flywheelKd = 0.0;
     public static final double flywheelReadyRatio = 0.8;
 

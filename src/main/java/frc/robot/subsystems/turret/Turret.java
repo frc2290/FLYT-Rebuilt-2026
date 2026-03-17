@@ -30,7 +30,7 @@ import frc.utils.FieldConstants.Hub;
 import frc.utils.ShootOnTheFly.SOTFResult;
 
 public class Turret extends SubsystemBase {
-    private static final double shooterVelocityScale = 1.35;
+    private static final double shooterVelocityScale = 1.3;
 
     public enum ControlMode {
         VELOCITY,
@@ -54,6 +54,7 @@ public class Turret extends SubsystemBase {
 
     private double sotfYaw = 0.0;
     private boolean turretPointedAtTarget = false;
+    private double currentTof = 0.0;
     private double previousLoopTimestampSec = Timer.getFPGATimestamp();
     private double activeShooterVelocitySetpointMps = 0.0;
     private double activeShotAngleSetpointDeg = 0.0;
@@ -169,6 +170,7 @@ public class Turret extends SubsystemBase {
         Logger.recordOutput("Turret/HoodAtPosition", hoodAtPositionState);
         Logger.recordOutput("Turret/FlywheelAtSpeed", flywheelAtSpeedState);
         Logger.recordOutput("Turret/AtShootingSetpoints", isAtShootingSetpoints());
+        Logger.recordOutput("Turret/shooterCommandedVoltage", shooterCommandedVoltage);
     }
 
     /**
@@ -188,6 +190,10 @@ public class Turret extends SubsystemBase {
     public void setHoodAngle(double angle) {
         angle = MathUtil.clamp(angle, 0, 30);
         io.setHoodAngle(angle);
+    }
+
+    public double getHoodAngle() {
+        return io.getHoodAngle();
     }
 
     /**
@@ -236,6 +242,10 @@ public class Turret extends SubsystemBase {
 
     public boolean isSotfEnabled() {
         return sotfEnabled;
+    }
+
+    public double getTof() {
+        return currentTof;
     }
 
     /** True when the measured hood angle is within tolerance of the requested shot angle. */

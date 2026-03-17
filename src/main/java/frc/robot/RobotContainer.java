@@ -6,6 +6,7 @@ package frc.robot;
 
 import frc.robot.subsystems.drive.Drive;
 import frc.utils.PoseEstimatorSubsystem;
+import frc.utils.LEDEffects.LEDEffect;
 import frc.robot.Commands.Autos.AutoBuilder;
 import frc.robot.Commands.Autos.FlytSequentialAuto;
 import frc.robot.Commands.Autos.SitAndShoot;
@@ -23,6 +24,7 @@ import frc.robot.subsystems.intake.IntakeConstants.IntakeSide;
 import frc.robot.subsystems.dyerotor.DyeRotor;
 import frc.robot.subsystems.turret.Turret;
 import edu.wpi.first.epilogue.Logged;
+import edu.wpi.first.wpilibj.LEDPattern;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.JoystickButton;
@@ -39,8 +41,10 @@ import edu.wpi.first.wpilibj2.command.StartEndCommand;
 
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-
+import edu.wpi.first.wpilibj.util.Color;
 import frc.utils.FuelSim;
+import frc.utils.LEDEffects;
+import frc.utils.LEDUtility;
 
 import static edu.wpi.first.math.util.Units.inchesToMeters;
 
@@ -68,6 +72,8 @@ public class RobotContainer {
     private final Intake m_intake;
     private final DyeRotor m_dyeRotor;
     private final Turret m_turret;
+
+    private final LEDUtility _leds = new LEDUtility(0);
 
     // The driver's controller
     CommandXboxController m_driverController;
@@ -133,6 +139,10 @@ public class RobotContainer {
             instance.registerRobot(inchesToMeters(30), inchesToMeters(37), inchesToMeters(5.0), _poseEstimator::getCurrentPose, _drive::getChassisSpeeds);
             instance.start();
         }
+
+        _leds.addStrip("Left", 0, 10);
+        _leds.addStrip("Right", 11, 20);
+        _leds.setDefault();
     }
 
     private void configureButtonBindings() {
@@ -143,6 +153,9 @@ public class RobotContainer {
         Trigger isUnderTrench = new Trigger(() -> m_stateMachine.getSpecialZone() == SpecialZone.TRENCH);
         Trigger isInNeutral = new Trigger(() -> m_stateMachine.getFieldZone() == FieldZone.NEUTRAL);
         Trigger isLeft = new Trigger(() -> m_stateMachine.getLeftSide());
+        Trigger hubActive = new Trigger(() -> m_stateMachine.isHubActive());
+        Trigger hubAboutToActive = new Trigger(() -> m_stateMachine.isHubAboutToBecomeActive());
+        Trigger isHoodDown = new Trigger(() -> m_turret.getHoodAngle() < 1);
 
         //isOnBump.or(isUnderTrench).and(notAuto).whileTrue(m_driveStateMachine.tempChangeState(DriveState.ASSIST));
         // isOnBump.and(notAuto).whileTrue(m_driveStateMachine.tempChangeState(DriveState.BUMP));
@@ -152,6 +165,19 @@ public class RobotContainer {
         Trigger rightNotIn = new Trigger(() -> !m_intake.isIn(IntakeSide.RIGHT));
         leftNotIn.onTrue(m_driveStateMachine.changeSnakeDirection(IntakeSide.LEFT));
         rightNotIn.onTrue(m_driveStateMachine.changeSnakeDirection(IntakeSide.RIGHT));
+
+        // LED Settings
+        // If hub is active, set the LEDs to be solid green. If hub not active, set LEDs to solid blue
+        hubActive.and(hubAboutToActive.negate())
+                    .and(isUnderTrench.negate())
+                        .onTrue(_leds.setAllCommand(LEDEffect.SOLID, Color.kGreen))
+                        .onFalse(_leds.setAllCommand(LEDEffect.SOLID, LEDEffects.flytBlue));
+        // If hub is 5 seconds from being active, flash LEDs blue
+        hubAboutToActive.and(hubActive.negate()).onTrue(_leds.setAllCommand(LEDEffect.FLASH, LEDEffects.flytBlue));
+        // If going under the trench and hood is not down, flash LEDs red
+        isUnderTrench.and(isHoodDown.negate()).onTrue(_leds.setAllCommand(LEDEffect.FLASH, Color.kRed));
+        // If going udner the trench and hood is down, flash LEDs green
+        isUnderTrench.and(isHoodDown).onTrue(_leds.setAllCommand(LEDEffect.FLASH, Color.kGreen));
 
         // END TRIGGERS
 
