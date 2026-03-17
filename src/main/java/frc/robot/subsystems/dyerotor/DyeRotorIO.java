@@ -24,4 +24,5 @@ public interface DyeRotorIO {
     public default void setFeederSpeed(double speed) {}
     public default void setRotorVoltage(double volts) {}
     public default void setFeederVoltage(double volts) {}
+    public default void resetIntegrator() {}
 }

@@ -147,4 +147,10 @@ public class DyeRotorIOSpark implements DyeRotorIO {
         feederSpeed = 0.0;
         feeder.setVoltage(MathUtil.clamp(volts, -12.0, 12.0));
     }
+
+    @Override
+    public void resetIntegrator() {
+        rotorController.setIAccum(0.0);
+        feederController.setIAccum(0.0);
+    }
 }
