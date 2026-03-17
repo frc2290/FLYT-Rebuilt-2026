@@ -113,6 +113,7 @@ public class DyeRotor extends SubsystemBase {
                 jamTimer.reset();
                 backdriveTimer.reset();
                 backdriveTimer.start();
+                io.resetIntegrator();
                 backdriving = true;
             } else {
                 setTargetBPS(defaultTargetBps);
@@ -147,6 +148,10 @@ public class DyeRotor extends SubsystemBase {
 
     public Command runDyeRotorAutoCommand() {
         return Commands.startEnd(() -> runDyeRotor(true), () -> runDyeRotor(false), this);
+    }
+
+    public void resetIntegrator() {
+        io.resetIntegrator();
     }
 
     /**
