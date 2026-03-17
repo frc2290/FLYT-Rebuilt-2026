@@ -89,18 +89,19 @@ public class ShootOnTheFly {
         public double yawAccelerationRadPerSec2;
         public double pitchVelocityDegPerSec;
         public double flywheelAccelerationMetersPerSec2;
+        public double tof;
 
         public SOTFResult(double yaw, double pitch, double vel, double dist) {
-            this(yaw, pitch, vel, dist, true, 0.0, 0.0, 0.0, 0.0);
+            this(yaw, pitch, vel, dist, true, 0.0, 0.0, 0.0, 0.0, 0.0);
         }
 
         public SOTFResult(double yaw, double pitch, double vel, double dist, boolean isValid) {
-            this(yaw, pitch, vel, dist, isValid, 0.0, 0.0, 0.0, 0.0);
+            this(yaw, pitch, vel, dist, isValid, 0.0, 0.0, 0.0, 0.0, 0.0);
         }
 
         public SOTFResult(double yaw, double pitch, double vel, double dist, boolean isValid,
                 double yawVelocityRadPerSec, double yawAccelerationRadPerSec2, double pitchVelocityDegPerSec,
-                double flywheelAccelerationMetersPerSec2) {
+                double flywheelAccelerationMetersPerSec2, double tof) {
             this.yaw = yaw;
             this.pitch = pitch;
             this.vel = vel;
@@ -110,10 +111,11 @@ public class ShootOnTheFly {
             this.yawAccelerationRadPerSec2 = yawAccelerationRadPerSec2;
             this.pitchVelocityDegPerSec = pitchVelocityDegPerSec;
             this.flywheelAccelerationMetersPerSec2 = flywheelAccelerationMetersPerSec2;
+            this.tof = tof;
         }
 
         public static SOTFResult invalid() {
-            return new SOTFResult(0.0, 0.0, 0.0, 0.0, false, 0.0, 0.0, 0.0, 0.0);
+            return new SOTFResult(0.0, 0.0, 0.0, 0.0, false, 0.0, 0.0, 0.0, 0.0, 0.0);
         }
     }
 
@@ -435,7 +437,8 @@ public class ShootOnTheFly {
                 yawVelocity,
                 yawAcceleration,
                 pitchVelocity,
-                flywheelAcceleration);
+                flywheelAcceleration,
+                convergence.tof);
     }
 
     private boolean isConvergenceValid(ConvergenceResult convergence) {

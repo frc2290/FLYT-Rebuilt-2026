@@ -20,6 +20,8 @@ import edu.wpi.first.wpilibj.AddressableLED;
 import edu.wpi.first.wpilibj.AddressableLEDBuffer;
 import edu.wpi.first.wpilibj.LEDPattern;
 import edu.wpi.first.wpilibj.util.Color;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.utils.LEDEffects.LEDEffect;
 import java.util.ArrayList;
@@ -64,12 +66,24 @@ public class LEDUtility extends SubsystemBase {
     return null;
   }
 
+  public Command setStrip(String _name, LEDEffect _effect) {
+    return Commands.runOnce(() -> getStrip(_name).setEffect(_effect), this);
+  }
+
+  public Command setStrip(String _name, LEDEffect _effect, Color _color) {
+    return Commands.runOnce(() -> getStrip(_name).setEffect(_effect, _color), this);
+  }
+
   public void setAll(LEDEffect _effect, Color _color) {
     newLedStrips.forEach(
         strip -> {
           strip.setColor(_color);
           strip.setEffect(_effect);
         });
+  }
+
+  public Command setAllCommand(LEDEffect _effect, Color _color) {
+    return Commands.runOnce(() -> setAll(_effect, _color), this);
   }
 
   public void setAll(LEDEffect _effect) {
@@ -79,8 +93,16 @@ public class LEDUtility extends SubsystemBase {
         });
   }
 
+  public Command setAllCommand(LEDEffect _effect) {
+    return Commands.runOnce(() -> setAll(_effect), this);
+  }
+
   public void setAll(LEDPattern pattern) {
     newLedStrips.forEach(strip -> strip.setPattern(pattern));
+  }
+
+  public Command setAllCommand(LEDPattern pattern) {
+    return Commands.runOnce(() -> setAll(pattern), this);
   }
 
   // DEFAULT LED PATTERN, CHANGE PER SEASON
