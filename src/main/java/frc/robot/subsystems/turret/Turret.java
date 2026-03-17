@@ -50,6 +50,7 @@ public class Turret extends SubsystemBase {
 
     private double sotfYaw = 0.0;
     private boolean turretPointedAtTarget = false;
+    private double currentTof = 0.0;
     private double previousLoopTimestampSec = Timer.getFPGATimestamp();
 
     public Turret(TurretIO turretIO, Supplier<Pose2d> pose, Supplier<ChassisSpeeds> speeds) {
@@ -97,6 +98,7 @@ public class Turret extends SubsystemBase {
                 currentTurretAngle,
                 turretOmegaRadPerSecond,
                 dt);
+        currentTof = result.tof;
         if (result.isValid) {
             sotfYaw = result.yaw;
         }
@@ -170,6 +172,10 @@ public class Turret extends SubsystemBase {
         io.setHoodAngle(angle);
     }
 
+    public double getHoodAngle() {
+        return io.getHoodAngle();
+    }
+
     /**
      * manually set the turn position
      * 
@@ -212,6 +218,10 @@ public class Turret extends SubsystemBase {
 
     public boolean isSotfEnabled() {
         return sotfEnabled;
+    }
+
+    public double getTof() {
+        return currentTof;
     }
 
     /** True when the measured hood angle is within tolerance of the requested shot angle. */
