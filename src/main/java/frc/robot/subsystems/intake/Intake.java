@@ -242,6 +242,34 @@ public class Intake extends SubsystemBase {
         });
     }
 
+    /** Characterization sweep for the left or right deploy mechanism. */
+    public Command agitateIntake(IntakeSide side) {
+        Timer agitateTimer = new Timer();
+        String logPrefix = side == IntakeSide.LEFT ? "Intake/Left" : "Intake/Right";
+
+        return startRun(() -> {
+            agitateTimer.restart();
+        }, () -> {
+            double wave = 0.5 + 0.5 * Math.cos(2 * Math.PI * agitateFrequencyHz * agitateTimer.get());
+            double angle = agitateInPosition + (wave * (agitateOutPosition - agitateInPosition));
+            driveRoller(side, rollerSpeed);
+            getIo(side).setDeployPosition(angle, false);
+            Logger.recordOutput(logPrefix + "DeployCharacterizeTarget", angle);
+        }).finallyDo(() -> {
+            agitateTimer.stop();
+            driveRoller(side, 0);
+            getIo(side).setDeployPosition(outPosition, true);
+        });
+    }
+
+    public Command agitateIntakeLeft() {
+        return agitateIntake(IntakeSide.LEFT);
+    }
+
+    public Command agitateIntakeRight() {
+        return agitateIntake(IntakeSide.RIGHT);
+    }
+
     public ControlMode getControlMode(IntakeSide side) {
         return side == IntakeSide.LEFT ? leftControlMode : rightControlMode;
     }

@@ -323,14 +323,17 @@ public class Robot extends LoggedRobot {
         sys_id_commands.addOption("Turret Turn Quasi Reverse", m_turret.sysIdQuasistaticTurn(Direction.kReverse));
         sys_id_commands.addOption("Turret Turn Dynamic Forward", m_turret.sysIdDynamicTurn(Direction.kForward));
         sys_id_commands.addOption("Turret Turn Dynamic Reverse", m_turret.sysIdDynamicTurn(Direction.kReverse));
+        sys_id_commands.addOption("Turret Hood Characterize", m_turret.characterizeHood());
         sys_id_commands.addOption("Intake Left Quasi Forward", m_intake.sysIdQuasistaticLeftIntake(Direction.kForward));
         sys_id_commands.addOption("Intake Left Quasi Reverse", m_intake.sysIdQuasistaticLeftIntake(Direction.kReverse));
         sys_id_commands.addOption("Intake Left Dynamic Forward", m_intake.sysIdDynamicLeftIntake(Direction.kForward));
         sys_id_commands.addOption("Intake Left Dynamic Reverse", m_intake.sysIdDynamicLeftIntake(Direction.kReverse));
+        sys_id_commands.addOption("Intake Left Deploy Characterize", m_intake.agitateIntakeLeft());
         sys_id_commands.addOption("Intake Right Quasi Forward", m_intake.sysIdQuasistaticRightIntake(Direction.kForward));
         sys_id_commands.addOption("Intake Right Quasi Reverse", m_intake.sysIdQuasistaticRightIntake(Direction.kReverse));
         sys_id_commands.addOption("Intake Right Dynamic Forward", m_intake.sysIdDynamicRightIntake(Direction.kForward));
         sys_id_commands.addOption("Intake Right Dynamic Reverse", m_intake.sysIdDynamicRightIntake(Direction.kReverse));
+        sys_id_commands.addOption("Intake Right Deploy Characterize", m_intake.agitateIntakeRight());
         sys_id_commands.addOption("Dye Rotor Rotor Quasi Forward", m_dyeRotor.sysIdQuasistaticRotor(Direction.kForward));
         sys_id_commands.addOption("Dye Rotor Rotor Quasi Reverse", m_dyeRotor.sysIdQuasistaticRotor(Direction.kReverse));
         sys_id_commands.addOption("Dye Rotor Rotor Dynamic Forward", m_dyeRotor.sysIdDynamicRotor(Direction.kForward));

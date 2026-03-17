@@ -379,6 +379,35 @@ public class Turret extends SubsystemBase {
     }
 
     /**
+     * Sweeps the hood back and forth using a sinusoidal wave for characterization
+     * and tuning.
+     * Operates at 1Hz between a safe minimum and maximum angle.
+     */
+    public Command characterizeHood() {
+        Timer agitateTimer = new Timer();
+
+        double minAngle = 5.0;
+        double maxAngle = 25.0;
+        double frequencyHz = 1.0;
+
+        return startRun(
+                () -> {
+                    agitateTimer.restart();
+                    setSotfEnabled(false);
+                },
+                () -> {
+                    double wave = 0.5 + 0.5 * Math.cos(2 * Math.PI * frequencyHz * agitateTimer.get());
+                    double targetAngle = minAngle + (wave * (maxAngle - minAngle));
+                    setHoodAngle(targetAngle);
+                    Logger.recordOutput("Turret/HoodCharacterizeTargetAngle", targetAngle);
+                }).finallyDo(() -> {
+                    agitateTimer.stop();
+                    setHoodAngle(0.0);
+                    setSotfEnabled(true);
+                });
+    }
+
+    /**
      * stop/unstop shooting
      * 
      * @param stop stopped?
