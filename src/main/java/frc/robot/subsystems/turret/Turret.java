@@ -370,8 +370,9 @@ public class Turret extends SubsystemBase {
         Timer agitateTimer = new Timer();
 
         double minAngle = 5.0;
-        double maxAngle = 25.0;
+        double maxAngle = 50.0;
         double frequencyHz = 1.0;
+        double DurationSec = 10.0 / frequencyHz;
 
         return startRun(
                 () -> {
@@ -383,7 +384,7 @@ public class Turret extends SubsystemBase {
                     double targetAngle = minAngle + (wave * (maxAngle - minAngle));
                     setHoodAngle(targetAngle);
                     Logger.recordOutput("Turret/HoodCharacterizeTargetAngle", targetAngle);
-                }).finallyDo(() -> {
+                }).until(() -> agitateTimer.hasElapsed(DurationSec)).finallyDo(() -> {
                     agitateTimer.stop();
                     setHoodAngle(0.0);
                     setSotfEnabled(true);
