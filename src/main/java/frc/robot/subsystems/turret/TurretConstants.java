@@ -46,9 +46,6 @@ public class TurretConstants {
     public static final double hoodAngleOffset = 10.0;
     public static final double hoodShotAngleOffset = 78.5;
     public static final double hoodShotAngleToleranceDeg = 2.0;
-    public static final double turretAllowedClosedLoopErrorDeg = 10.0;
-    public static final double hoodAllowedClosedLoopErrorDeg = hoodShotAngleToleranceDeg;
-    public static final double flywheelAllowedClosedLoopErrorMps = 0.25;
     // Spark relative encoder is on the turret turn motor.
     // Position factor: motor rotations -> turret mechanism degrees.
     public static final double turretEncoderPositionFactor = (numTeethMotor / numTeethTurret) * 360.0;
@@ -171,7 +168,7 @@ public class TurretConstants {
         public static final double tofDerivativeStepMeters = 0.01;
 
         public static final double maxValidDistanceMeters = 10.0;
-        public static final double pointAtTargetToleranceDeg = turretAllowedClosedLoopErrorDeg;
+        public static final double pointAtTargetToleranceDeg = 10.0;
 
         // Shooter physical offset from turret center, meters.
         public static final double turretShooterOffsetX = 0.0;

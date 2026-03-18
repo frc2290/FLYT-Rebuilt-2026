@@ -9,7 +9,6 @@ import java.util.OptionalDouble;
 
 import org.littletonrobotics.junction.Logger;
 
-import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -23,12 +22,14 @@ public class DyeRotor extends SubsystemBase {
         VOLTAGE
     }
 
+    private static final double JAM_DETECT_SECONDS = 0.25;
+    private static final double BACKDRIVE_SECONDS = 0.25;
+    private static final double AT_SPEED_RATIO = 0.50;
+
     private final DyeRotorIO io;
     private final DyeRotorIOInputsAutoLogged inputs = new DyeRotorIOInputsAutoLogged();
     private final SysIdRoutine rotorSysId;
     private final SysIdRoutine feederSysId;
-    private final Debouncer rotorAtSpeedDebouncer = new Debouncer(0.1, Debouncer.DebounceType.kRising);
-    private final Debouncer feederAtSpeedDebouncer = new Debouncer(0.1, Debouncer.DebounceType.kRising);
 
     private final Timer jamTimer = new Timer();
     private final Timer backdriveTimer = new Timer();
@@ -39,10 +40,6 @@ public class DyeRotor extends SubsystemBase {
     private ControlMode feederControlMode = ControlMode.VELOCITY;
     private double rotorCommandedVoltage = 0.0;
     private double feederCommandedVoltage = 0.0;
-    private double currentTargetRotorRps = 0.0;
-    private double currentTargetFeederRps = 0.0;
-    private boolean rotorAtSpeedState = false;
-    private boolean feederAtSpeedState = false;
 
     public DyeRotor(DyeRotorIO io) {
         this.io = io;
@@ -73,38 +70,27 @@ public class DyeRotor extends SubsystemBase {
     @Override
     public void periodic() {
         io.updateInputs(inputs);
-        rotorAtSpeedState =
-                rotorAtSpeedDebouncer.calculate(rotorControlMode == ControlMode.VELOCITY && io.rotorAtSetpoint());
-        feederAtSpeedState =
-                feederAtSpeedDebouncer.calculate(feederControlMode == ControlMode.VELOCITY && io.feederAtSetpoint());
         Logger.processInputs("DyeRotor", inputs);
         OptionalDouble measuredOverfeedRatio = getMeasuredOverfeedRatio();
         Logger.recordOutput("DyeRotor/RotorControlMode", rotorControlMode.toString());
         Logger.recordOutput("DyeRotor/FeederControlMode", feederControlMode.toString());
         Logger.recordOutput("DyeRotor/MeasuredOverfeedRatio", measuredOverfeedRatio.orElse(Double.NaN));
-        Logger.recordOutput("DyeRotor/TargetRotorRps", currentTargetRotorRps);
-        Logger.recordOutput("DyeRotor/TargetFeederRps", currentTargetFeederRps);
-        Logger.recordOutput("DyeRotor/RotorAtSpeed", rotorAtSpeedState);
-        Logger.recordOutput("DyeRotor/FeederAtSpeed", feederAtSpeedState);
-        Logger.recordOutput("DyeRotor/AtFeedingSpeeds", isAtFeedingSpeeds());
 
         if (rotorControlMode == ControlMode.VOLTAGE || feederControlMode == ControlMode.VOLTAGE) {
             io.setRotorVoltage(rotorControlMode == ControlMode.VOLTAGE ? rotorCommandedVoltage : 0.0);
             io.setFeederVoltage(feederControlMode == ControlMode.VOLTAGE ? feederCommandedVoltage : 0.0);
-            stopDyeRotor();
             return;
         }
 
         if (!runDyeRotor) {
             io.setRotorSpeed(0);
             io.setFeederSpeed(0);
-            stopDyeRotor();
             return;
         }
 
         if (backdriving) {
             setTargetBPS(-defaultTargetBps);
-            if (backdriveTimer.hasElapsed(backdriveSeconds)) {
+            if (backdriveTimer.hasElapsed(BACKDRIVE_SECONDS)) {
                 backdriving = false;
                 backdriveTimer.stop();
                 backdriveTimer.reset();
@@ -115,7 +101,7 @@ public class DyeRotor extends SubsystemBase {
         }
 
         double targetRotorRps = defaultTargetBps / ballsPerRotation;
-        boolean atTargetSpeed = Math.abs(inputs.rotorEncoderRPM) >= (targetRotorRps * atSpeedRatio);
+        boolean atTargetSpeed = Math.abs(inputs.rotorEncoderRPM) >= (targetRotorRps * AT_SPEED_RATIO);
 
         if (!atTargetSpeed) {
             if (!jamTimer.isRunning()) {
@@ -123,7 +109,7 @@ public class DyeRotor extends SubsystemBase {
                 jamTimer.start();
             }
 
-            if (jamTimer.hasElapsed(jamDetectSeconds)) {
+            if (jamTimer.hasElapsed(JAM_DETECT_SECONDS)) {
                 jamTimer.stop();
                 jamTimer.reset();
                 backdriveTimer.reset();
@@ -145,9 +131,6 @@ public class DyeRotor extends SubsystemBase {
 
     public void runDyeRotor(boolean run) {
         this.runDyeRotor = run;
-        if (!run) {
-            stopDyeRotor();
-        }
         // backdriving = false;
         // jamTimer.stop();
         // jamTimer.reset();
@@ -185,25 +168,24 @@ public class DyeRotor extends SubsystemBase {
         double rotorSpeed = targetBPS / ballsPerRotation;
 
         // 2) FEED WHEEL KINEMATICS (PURE ROLLING + OVERFEED)
-        double feedSpeed = calculateFeedSpeedRps(rotorSpeed);
+        double feedMultiplier =
+                (ballsPerRotation * fuelDiameterInches * overfeedRatio) / (Math.PI * feedWheelRadiusInches);
+        double feedSpeedAbs = rotorSpeed * feedMultiplier;
+        double feedSpeed = feedSpeedAbs - rotorSpeed;
 
         // 3) COMMAND MECHANISM REV/SEC DIRECTLY
         // Spark encoder conversion factors apply motor->mechanism gear ratio scaling.
-        currentTargetRotorRps = rotorSpeed;
-        currentTargetFeederRps = feedSpeed;
         io.setRotorSpeed(rotorSpeed);
         io.setFeederSpeed(feedSpeed);
     }
 
     public void driveRotor(double speed) {
         setRotorControlMode(ControlMode.VELOCITY);
-        currentTargetRotorRps = speed;
         io.setRotorSpeed(speed);
     }
 
     public void driveFeeder(double speed) {
         setFeederControlMode(ControlMode.VELOCITY);
-        currentTargetFeederRps = speed;
         io.setFeederSpeed(speed);
     }
 
@@ -249,8 +231,6 @@ public class DyeRotor extends SubsystemBase {
         if (rotorControlMode == ControlMode.VELOCITY) {
             rotorCommandedVoltage = 0.0;
             io.setRotorVoltage(0.0);
-        } else {
-            currentTargetRotorRps = 0.0;
         }
     }
 
@@ -263,8 +243,6 @@ public class DyeRotor extends SubsystemBase {
         if (feederControlMode == ControlMode.VELOCITY) {
             feederCommandedVoltage = 0.0;
             io.setFeederVoltage(0.0);
-        } else {
-            currentTargetFeederRps = 0.0;
         }
     }
 
@@ -314,30 +292,6 @@ public class DyeRotor extends SubsystemBase {
             setFeederControlMode(ControlMode.VELOCITY);
             feederCommandedVoltage = 0.0;
         });
-    }
-
-    public boolean isRotorAtSpeed() {
-        return rotorAtSpeedState;
-    }
-
-    public boolean isFeederAtSpeed() {
-        return feederAtSpeedState;
-    }
-
-    public boolean isAtFeedingSpeeds() {
-        return isRotorAtSpeed() && isFeederAtSpeed();
-    }
-
-    private void stopDyeRotor() {
-        currentTargetRotorRps = 0.0;
-        currentTargetFeederRps = 0.0;
-    }
-
-    private static double calculateFeedSpeedRps(double rotorSpeedRps) {
-        double feedMultiplier =
-                (ballsPerRotation * fuelDiameterInches * overfeedRatio) / (Math.PI * feedWheelRadiusInches);
-        double feedSpeedAbs = rotorSpeedRps * feedMultiplier;
-        return feedSpeedAbs - rotorSpeedRps;
     }
 
 }

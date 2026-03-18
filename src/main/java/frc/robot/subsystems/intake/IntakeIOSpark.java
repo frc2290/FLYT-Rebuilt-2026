@@ -11,7 +11,6 @@ import com.revrobotics.PersistMode;
 import com.revrobotics.REVLibError;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.ResetMode;
-import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.FeedbackSensor;
 import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkBase.ControlType;
@@ -35,6 +34,8 @@ public class IntakeIOSpark implements IntakeIO {
     private final SparkClosedLoopController deployController;
 
     private IntakeSide side;
+
+    private double deploySetpoint = inPosition;
 
     public IntakeIOSpark(IntakeSide side, boolean inverted, double zeroOffset) {
         this.side = side;
@@ -69,8 +70,7 @@ public class IntakeIOSpark implements IntakeIO {
         driveConfig
                 .closedLoop
                 .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-                .pid(rollerKp, rollerKi, rollerKd)
-                .allowedClosedLoopError(rollerAllowedClosedLoopErrorMetersPerSec, ClosedLoopSlot.kSlot0);
+                .pid(rollerKp, rollerKi, rollerKd);
         driveConfig.closedLoop.feedForward.kV(rollerKv);
         // driveConfig.signals
         // .appliedOutputPeriodMs(20)
@@ -101,8 +101,7 @@ public class IntakeIOSpark implements IntakeIO {
         deployConfig
                 .closedLoop
                 .feedbackSensor(FeedbackSensor.kAbsoluteEncoder)
-                .pid(deployKp, deployKi, deployKd)
-                .allowedClosedLoopError(deployAllowedClosedLoopErrorDeg, ClosedLoopSlot.kSlot0);
+                .pid(deployKp, deployKi, deployKd);
         deployConfig.closedLoop
                 .maxMotion
                 // Calculated for a 0.5s, 86-degree move
@@ -132,6 +131,8 @@ public class IntakeIOSpark implements IntakeIO {
 
     @Override
     public void updateInputs(IntakeIOInputs inputs) {
+        deployController.setSetpoint(deploySetpoint + getZeroOffsetAdj(), ControlType.kMAXMotionPositionControl);
+
         // Update drive inputs
         ifOk(driveSpark, driveEncoder::getPosition, (value) -> inputs.drivePositionMeters = value);
         ifOk(driveSpark, driveEncoder::getVelocity, (value) -> inputs.driveSpeed = value);
@@ -168,19 +169,8 @@ public class IntakeIOSpark implements IntakeIO {
     }
 
     @Override
-    public void setDeployPosition(double angle, boolean useProfile) {
-        ControlType mode = useProfile ? ControlType.kMAXMotionPositionControl : ControlType.kPosition;
-        deployController.setSetpoint(angle + getZeroOffsetAdj(), mode);
-    }
-
-    @Override
-    public boolean deployAtSetpoint() {
-        return deployController.isAtSetpoint();
-    }
-
-    @Override
-    public boolean rollerAtSetpoint() {
-        return driveController.isAtSetpoint();
+    public void setDeployPosition(double angle) {
+        this.deploySetpoint = angle;
     }
 
     public double getPosition() {
