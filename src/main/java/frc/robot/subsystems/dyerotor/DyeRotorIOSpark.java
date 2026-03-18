@@ -61,7 +61,8 @@ public class DyeRotorIOSpark implements DyeRotorIO {
                 .closedLoop
                 .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
                 .pid(rotorKp, rotorKi, rotorKd);
-        rotorConfig.closedLoop.feedForward.kV(rotorKv);
+        rotorConfig.closedLoop.feedForward.kV(5.8426);
+        rotorConfig.closedLoop.feedForward.kS(0.07851);
         REVLibError rotorErr = rotor.configure(
                 rotorConfig,
                 ResetMode.kResetSafeParameters,
