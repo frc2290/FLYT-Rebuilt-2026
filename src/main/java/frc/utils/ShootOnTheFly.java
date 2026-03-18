@@ -27,11 +27,22 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 public class ShootOnTheFly {
     public static ShootOnTheFly instance = null;
 
-    private final LinearInterpolator shootAngleInterp = new LinearInterpolator();
-    private final LinearInterpolator shootSpeedInterp = new LinearInterpolator();
+    private InterpolatingTreeMap<Double, FullShooterParams> hubMap;
+    private InterpolatingTreeMap<Double, FullShooterParams> shuttleMap;
+    private double prevVx = 0.0;
+    private double prevVy = 0.0;
+    private double prevOmega = 0.0;
+    private boolean hasPreviousVelocityState = false;
+    private double previousTofRecursive = -1.0;
+    private double previousTofNewton = -1.0;
+    private TargetTable currentTargetTable = TargetTable.HUB;
 
-    public record FullShooterParams(double speedMetersPerSecond, double hoodAngle, double timeOfFlight) {
+    public enum TargetTable {
+        HUB,
+        SHUTTLE
     }
+
+    public record FullShooterParams(double speedMetersPerSecond, double hoodAngle, double timeOfFlight) {}
 
     private static class TargetKinematics {
         private final Translation2d toGoal;
@@ -62,14 +73,6 @@ public class ShootOnTheFly {
             this.finalBallGoal = finalBallGoal;
         }
     }
-
-    private InterpolatingTreeMap<Double, FullShooterParams> shooterMap;
-    private double prevVx = 0.0;
-    private double prevVy = 0.0;
-    private double prevOmega = 0.0;
-    private boolean hasPreviousVelocityState = false;
-    private double previousTofRecursive = -1.0;
-    private double previousTofNewton = -1.0;
 
     public static FullShooterParams interpolateParams(FullShooterParams startValue, FullShooterParams endValue,
             double t) {
@@ -119,24 +122,18 @@ public class ShootOnTheFly {
         }
     }
 
-    public void addShootInterpData(InterpolatingTreeMap<Double, FullShooterParams> shooterMap) {
-        this.shooterMap = shooterMap;
-    }
-
-    public void addShootAngleInterpData(double[][] data) {
-        shootAngleInterp.build_table(data);
-    }
-
-    public double getShootAngleInterp(double dist) {
-        return shootAngleInterp.getInterpolatedValue(dist);
-    }
-
-    public void addShootSpeedInterpData(double[][] data) {
-        shootSpeedInterp.build_table(data);
-    }
-
-    public double getShootSpeedInterp(double dist) {
-        return shootSpeedInterp.getInterpolatedValue(dist);
+    public void addShootInterpData(InterpolatingTreeMap<Double, FullShooterParams> shotMap, TargetTable targetTable) {
+        switch (targetTable) {
+            case HUB:
+                this.hubMap = shotMap;
+                break;
+            case SHUTTLE:
+                this.shuttleMap = shotMap;
+                break;
+            default:
+                this.hubMap = shotMap;
+                break;
+        }
     }
 
     public SOTFResult calculateRecursiveTOF(Translation2d goalLocation, Pose2d robotPose, ChassisSpeeds robotSpeeds) {
@@ -397,7 +394,7 @@ public class ShootOnTheFly {
             return SOTFResult.invalid();
         }
 
-        FullShooterParams params = shooterMap.get(convergence.projectedDistance);
+        FullShooterParams params = (currentTargetTable == TargetTable.HUB ? hubMap.get(convergence.projectedDistance) : shuttleMap.get(convergence.projectedDistance));
         if (params == null) {
             return SOTFResult.invalid();
         }
@@ -452,12 +449,29 @@ public class ShootOnTheFly {
     }
 
     private boolean isShooterMapReady() {
-        return shooterMap != null && shooterMap.get(0.0) != null;
+        switch (currentTargetTable) {
+            case HUB:
+                return hubMap != null && hubMap.get(0.0) != null;
+            case SHUTTLE:
+                return shuttleMap != null && shuttleMap.get(0.0) != null;
+            default:
+                return false;
+        }
     }
 
     private double getInterpolatedTof(double distanceMeters) {
-        FullShooterParams params = shooterMap.get(distanceMeters);
+        FullShooterParams params = (currentTargetTable == TargetTable.HUB ? hubMap.get(distanceMeters) : shuttleMap.get(distanceMeters));
         return params != null ? params.timeOfFlight() : Double.NaN;
+    }
+
+    private double getInterpolatedSpeed(double distanceMeters) {
+        FullShooterParams params = (currentTargetTable == TargetTable.HUB ? hubMap.get(distanceMeters) : shuttleMap.get(distanceMeters));
+        return params != null ? params.speedMetersPerSecond() : Double.NaN;
+    }
+
+    private double getInterpolatedHoodAngle(double distanceMeters) {
+        FullShooterParams params = (currentTargetTable == TargetTable.HUB ? hubMap.get(distanceMeters) : shuttleMap.get(distanceMeters));
+        return params != null ? params.hoodAngle() : Double.NaN;
     }
 
     private double getTofDerivative(double distanceMeters) {
@@ -477,9 +491,6 @@ public class ShootOnTheFly {
     }
 
     private double getPitchDerivative(double distanceMeters) {
-        if (!shootAngleInterp.isInitialized()) {
-            return Double.NaN;
-        }
         double h = tofDerivativeStepMeters;
         double upperDist = distanceMeters + h;
         double lowerDist = Math.max(0.0, distanceMeters - h);
@@ -488,8 +499,8 @@ public class ShootOnTheFly {
             return Double.NaN;
         }
 
-        double pHigh = shootAngleInterp.getInterpolatedValue(upperDist);
-        double pLow = shootAngleInterp.getInterpolatedValue(lowerDist);
+        double pHigh = getInterpolatedHoodAngle(upperDist);
+        double pLow = getInterpolatedHoodAngle(lowerDist);
         if (!Double.isFinite(pHigh) || !Double.isFinite(pLow)) {
             return Double.NaN;
         }
@@ -498,9 +509,6 @@ public class ShootOnTheFly {
     }
 
     private double getSpeedDerivative(double distanceMeters) {
-        if (!shootSpeedInterp.isInitialized()) {
-            return Double.NaN;
-        }
         double h = tofDerivativeStepMeters;
         double upperDist = distanceMeters + h;
         double lowerDist = Math.max(0.0, distanceMeters - h);
@@ -509,8 +517,8 @@ public class ShootOnTheFly {
             return Double.NaN;
         }
 
-        double sHigh = shootSpeedInterp.getInterpolatedValue(upperDist);
-        double sLow = shootSpeedInterp.getInterpolatedValue(lowerDist);
+        double sHigh = getInterpolatedSpeed(upperDist);
+        double sLow = getInterpolatedSpeed(lowerDist);
         if (!Double.isFinite(sHigh) || !Double.isFinite(sLow)) {
             return Double.NaN;
         }
@@ -530,4 +538,11 @@ public class ShootOnTheFly {
                 .rotateBy(robotPose.getRotation());
     }
 
+    public void setCurrentTofTable(TargetTable targetTable) {
+        this.currentTargetTable = targetTable;
+    }
+
+    public TargetTable getCurrentTofTable() {
+        return this.currentTargetTable;
+    }
 }

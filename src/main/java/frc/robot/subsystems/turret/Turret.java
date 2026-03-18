@@ -7,8 +7,6 @@ package frc.robot.subsystems.turret;
 import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Volts;
-import static frc.robot.subsystems.turret.TurretConstants.turretHoodData;
-import static frc.robot.subsystems.turret.TurretConstants.turretRPMData;
 
 import java.util.function.Supplier;
 
@@ -28,6 +26,7 @@ import frc.utils.ShootOnTheFly.FullShooterParams;
 import frc.robot.Robot;
 import frc.utils.FieldConstants.Hub;
 import frc.utils.ShootOnTheFly.SOTFResult;
+import frc.utils.ShootOnTheFly.TargetTable;
 
 public class Turret extends SubsystemBase {
     private static final double shooterVelocityScale = 1.3;
@@ -62,9 +61,8 @@ public class Turret extends SubsystemBase {
         this.io = turretIO;
         this.pose = pose;
         this.speeds = speeds;
-        sotf.addShootInterpData(TurretConstants.SHOOTER_MAP);
-        sotf.addShootSpeedInterpData(turretRPMData);
-        sotf.addShootAngleInterpData(turretHoodData);
+        sotf.addShootInterpData(TurretConstants.HUB_MAP, TargetTable.HUB);
+        sotf.addShootInterpData(TurretConstants.SHUTTLE_MAP, TargetTable.SHUTTLE);
 
         shooterSysId = new SysIdRoutine(
                 new SysIdRoutine.Config(
@@ -165,6 +163,7 @@ public class Turret extends SubsystemBase {
         Logger.recordOutput("Turret/SysIdVoltage", sysIdVoltage);
         Logger.recordOutput("Turret/FlywheelVelocitySetpointMps", activeShooterVelocitySetpointMps);
         Logger.recordOutput("Turret/ShotAngleSetpointDeg", activeShotAngleSetpointDeg);
+        Logger.recordOutput("Turret/CurrentTOFTable", sotf.getCurrentTofTable());
 
         Robot.batteryLogger.reportCurrentUsage("Turret/Turn", inputs.turretConnected ? inputs.turretCurrentAmps : 0.0);
         Robot.batteryLogger.reportCurrentUsage("Turret/Hood", inputs.hoodConnected ? inputs.hoodCurrentAmps : 0.0);
@@ -270,7 +269,7 @@ public class Turret extends SubsystemBase {
 
     /** Returns the nominal shot speed command used by this turret for a given distance. */
     public double getShotVelocityForDistanceMeters(double distanceMeters) {
-        FullShooterParams params = TurretConstants.SHOOTER_MAP.get(distanceMeters);
+        FullShooterParams params = TurretConstants.HUB_MAP.get(distanceMeters);
         if (params == null) {
             return 0.0;
         }
@@ -279,7 +278,7 @@ public class Turret extends SubsystemBase {
 
     /** Returns the nominal shot hood-angle command for a given distance. */
     public double getShotAngleForDistanceMeters(double distanceMeters) {
-        FullShooterParams params = TurretConstants.SHOOTER_MAP.get(distanceMeters);
+        FullShooterParams params = TurretConstants.HUB_MAP.get(distanceMeters);
         if (params == null) {
             return 0.0;
         }
