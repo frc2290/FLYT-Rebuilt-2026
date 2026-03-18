@@ -40,8 +40,8 @@ public class DyeRotorConstants {
     // This ensures that commanding the theoretical max mechanism speed outputs exactly 12.0V.
     public static final double rotorKv = 12.0 / ((rotorFreeSpeedRPM / 60.0) / rotorGearRatio);
     public static final double feederKv = 12.0 / ((feederFreeSpeedRPM / 60.0) / feedGearRatio);
-    public static final double rotorKp = 0.0;
-    public static final double rotorKi = 0.0;
+    public static final double rotorKp = 1.16146667;
+    public static final double rotorKi = 0.01947533;
     public static final double rotorKd = 0.0;
     public static final double feederKp = 0.0;
     public static final double feederKi = 0.0;
