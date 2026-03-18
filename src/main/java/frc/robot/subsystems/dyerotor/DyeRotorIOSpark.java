@@ -28,6 +28,10 @@ public class DyeRotorIOSpark implements DyeRotorIO {
     private final SparkClosedLoopController feederController;
     private final SparkClosedLoopController rotorController;
 
+    // Global variables
+    private double rotorSpeed = 0.0;
+    private double feederSpeed = 0.0;
+
     public DyeRotorIOSpark() {
 
         // Create motor controllers
@@ -56,8 +60,7 @@ public class DyeRotorIOSpark implements DyeRotorIO {
         rotorConfig
                 .closedLoop
                 .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-                .pid(rotorKp, rotorKi, rotorKd)
-                .allowedClosedLoopError(rotorReadyToleranceRps, ClosedLoopSlot.kSlot0);
+                .pid(rotorKp, rotorKi, rotorKd);
         rotorConfig.closedLoop.feedForward.kV(rotorKv);
         REVLibError rotorErr = rotor.configure(
                 rotorConfig,
@@ -81,8 +84,7 @@ public class DyeRotorIOSpark implements DyeRotorIO {
         feederConfig
                 .closedLoop
                 .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-                .pid(feederKp, feederKi, feederKd)
-                .allowedClosedLoopError(feederReadyToleranceRps, ClosedLoopSlot.kSlot0);
+                .pid(feederKp, feederKi, feederKd);
         feederConfig.closedLoop.feedForward.kV(feederKv);
         REVLibError feederErr = feeder.configure(
                 feederConfig,
@@ -103,6 +105,7 @@ public class DyeRotorIOSpark implements DyeRotorIO {
 
     @Override
     public void updateInputs(DyeRotorIOInputs inputs) {
+        inputs.rotorSpeed = rotorSpeed;
         inputs.rotorEncoderPosition = rotorEnc.getPosition();
         inputs.rotorEncoderRPM = rotorEnc.getVelocity();
         ifOk(
@@ -111,6 +114,7 @@ public class DyeRotorIOSpark implements DyeRotorIO {
                 (values) -> inputs.rotorAppliedVolts = values[0] * values[1]);
         ifOk(rotor, rotor::getOutputCurrent, (value) -> inputs.rotorCurrentAmps = value);
 
+        inputs.feederSpeed = feederSpeed;
         inputs.feederEncoderPosition = feederEnc.getPosition();
         inputs.feederEncoderRPM = feederEnc.getVelocity();
         ifOk(
@@ -122,21 +126,25 @@ public class DyeRotorIOSpark implements DyeRotorIO {
 
     @Override
     public void setRotorSpeed(double speed) {
-        rotorController.setSetpoint(speed, ControlType.kVelocity);
+        rotorSpeed = speed;
+        rotorController.setSetpoint(rotorSpeed, ControlType.kVelocity);
     }
 
     @Override
     public void setFeederSpeed(double speed) {
-        feederController.setSetpoint(speed, ControlType.kVelocity);
+        feederSpeed = speed;
+        feederController.setSetpoint(feederSpeed, ControlType.kVelocity);
     }
 
     @Override
     public void setRotorVoltage(double volts) {
+        rotorSpeed = 0.0;
         rotor.setVoltage(MathUtil.clamp(volts, -12.0, 12.0));
     }
 
     @Override
     public void setFeederVoltage(double volts) {
+        feederSpeed = 0.0;
         feeder.setVoltage(MathUtil.clamp(volts, -12.0, 12.0));
     }
 
@@ -144,15 +152,5 @@ public class DyeRotorIOSpark implements DyeRotorIO {
     public void resetIntegrator() {
         rotorController.setIAccum(0.0);
         feederController.setIAccum(0.0);
-    }
-
-    @Override
-    public boolean rotorAtSetpoint() {
-        return rotorController.isAtSetpoint();
-    }
-
-    @Override
-    public boolean feederAtSetpoint() {
-        return feederController.isAtSetpoint();
     }
 }

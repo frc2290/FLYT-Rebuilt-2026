@@ -23,7 +23,6 @@ public class IntakeIOSim implements IntakeIO {
 
     private PIDController deployController = new PIDController(deploySimKp, deploySimKi, deploySimKd);
     private double deployAppliedVolts = 0.0;
-    private double deploySetpointDeg = inPosition;
     private double driveSpeed = 0.0;
     private double driveCommandedVolts = 0.0;
 
@@ -34,7 +33,6 @@ public class IntakeIOSim implements IntakeIO {
         deploySim = new DCMotorSim(
                 LinearSystemId.createDCMotorSystem(deployGearbox, 0.025, deployMotorReduction),
                 deployGearbox);
-        deployController.setSetpoint(degreesToRadians(inPosition));
 
         FuelSim fuelSim = FuelSim.getInstance();
         
@@ -91,20 +89,7 @@ public class IntakeIOSim implements IntakeIO {
     }
 
     @Override
-    public void setDeployPosition(double angle, boolean useProfile) {
-        deploySetpointDeg = angle;
+    public void setDeployPosition(double angle) {
         deployController.setSetpoint(degreesToRadians(angle));
-    }
-
-    @Override
-    public boolean deployAtSetpoint() {
-        return Math.abs(radiansToDegrees(deploySim.getAngularPositionRad()) - deploySetpointDeg)
-                <= deployAllowedClosedLoopErrorDeg;
-    }
-
-    @Override
-    public boolean rollerAtSetpoint() {
-        double measuredSpeed = driveSim.getAngularVelocityRPM() * rollerEncoderVelocityFactor;
-        return Math.abs(measuredSpeed - driveSpeed) <= rollerAllowedClosedLoopErrorMetersPerSec;
     }
 }
