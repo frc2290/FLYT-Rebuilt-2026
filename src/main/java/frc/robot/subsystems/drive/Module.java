@@ -14,12 +14,17 @@ import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.Alert;
 import edu.wpi.first.wpilibj.Alert.AlertType;
+import frc.robot.Robot;
+
 import org.littletonrobotics.junction.Logger;
 
 public class Module {
   private final ModuleIO io;
   private final ModuleIOInputsAutoLogged inputs = new ModuleIOInputsAutoLogged();
   private final int index;
+
+  private final String driveEnergyKey;
+  private final String turnEnergyKey;
 
   private final Alert driveDisconnectedAlert;
   private final Alert turnDisconnectedAlert;
@@ -28,6 +33,8 @@ public class Module {
   public Module(ModuleIO io, int index) {
     this.io = io;
     this.index = index;
+    this.driveEnergyKey = "FullDrive/Drive" + "/" + index;
+    this.turnEnergyKey = "FullDrive/Turn" + "/" + index;
     driveDisconnectedAlert =
         new Alert(
             "Disconnected drive motor on module " + Integer.toString(index) + ".",
@@ -53,6 +60,12 @@ public class Module {
     // Update alerts
     driveDisconnectedAlert.set(!inputs.driveConnected);
     turnDisconnectedAlert.set(!inputs.turnConnected);
+
+    // Report energy usage
+    Robot.batteryLogger.reportCurrentUsage(
+        driveEnergyKey, inputs.driveConnected ? inputs.driveCurrentAmps : 0.0);
+    Robot.batteryLogger.reportCurrentUsage(
+        turnEnergyKey, inputs.turnConnected ? inputs.turnCurrentAmps : 0.0);
   }
 
   /** Runs the module with the specified setpoint state. Mutates the state to optimize it. */

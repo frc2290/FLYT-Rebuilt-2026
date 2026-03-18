@@ -41,6 +41,5 @@ public interface TurretIO {
     public default void setShotAngle(double angle) {};
     public default boolean turretAtSetpoint() { return false; };
     public default boolean hoodAtSetpoint() { return false; };
-    public default boolean flywheelAtSetpoint() { return false; };
-    public default boolean flywheelAtSpeed() { return flywheelAtSetpoint(); };
+    public default boolean flywheelAtSpeed() { return false; };
 }
