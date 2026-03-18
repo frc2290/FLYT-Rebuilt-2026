@@ -26,6 +26,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.utils.ShootOnTheFly;
 import frc.utils.ShootOnTheFly.FullShooterParams;
+import frc.robot.Robot;
 import frc.utils.FieldConstants.Hub;
 import frc.utils.ShootOnTheFly.SOTFResult;
 
@@ -159,7 +160,7 @@ public class Turret extends SubsystemBase {
         }
         azimuthAtPositionState = azimuthAtPositionDebouncer.calculate(inputs.turretConnected && io.turretAtSetpoint());
         hoodAtPositionState = hoodAtPositionDebouncer.calculate(inputs.hoodConnected && io.hoodAtSetpoint());
-        flywheelAtSpeedState = flywheelAtSpeedDebouncer.calculate(inputs.flywheelConnected && io.flywheelAtSetpoint());
+        flywheelAtSpeedState = flywheelAtSpeedDebouncer.calculate(inputs.flywheelConnected && io.flywheelAtSpeed());
         Logger.recordOutput("Turret/SOTFYaw", result.yaw);
         Logger.recordOutput("Turret/SOTFVel", result.vel);
         Logger.recordOutput("Turret/SOTFPitch", result.pitch);
@@ -183,6 +184,10 @@ public class Turret extends SubsystemBase {
         Logger.recordOutput("Turret/HoodAtPosition", hoodAtPositionState);
         Logger.recordOutput("Turret/FlywheelAtSpeed", flywheelAtSpeedState);
         Logger.recordOutput("Turret/AtShootingSetpoints", isAtShootingSetpoints());
+
+        Robot.batteryLogger.reportCurrentUsage("Turret/Turn", inputs.turretConnected ? inputs.turretCurrentAmps : 0.0);
+        Robot.batteryLogger.reportCurrentUsage("Turret/Hood", inputs.hoodConnected ? inputs.hoodCurrentAmps : 0.0);
+        Robot.batteryLogger.reportCurrentUsage("Turret/Flywheel", inputs.flywheelConnected ? inputs.flywheelCurrentAmps : 0.0);
     }
 
     /**

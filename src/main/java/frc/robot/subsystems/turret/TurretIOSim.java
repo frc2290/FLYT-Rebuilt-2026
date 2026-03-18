@@ -136,14 +136,9 @@ public class TurretIOSim implements TurretIO {
     }
 
     @Override
-    public boolean flywheelAtSetpoint() {
+    public boolean flywheelAtSpeed() {
         double measuredVelocity = turretShootSim.getAngularVelocityRPM() * flywheelEncoderVelocityFactor;
         return Math.abs(measuredVelocity - turretSpeed) <= flywheelAllowedClosedLoopErrorMps;
-    }
-
-    @Override
-    public boolean flywheelAtSpeed() {
-        return flywheelAtSetpoint();
     }
 
     public void simIntake() {

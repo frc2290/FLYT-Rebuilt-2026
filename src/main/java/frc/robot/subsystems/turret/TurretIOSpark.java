@@ -329,15 +329,9 @@ public class TurretIOSpark implements TurretIO {
     }
 
     @Override
-    public boolean flywheelAtSetpoint() {
+    public boolean flywheelAtSpeed() {
         return flywheelController1.isAtSetpoint();
     }
-
-    @Override
-    public boolean flywheelAtSpeed() {
-        return flywheelAtSetpoint();
-    }
-
 
     @Override
     public void shootFuel() {
