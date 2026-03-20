@@ -16,6 +16,7 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import frc.robot.subsystems.turret.TurretConstants;
 import frc.utils.ShootOnTheFly.FullShooterParams;
 import frc.utils.ShootOnTheFly.SOTFResult;
+import frc.utils.ShootOnTheFly.TargetTable;
 
 class ShootOnTheFlyTest {
     private static final double DT_SECONDS = TurretConstants.SotfConstants.defaultLoopDtSeconds;
@@ -26,9 +27,9 @@ class ShootOnTheFlyTest {
     void setup() {
         ShootOnTheFly.instance = null;
         sotf = ShootOnTheFly.getInstance();
-        sotf.addShootInterpData(TurretConstants.SHOOTER_MAP);
-        sotf.addShootAngleInterpData(TurretConstants.turretHoodData);
-        sotf.addShootSpeedInterpData(TurretConstants.turretRPMData);
+        sotf.addShootInterpData(TurretConstants.HUB_MAP, TargetTable.HUB);
+        sotf.addShootInterpData(TurretConstants.SHUTTLE_MAP, TargetTable.SHUTTLE);
+        sotf.setCurrentTofTable(TargetTable.HUB);
     }
 
     private static InterpolatingTreeMap<Double, FullShooterParams> newShooterMap() {
@@ -36,7 +37,8 @@ class ShootOnTheFlyTest {
     }
 
     private void injectSyntheticLut(InterpolatingTreeMap<Double, FullShooterParams> map) {
-        sotf.addShootInterpData(map);
+        sotf.addShootInterpData(map, TargetTable.HUB);
+        sotf.setCurrentTofTable(TargetTable.HUB);
     }
 
     @Test

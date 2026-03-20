@@ -40,8 +40,8 @@ public class DyeRotorConstants {
     // This ensures that commanding the theoretical max mechanism speed outputs exactly 12.0V.
     public static final double rotorKv = 12.0 / ((rotorFreeSpeedRPM / 60.0) / rotorGearRatio);
     public static final double feederKv = 12.0 / ((feederFreeSpeedRPM / 60.0) / feedGearRatio);
-    public static final double rotorKp = 0.0;
-    public static final double rotorKi = 0.0;
+    public static final double rotorKp = 1.16146667;
+    public static final double rotorKi = 0.01947533;
     public static final double rotorKd = 0.0;
     public static final double feederKp = 0.0;
     public static final double feederKi = 0.0;
@@ -52,11 +52,4 @@ public class DyeRotorConstants {
     public static final double defaultTargetBps = 12;
     public static final double overfeedRatio = 1.3; //Rate balls are fed realitive to the rotor speed. Based on Wildstang Calcs
     public static final double minRotorRpsForOverfeed = 10.0 / 60.0;
-    public static final double jamDetectSeconds = 0.25;
-    public static final double backdriveSeconds = 0.25;
-    public static final double atSpeedRatio = 0.50;
-
-    // Hardcoded readiness tolerances (derived from a 50% atSpeedRatio at 12 BPS)
-    public static final double rotorReadyToleranceRps = 0.75;
-    public static final double feederReadyToleranceRps = 15.63;
 }

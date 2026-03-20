@@ -23,10 +23,12 @@ import frc.robot.subsystems.dyerotor.DyeRotor;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.turret.Turret;
 import frc.utils.FieldConstants;
+import frc.utils.ShootOnTheFly;
 import frc.utils.FieldConstants.Hub;
 import frc.utils.FieldConstants.LinesHorizontal;
 import frc.utils.FieldConstants.LinesVertical;
 import frc.utils.FieldConstants.Tower;
+import frc.utils.ShootOnTheFly.TargetTable;
 
 public class StateMachine extends SubsystemBase {
     public enum FieldZone {
@@ -57,6 +59,8 @@ public class StateMachine extends SubsystemBase {
     private Intake m_intake;
     private Turret m_turret;
     private DyeRotor m_dyeRotor;
+
+    private ShootOnTheFly shootOnTheFly = ShootOnTheFly.getInstance();
 
     public StateMachine(Supplier<Pose2d> poseSupplier, Supplier<ChassisSpeeds> speedSupplier, Intake intake, Turret turret, DyeRotor dyeRotor) {
         this.poseSupplier = poseSupplier;
@@ -252,16 +256,18 @@ public class StateMachine extends SubsystemBase {
                 switch (fieldZone) {
                     case ANTI_ALLIANCE:
                     case ALLIANCE:
+                        shootOnTheFly.setCurrentTofTable(TargetTable.HUB);
                         // point at the hub, but only shoot if hub is active
                         m_turret.setTargetTranslation(Hub.topCenterPoint.toTranslation2d());
-                        if (shootOverride) {// && m_turret.flywheelAtSpeed()) {// && m_turret.isTurretPointedAtTarget()) {
+                        if (!shootOverride && m_turret.isTurretPointedAtTarget()) {
                             m_dyeRotor.runDyeRotor(true);
                         } else {
                             m_dyeRotor.runDyeRotor(false);
                         }
                         break;
                     case NEUTRAL:
-                        if (shootOverride) {// && m_turret.flywheelAtSpeed()) {// && m_turret.isTurretPointedAtTarget()) {
+                        shootOnTheFly.setCurrentTofTable(TargetTable.SHUTTLE);
+                        if (shootOverride && m_turret.isTurretPointedAtTarget()) {
                             m_dyeRotor.runDyeRotor(true);
                         } else {
                             m_dyeRotor.runDyeRotor(false);

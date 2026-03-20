@@ -7,15 +7,12 @@ package frc.robot.subsystems.turret;
 import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Volts;
-import static frc.robot.subsystems.turret.TurretConstants.turretHoodData;
-import static frc.robot.subsystems.turret.TurretConstants.turretRPMData;
 
 import java.util.function.Supplier;
 
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.math.MathUtil;
-import edu.wpi.first.math.filter.Debouncer;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -29,6 +26,7 @@ import frc.utils.ShootOnTheFly.FullShooterParams;
 import frc.robot.Robot;
 import frc.utils.FieldConstants.Hub;
 import frc.utils.ShootOnTheFly.SOTFResult;
+import frc.utils.ShootOnTheFly.TargetTable;
 
 public class Turret extends SubsystemBase {
     private static final double shooterVelocityScale = 1.3;
@@ -43,9 +41,6 @@ public class Turret extends SubsystemBase {
     private final TurretIOInputsAutoLogged inputs = new TurretIOInputsAutoLogged();
     private final SysIdRoutine shooterSysId;
     private final SysIdRoutine turnSysId;
-    private final Debouncer azimuthAtPositionDebouncer = new Debouncer(0.05, Debouncer.DebounceType.kRising);
-    private final Debouncer hoodAtPositionDebouncer = new Debouncer(0.05, Debouncer.DebounceType.kRising);
-    private final Debouncer flywheelAtSpeedDebouncer = new Debouncer(0.1, Debouncer.DebounceType.kRising);
     private Supplier<Pose2d> pose;
     private Supplier<ChassisSpeeds> speeds;
     private boolean stopShoot = false;
@@ -61,18 +56,13 @@ public class Turret extends SubsystemBase {
     private double previousLoopTimestampSec = Timer.getFPGATimestamp();
     private double activeShooterVelocitySetpointMps = 0.0;
     private double activeShotAngleSetpointDeg = 0.0;
-    private double activeAzimuthSetpointDeg = 0.0;
-    private boolean azimuthAtPositionState = false;
-    private boolean hoodAtPositionState = false;
-    private boolean flywheelAtSpeedState = false;
 
     public Turret(TurretIO turretIO, Supplier<Pose2d> pose, Supplier<ChassisSpeeds> speeds) {
         this.io = turretIO;
         this.pose = pose;
         this.speeds = speeds;
-        sotf.addShootInterpData(TurretConstants.SHOOTER_MAP);
-        sotf.addShootSpeedInterpData(turretRPMData);
-        sotf.addShootAngleInterpData(turretHoodData);
+        sotf.addShootInterpData(TurretConstants.HUB_MAP, TargetTable.HUB);
+        sotf.addShootInterpData(TurretConstants.SHUTTLE_MAP, TargetTable.SHUTTLE);
 
         shooterSysId = new SysIdRoutine(
                 new SysIdRoutine.Config(
@@ -122,17 +112,15 @@ public class Turret extends SubsystemBase {
                 currentTurretAngle,
                 turretOmegaRadPerSecond,
                 dt);
-        sotfYaw = result.yaw;
+        if (result.isValid) {
+            sotfYaw = result.yaw;
+        }
 
         Rotation2d turretPointedAt = currentTurretAngle.rotateBy(currentPose.getRotation());
         Rotation2d targetYaw = Rotation2d.fromDegrees(result.yaw);
-        turretPointedAtTarget = MathUtil.isNear(
-                result.yaw,
-                turretPointedAt.getDegrees(),
-                TurretConstants.SotfConstants.pointAtTargetToleranceDeg,
-                -180.0,
-                180.0);
-        double turretYawErrorDeg = MathUtil.inputModulus(result.yaw - turretPointedAt.getDegrees(), -180.0, 180.0);
+        Rotation2d error = turretPointedAt.minus(targetYaw);
+        turretPointedAtTarget = result.isValid
+                && Math.abs(error.getDegrees()) < TurretConstants.SotfConstants.pointAtTargetToleranceDeg;
 
         activeShooterVelocitySetpointMps = result.vel * shooterVelocityScale;
         activeShotAngleSetpointDeg = result.pitch;
@@ -140,17 +128,16 @@ public class Turret extends SubsystemBase {
         // TURN CONTROL
         if (currentControlMode == ControlMode.TURN_VOLTAGE) {
             io.setTurnVoltage(sysIdVoltage);
-        } else if (sotfEnabled) {
+        } else if (sotfEnabled && result.isValid) {
             Rotation2d turretTargetRelative = targetYaw.minus(currentPose.getRotation());
             io.setTurnPosition(turretTargetRelative);
-            activeAzimuthSetpointDeg = turretTargetRelative.getDegrees();
         }
 
         // SHOOTER CONTROL
         if (currentControlMode == ControlMode.SHOOTER_VOLTAGE) {
             io.setShooterVoltage(sysIdVoltage);
         } else if (sotfEnabled) {
-            boolean canShoot = !stopShoot;
+            boolean canShoot = !stopShoot && result.isValid;
             io.setShooterSpeed(activeShooterVelocitySetpointMps);
             if (canShoot) {
                 io.setShotAngle(activeShotAngleSetpointDeg);
@@ -158,9 +145,6 @@ public class Turret extends SubsystemBase {
                 io.setHoodAngle(0);
             }
         }
-        azimuthAtPositionState = azimuthAtPositionDebouncer.calculate(inputs.turretConnected && io.turretAtSetpoint());
-        hoodAtPositionState = hoodAtPositionDebouncer.calculate(inputs.hoodConnected && io.hoodAtSetpoint());
-        flywheelAtSpeedState = flywheelAtSpeedDebouncer.calculate(inputs.flywheelConnected && io.flywheelAtSpeed());
         Logger.recordOutput("Turret/SOTFYaw", result.yaw);
         Logger.recordOutput("Turret/SOTFVel", result.vel);
         Logger.recordOutput("Turret/SOTFPitch", result.pitch);
@@ -174,16 +158,12 @@ public class Turret extends SubsystemBase {
         Logger.recordOutput("Turret/SOTFLoopDtSec", dt);
         Logger.recordOutput("Turret/SOTFEnabled", sotfEnabled);
         Logger.recordOutput("Turret/PointedAtHub", turretPointedAtTarget);
-        Logger.recordOutput("Turret/turretPointedAt", turretYawErrorDeg);
+        Logger.recordOutput("Turret/turretPointedAt", error.getDegrees());
         Logger.recordOutput("Turret/ControlMode", currentControlMode.toString());
         Logger.recordOutput("Turret/SysIdVoltage", sysIdVoltage);
-        Logger.recordOutput("Turret/AzimuthSetpointDeg", activeAzimuthSetpointDeg);
         Logger.recordOutput("Turret/FlywheelVelocitySetpointMps", activeShooterVelocitySetpointMps);
         Logger.recordOutput("Turret/ShotAngleSetpointDeg", activeShotAngleSetpointDeg);
-        Logger.recordOutput("Turret/AzimuthAtPosition", azimuthAtPositionState);
-        Logger.recordOutput("Turret/HoodAtPosition", hoodAtPositionState);
-        Logger.recordOutput("Turret/FlywheelAtSpeed", flywheelAtSpeedState);
-        Logger.recordOutput("Turret/AtShootingSetpoints", isAtShootingSetpoints());
+        Logger.recordOutput("Turret/CurrentTOFTable", sotf.getCurrentTofTable());
 
         Robot.batteryLogger.reportCurrentUsage("Turret/Turn", inputs.turretConnected ? inputs.turretCurrentAmps : 0.0, inputs.turretAppliedVolts);
         Robot.batteryLogger.reportCurrentUsage("Turret/Hood", inputs.hoodConnected ? inputs.hoodCurrentAmps : 0.0, inputs.hoodAppliedVolts);
@@ -220,7 +200,6 @@ public class Turret extends SubsystemBase {
      */
     public void setTurnPosition(Rotation2d rotation) {
         io.setTurnPosition(rotation);
-        activeAzimuthSetpointDeg = rotation.getDegrees();
     }
 
     /**
@@ -233,7 +212,6 @@ public class Turret extends SubsystemBase {
             setControlMode(ControlMode.NORMAL);
         }
         io.setShooterSpeed(speed);
-        activeShooterVelocitySetpointMps = speed;
     }
 
     /** Applies fixed shooter/hood setpoints directly. */
@@ -244,8 +222,6 @@ public class Turret extends SubsystemBase {
         }
         io.setShooterSpeed(flywheelVelocityMps);
         io.setShotAngle(hoodAngleDeg);
-        activeShooterVelocitySetpointMps = flywheelVelocityMps;
-        activeShotAngleSetpointDeg = hoodAngleDeg;
     }
 
     /** Command factory to run a fixed manual shot. */
@@ -272,7 +248,8 @@ public class Turret extends SubsystemBase {
         if (!inputs.hoodConnected) {
             return true;
         }
-        return isHoodAtPosition();
+        double measuredShotAngleDeg = TurretConstants.hoodShotAngleOffset - inputs.hoodPositionDeg;
+        return Math.abs(measuredShotAngleDeg - hoodAngleDeg) <= TurretConstants.hoodShotAngleToleranceDeg;
     }
 
     /** Backwards-compatible alias for manual-shot checks. */
@@ -282,7 +259,7 @@ public class Turret extends SubsystemBase {
 
     /** True when both flywheel and hood have reached manual-shot readiness. */
     public boolean manualShotReady(double hoodAngleDeg) {
-        return isFlywheelAtSpeed() && hoodAtShotSetpoint(hoodAngleDeg);
+        return flywheelAtSpeed() && hoodAtShotSetpoint(hoodAngleDeg);
     }
 
     /** Current measured flywheel linear velocity (m/s). */
@@ -292,7 +269,7 @@ public class Turret extends SubsystemBase {
 
     /** Returns the nominal shot speed command used by this turret for a given distance. */
     public double getShotVelocityForDistanceMeters(double distanceMeters) {
-        FullShooterParams params = TurretConstants.SHOOTER_MAP.get(distanceMeters);
+        FullShooterParams params = TurretConstants.HUB_MAP.get(distanceMeters);
         if (params == null) {
             return 0.0;
         }
@@ -301,7 +278,7 @@ public class Turret extends SubsystemBase {
 
     /** Returns the nominal shot hood-angle command for a given distance. */
     public double getShotAngleForDistanceMeters(double distanceMeters) {
-        FullShooterParams params = TurretConstants.SHOOTER_MAP.get(distanceMeters);
+        FullShooterParams params = TurretConstants.HUB_MAP.get(distanceMeters);
         if (params == null) {
             return 0.0;
         }
@@ -392,8 +369,9 @@ public class Turret extends SubsystemBase {
         Timer agitateTimer = new Timer();
 
         double minAngle = 5.0;
-        double maxAngle = 25.0;
+        double maxAngle = 50.0;
         double frequencyHz = 1.0;
+        double DurationSec = 10.0 / frequencyHz;
 
         return startRun(
                 () -> {
@@ -405,7 +383,7 @@ public class Turret extends SubsystemBase {
                     double targetAngle = minAngle + (wave * (maxAngle - minAngle));
                     setHoodAngle(targetAngle);
                     Logger.recordOutput("Turret/HoodCharacterizeTargetAngle", targetAngle);
-                }).finallyDo(() -> {
+                }).until(() -> agitateTimer.hasElapsed(DurationSec)).finallyDo(() -> {
                     agitateTimer.stop();
                     setHoodAngle(0.0);
                     setSotfEnabled(true);
@@ -433,7 +411,7 @@ public class Turret extends SubsystemBase {
     }
 
     public boolean flywheelAtSpeed() {
-        return isFlywheelAtSpeed();
+        return io.flywheelAtSpeed();
     }
 
     public double getSotfYaw() {
@@ -448,19 +426,4 @@ public class Turret extends SubsystemBase {
         return turretPointedAtTarget;
     }
 
-    public boolean isAzimuthAtPosition() {
-        return azimuthAtPositionState;
-    }
-
-    public boolean isHoodAtPosition() {
-        return hoodAtPositionState;
-    }
-
-    public boolean isFlywheelAtSpeed() {
-        return flywheelAtSpeedState;
-    }
-
-    public boolean isAtShootingSetpoints() {
-        return isAzimuthAtPosition() && isHoodAtPosition() && isFlywheelAtSpeed();
-    }
 }
