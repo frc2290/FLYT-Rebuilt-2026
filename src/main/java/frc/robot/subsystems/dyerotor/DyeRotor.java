@@ -22,6 +22,7 @@ public class DyeRotor extends SubsystemBase {
         VOLTAGE
     }
 
+    private static final double JAM_STARTUP_DELAY_SECONDS = 0.5;
     private static final double JAM_DETECT_SECONDS = 0.25;
     private static final double BACKDRIVE_SECONDS = 0.25;
     private static final double AT_SPEED_RATIO = 0.50;
@@ -31,6 +32,7 @@ public class DyeRotor extends SubsystemBase {
     private final SysIdRoutine rotorSysId;
     private final SysIdRoutine feederSysId;
 
+    private final Timer jamStartupTimer = new Timer();
     private final Timer jamTimer = new Timer();
     private final Timer backdriveTimer = new Timer();
 
@@ -75,6 +77,8 @@ public class DyeRotor extends SubsystemBase {
         Logger.recordOutput("DyeRotor/RotorControlMode", rotorControlMode.toString());
         Logger.recordOutput("DyeRotor/FeederControlMode", feederControlMode.toString());
         Logger.recordOutput("DyeRotor/MeasuredOverfeedRatio", measuredOverfeedRatio.orElse(Double.NaN));
+        Logger.recordOutput("DyeRotor/Backdriving", backdriving);
+        Logger.recordOutput("DyeRotor/RunDyeRotor", runDyeRotor);
 
         if (rotorControlMode == ControlMode.VOLTAGE || feederControlMode == ControlMode.VOLTAGE) {
             io.setRotorVoltage(rotorControlMode == ControlMode.VOLTAGE ? rotorCommandedVoltage : 0.0);
@@ -85,6 +89,13 @@ public class DyeRotor extends SubsystemBase {
         if (!runDyeRotor) {
             io.setRotorSpeed(0);
             io.setFeederSpeed(0);
+            jamStartupTimer.stop();
+            jamStartupTimer.reset();
+            jamTimer.stop();
+            jamTimer.reset();
+            backdriveTimer.stop();
+            backdriveTimer.reset();
+            backdriving = false;
             return;
         }
 
@@ -96,12 +107,37 @@ public class DyeRotor extends SubsystemBase {
                 backdriveTimer.reset();
                 jamTimer.stop();
                 jamTimer.reset();
+                jamStartupTimer.reset();
+                jamStartupTimer.start();
             }
             return;
         }
 
+        if (jamStartupTimer.isRunning() && jamStartupTimer.hasElapsed(JAM_STARTUP_DELAY_SECONDS)) {
+            jamStartupTimer.stop();
+        }
+        boolean jamDetectionEnabled = !jamStartupTimer.isRunning();
+        Logger.recordOutput("DyeRotor/JamDetectionEnabled", jamDetectionEnabled);
+        Logger.recordOutput("DyeRotor/JamStartupTimerSeconds", jamStartupTimer.get());
+        if (!jamDetectionEnabled) {
+            jamTimer.stop();
+            jamTimer.reset();
+            setTargetBPS(defaultTargetBps);
+            return;
+        }
+
         double targetRotorRps = defaultTargetBps / ballsPerRotation;
-        boolean atTargetSpeed = Math.abs(inputs.rotorEncoderRPM) >= (targetRotorRps * AT_SPEED_RATIO);
+        double feedMultiplier =
+                (ballsPerRotation * fuelDiameterInches * overfeedRatio) / (Math.PI * feedWheelRadiusInches);
+        double targetFeederRps = (targetRotorRps * feedMultiplier) - targetRotorRps;
+
+        boolean rotorAtSpeed = Math.abs(inputs.rotorEncoderRPM) >= (Math.abs(targetRotorRps) * AT_SPEED_RATIO);
+        boolean feederAtSpeed = Math.abs(inputs.feederEncoderRPM) >= (Math.abs(targetFeederRps) * AT_SPEED_RATIO);
+        boolean atTargetSpeed = rotorAtSpeed && feederAtSpeed;
+        Logger.recordOutput("DyeRotor/TargetRotorRps", targetRotorRps);
+        Logger.recordOutput("DyeRotor/TargetFeederRps", targetFeederRps);
+        Logger.recordOutput("DyeRotor/RotorAtSpeed", rotorAtSpeed);
+        Logger.recordOutput("DyeRotor/FeederAtSpeed", feederAtSpeed);
 
         if (!atTargetSpeed) {
             if (!jamTimer.isRunning()) {
@@ -130,17 +166,25 @@ public class DyeRotor extends SubsystemBase {
     }
 
     public void runDyeRotor(boolean run) {
-        this.runDyeRotor = run;
-        // backdriving = false;
-        // jamTimer.stop();
-        // jamTimer.reset();
-        // backdriveTimer.stop();
-        // backdriveTimer.reset();
+        if (run && !this.runDyeRotor) {
+            backdriving = false;
+            backdriveTimer.stop();
+            backdriveTimer.reset();
+            jamTimer.stop();
+            jamTimer.reset();
+            jamStartupTimer.reset();
+            jamStartupTimer.start();
+        } else if (!run && this.runDyeRotor) {
+            backdriving = false;
+            backdriveTimer.stop();
+            backdriveTimer.reset();
+            jamTimer.stop();
+            jamTimer.reset();
+            jamStartupTimer.stop();
+            jamStartupTimer.reset();
+        }
 
-        // if (!run) {
-        //     io.setRotorSpeed(0);
-        //     io.setFeederSpeed(0);
-        // }
+        this.runDyeRotor = run;
     }
 
     public Command runDyeRotorCommand(boolean run) {
