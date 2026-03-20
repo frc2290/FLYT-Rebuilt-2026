@@ -63,9 +63,9 @@ public class Module {
 
     // Report energy usage
     Robot.batteryLogger.reportCurrentUsage(
-        driveEnergyKey, inputs.driveConnected ? inputs.driveCurrentAmps : 0.0);
+        driveEnergyKey, inputs.driveConnected ? inputs.driveCurrentAmps : 0.0, inputs.driveAppliedVolts);
     Robot.batteryLogger.reportCurrentUsage(
-        turnEnergyKey, inputs.turnConnected ? inputs.turnCurrentAmps : 0.0);
+        turnEnergyKey, inputs.turnConnected ? inputs.turnCurrentAmps : 0.0, inputs.turnAppliedVolts);
   }
 
   /** Runs the module with the specified setpoint state. Mutates the state to optimize it. */
