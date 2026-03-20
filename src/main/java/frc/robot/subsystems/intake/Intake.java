@@ -215,16 +215,16 @@ public class Intake extends SubsystemBase {
     public Command agitateIntake(IntakeSide side) {
         Timer agitateTimer = new Timer();
         String logPrefix = side == IntakeSide.LEFT ? "Intake/Left" : "Intake/Right";
-        double frequencyHz = 0.5;
+        double frequencyHz = 1.0;
         double agitateOutPosition = outPosition;
-        double agitateInPosition = outPosition * 0.15;
+        double agitateInPosition = outPosition * 0.65;
 
         return startRun(() -> {
             agitateTimer.restart();
         }, () -> {
             double wave = 0.5 + 0.5 * Math.cos(2 * Math.PI * frequencyHz * agitateTimer.get());
             double angle = agitateInPosition + (wave * (agitateOutPosition - agitateInPosition));
-            driveRoller(side, rollerSpeed);
+            driveRoller(side, rollerSpeed/2);
             getIo(side).setDeployPosition(angle);
             Logger.recordOutput(logPrefix + "DeployCharacterizeTarget", angle);
         }).finallyDo(() -> {

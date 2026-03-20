@@ -32,6 +32,7 @@ public interface TurretIO {
         public double flywheelAppliedVolts = 0.0;
         public double flywheelCurrentAmps = 0.0;
         public double flywheelFollowerCurrentAmps = 0.0;
+        public double flywheelFollowerVelocity = 0.0;
     }
 
     public default void updateInputs(TurretIOInputs inputs) {};
