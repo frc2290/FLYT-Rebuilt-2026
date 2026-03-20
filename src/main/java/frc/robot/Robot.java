@@ -4,8 +4,10 @@
 
 package frc.robot;
 
+import org.littletonrobotics.conduit.ConduitApi;
 import org.littletonrobotics.junction.AutoLog;
 import org.littletonrobotics.junction.LogFileUtil;
+import org.littletonrobotics.junction.LoggedPowerDistribution;
 import org.littletonrobotics.junction.LoggedRobot;
 import org.littletonrobotics.junction.Logger;
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
@@ -16,6 +18,7 @@ import org.littletonrobotics.urcl.URCL;
 
 import edu.wpi.first.wpilibj.DataLogManager;
 import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.PowerDistribution;
 import edu.wpi.first.wpilibj.RobotController;
 import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -37,6 +40,7 @@ import frc.robot.subsystems.dyerotor.DyeRotor;
 import frc.robot.subsystems.dyerotor.DyeRotorIO;
 import frc.robot.subsystems.dyerotor.DyeRotorIOSim;
 import frc.robot.subsystems.dyerotor.DyeRotorIOSpark;
+import frc.robot.subsystems.energy.BatteryIOInputsAutoLogged;
 import frc.robot.subsystems.energy.BatteryLogger;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.IntakeIO;
@@ -70,14 +74,8 @@ public class Robot extends LoggedRobot {
     /** Container that wires up all subsystems, commands, and driver controls. */
     private RobotContainer m_robotContainer;
 
-    @AutoLog
-    public static class BatteryIOInputs {
-        public double batteryVoltage = 12.0;
-        public double rioCurrent = 0.0;
-    }
-
-    public static final BatteryLogger batteryLogger = new BatteryLogger();
-    private final BatteryIOInputsAutoLogged batteryInputs = new BatteryIOInputsAutoLogged();
+    private static final BatteryIOInputsAutoLogged batteryInputs = new BatteryIOInputsAutoLogged();
+    public static final BatteryLogger batteryLogger = new BatteryLogger(batteryInputs);
 
     /**
      * Cached reference to the primary driver controller so subsystems can read
@@ -234,11 +232,13 @@ public class Robot extends LoggedRobot {
      */
     @Override
     public void robotPeriodic() {
-        batteryInputs.batteryVoltage = RobotController.getBatteryVoltage();
-        batteryInputs.rioCurrent = RobotController.getInputCurrent();
-        Logger.processInputs("BatteryLogger", batteryInputs);
-        batteryLogger.setBatteryVoltage(batteryInputs.batteryVoltage);
-        batteryLogger.setRioCurrent(batteryInputs.rioCurrent);
+        ConduitApi conduit = ConduitApi.getInstance();
+        batteryInputs.batteryVoltage = conduit.getVoltageVin();
+        batteryInputs.rioCurrent = conduit.getPDPChannelCurrent(20);
+        batteryInputs.radioCurrent = conduit.getPDPChannelCurrent(21);
+        batteryInputs.cameraCurrent = conduit.getPDPChannelCurrent(22);
+
+        batteryInputs.cameraCurrent = RobotController.getInputCurrent();
 
         DriverStation.getAlliance().ifPresent(m_poseEstimator::setAlliance);
 
@@ -251,7 +251,6 @@ public class Robot extends LoggedRobot {
         // block in order for anything in the Command-based framework to work.
         CommandScheduler.getInstance().run();
         
-        // log outputs of this
         batteryLogger.periodicAfterScheduler();
     }
 

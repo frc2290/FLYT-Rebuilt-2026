@@ -139,8 +139,8 @@ public class DyeRotor extends SubsystemBase {
             setTargetBPS(defaultTargetBps);
         }
 
-        Robot.batteryLogger.reportCurrentUsage("DyeRotor/Feeder", inputs.feederCurrentAmps);
-        Robot.batteryLogger.reportCurrentUsage("DyeRotor/Rotor", inputs.rotorCurrentAmps);
+        Robot.batteryLogger.reportCurrentUsage("DyeRotor/Feeder", inputs.feederCurrentAmps, inputs.feederAppliedVolts);
+        Robot.batteryLogger.reportCurrentUsage("DyeRotor/Rotor", inputs.rotorCurrentAmps, inputs.rotorAppliedVolts);
     }
 
     public void runDyeRotor(boolean run) {
