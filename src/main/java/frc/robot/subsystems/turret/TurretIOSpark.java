@@ -51,6 +51,7 @@ public class TurretIOSpark implements TurretIO {
     private final SparkClosedLoopController turretController; 
     private final SparkClosedLoopController hoodController;
     private final SparkClosedLoopController flywheelController1;
+    private final SparkClosedLoopController flywheelController2;
 
     private final Debouncer turretConnectedDebounce =
       new Debouncer(0.5, Debouncer.DebounceType.kFalling);
@@ -84,8 +85,8 @@ public class TurretIOSpark implements TurretIO {
         // Setup RoboRio Absolute encoders
         // Initializes duty cycle encoders on DIO pins 0 and 1.
         // get() returns position in rotations [0, 1].
-        turnEncoder1 = new DutyCycleEncoder(0, 1, 0.8392072209801805);
-        turnEncoder2 = new DutyCycleEncoder(1, 1, 0.7671258191781455);
+        turnEncoder1 = new DutyCycleEncoder(0, 1, 0.8347440958686024);
+        turnEncoder2 = new DutyCycleEncoder(1, 1, 0.7634904940872623);
 
         // Gets if the encoders are connected, IMPLEMENT LATER
         turnEncoder1.isConnected();
@@ -100,6 +101,7 @@ public class TurretIOSpark implements TurretIO {
         turretController = turretSpark.getClosedLoopController();
         hoodController = hoodSpark.getClosedLoopController();
         flywheelController1 = flywheel1Spark.getClosedLoopController();
+        flywheelController2 = flywheel2Spark.getClosedLoopController();
 
         // Turret parameters
         var turretConfig = new SparkFlexConfig();
@@ -182,8 +184,20 @@ public class TurretIOSpark implements TurretIO {
         var flywheelFollowerConfig = new SparkFlexConfig();
         flywheelFollowerConfig
             .apply(flywheelBaseConfig)
-            // true means follower output is inverted relative to leader
-            .follow(flywheel1Spark, true);
+            .inverted(!flywheelIsInverted);
+        flywheelFollowerConfig
+            .encoder
+            .positionConversionFactor(flywheelEncoderPositionFactor)
+            .velocityConversionFactor(flywheelEncoderVelocityFactor)
+            .quadratureMeasurementPeriod(5)
+            .quadratureAverageDepth(1);
+        flywheelFollowerConfig
+            .closedLoop
+            .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
+            .pid(flywheelKp, flywheelKi, flywheelKd);
+        flywheelFollowerConfig.closedLoop.feedForward.kV(flywheelKv);
+        flywheelFollowerConfig.closedLoop.feedForward.kS(flywheelKs);
+
         REVLibError flywheel1Err = flywheel1Spark.configure(
             flywheelLeaderConfig,
             ResetMode.kResetSafeParameters,
@@ -290,6 +304,7 @@ public class TurretIOSpark implements TurretIO {
             flywheel1Encoder::getPosition,
             (value) -> inputs.flywheelPositionMeters = value);
         ifOk(flywheel1Spark, flywheel1Encoder::getVelocity, (value) -> inputs.flywheelVelocity = value);
+        ifOk(flywheel2Spark, flywheel2Encoder::getVelocity, (value) -> inputs.flywheelFollowerVelocity = value);
         ifOk(
             flywheel1Spark,
             new DoubleSupplier[] {flywheel1Spark::getAppliedOutput, flywheel1Spark::getBusVoltage},
@@ -332,12 +347,14 @@ public class TurretIOSpark implements TurretIO {
         turretSpeed = speed;
         shooterVoltageCommand = 0.0;
         flywheelController1.setSetpoint(turretSpeed, ControlType.kVelocity);
+        flywheelController2.setSetpoint(turretSpeed, ControlType.kVelocity);
     };
 
     @Override
     public void setShooterVoltage(double volts) {
         shooterVoltageCommand = MathUtil.clamp(volts, -12.0, 12.0);
         flywheel1Spark.setVoltage(shooterVoltageCommand);
+        flywheel2Spark.setVoltage(shooterVoltageCommand);
     }
 
     @Override

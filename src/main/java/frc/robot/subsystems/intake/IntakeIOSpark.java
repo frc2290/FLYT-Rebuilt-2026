@@ -58,10 +58,10 @@ public class IntakeIOSpark implements IntakeIO {
 
         var driveConfig = new SparkFlexConfig();
         driveConfig
-                .idleMode(IdleMode.kBrake)
+                .idleMode(IdleMode.kCoast)
                 .inverted(!inverted)
-                .smartCurrentLimit(driveMotorCurrentLimit, 60)
-                .voltageCompensation(12.0);
+                .smartCurrentLimit(driveMotorCurrentLimit);
+                //.voltageCompensation(12.0);
         driveConfig
                 .encoder
                 .positionConversionFactor(rollerEncoderPositionFactor)
@@ -139,7 +139,7 @@ public class IntakeIOSpark implements IntakeIO {
         ifOk(
                 driveSpark,
                 new DoubleSupplier[] { driveSpark::getAppliedOutput, driveSpark::getBusVoltage },
-                (values) -> inputs.driveAppliedVolts = values[0] * values[1]);
+                (values) -> inputs.driveAppliedVolts = values[0]);
         ifOk(driveSpark, driveSpark::getOutputCurrent, (value) -> inputs.driveCurrentAmps = value);
 
         // Update deploy inputs
@@ -160,7 +160,8 @@ public class IntakeIOSpark implements IntakeIO {
 
     @Override
     public void setIntakeSpeed(double speed) {
-        driveController.setSetpoint(speed, ControlType.kVelocity);
+        //driveController.setSetpoint(speed, ControlType.kVelocity);
+        driveSpark.set(speed);
     }
 
     @Override

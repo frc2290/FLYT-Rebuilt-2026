@@ -59,8 +59,10 @@ public class PhotonRunnable implements Runnable {
         // Keep layout origin fixed to blue; alliance flipping is handled in PoseEstimatorSubsystem.
         try {
             layout = new AprilTagFieldLayout(Filesystem.getDeployDirectory().getAbsolutePath() + "/field_calibration.json");
+            System.out.println("COULD READ APRIL TAG FIELD FILE WOOOOOOOOOOOOO");
         } catch (IOException e) {
             e.printStackTrace();
+            System.out.println("COULD NOT READ APRIL TAG FIELD FILE!!!!!!!!!!!!!!!!!!!!!!!!!");
             layout = FieldConstants.AprilTagLayoutType.OFFICIAL.getLayout();
         }
         layout.setOrigin(OriginPosition.kBlueAllianceWallRightSide);
