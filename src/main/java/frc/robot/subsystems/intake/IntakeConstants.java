@@ -22,11 +22,11 @@ public class IntakeConstants {
 
     // --- Motor Configurations ---
     public static final boolean deployInverted = false;
-    public static final int driveMotorCurrentLimit = 40;
+    public static final int driveMotorCurrentLimit = 60;
     public static final int deployMotorCurrentLimit = 40;
 
     // --- Physical Dimensions & Mechanics ---
-    public static final double driveMotorReduction = (11.0 / 29.0) * (18.0 / 25.0) * (30.0 / 20.0) / 5;
+    public static final double driveMotorReduction = (29.0/11.0) * (25.0/18.0) * (20.0/30.0); //(11.0 / 29.0) * (18.0 / 25.0) * (30.0 / 20.0);
     public static final double deployMotorToEncoderReduction = 84.0 / 7.0;
     public static final double deployEncoderToLinkageReduction = 48.0 / 16.0;
     public static final double deployMotorReduction =
@@ -38,7 +38,7 @@ public class IntakeConstants {
     public static final double deployEncoderPositionFactor =
             (1.0 / deployEncoderToLinkageReduction) * 360.0;
     public static final double deployEncoderVelocityFactor = deployEncoderPositionFactor / 60.0;
-    public static final double rollerEncoderPositionFactor = driveMotorReduction * (Math.PI * rollerDiameterMeters);
+    public static final double rollerEncoderPositionFactor = (Math.PI * rollerDiameterMeters) / driveMotorReduction; //driveMotorReduction * (Math.PI * rollerDiameterMeters);
     public static final double rollerEncoderVelocityFactor = rollerEncoderPositionFactor / 60.0;
 
     // --- Control Loop Constants (PID & Feedforward) ---
@@ -49,12 +49,11 @@ public class IntakeConstants {
     public static final double rollerKp = 0.5;
     public static final double rollerKi = 0.0;
     public static final double rollerKd = 0.0;
-    public static final double rollerAllowedClosedLoopErrorMetersPerSec = 0.1;
     public static final DCMotor deployGearbox = DCMotor.getNeoVortex(1);
     public static final double deployFreeSpeedRPM =
             Units.radiansPerSecondToRotationsPerMinute(deployGearbox.freeSpeedRadPerSec);
-    public static final double deployKv = 12.0
-            / ((deployFreeSpeedRPM / deployMotorToEncoderReduction) * deployEncoderVelocityFactor);
+    public static final double deployKv = (12.0
+            / ((deployFreeSpeedRPM / deployMotorToEncoderReduction) * deployEncoderVelocityFactor));
     public static final double deployKp = 0.025;
     public static final double deployKi = 0.0;
     public static final double deployKd = 0.0;
@@ -65,16 +64,11 @@ public class IntakeConstants {
     public static final double deploySimKd = 1.0;
 
     // --- Subsystem Behaviors & Targets ---
-    public static final double inPosition = 5;
+    public static final double inPosition = 1;
     public static final double outPosition = 86;
     public static final double positionBuffer = 5;
-    public static final double deployAllowedClosedLoopErrorDeg = positionBuffer;
     // Intake roller surface speed command in m/s.
-    public static final double rollerSpeed = 3;
-    // Agitation constants
-    public static final double agitateFrequencyHz = 0.5; // About 1 full bounce every 1.88 seconds
-    public static final double agitateOutPosition = outPosition;
-    public static final double agitateInPosition = outPosition * 0.15;
+    public static final double rollerSpeed = 1;//3;
     public static final double leftZeroOffsetAdj = 17.2;
     public static final double rightZeroOffsetAdj = 16.3;
 }

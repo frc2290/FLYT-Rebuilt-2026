@@ -51,6 +51,7 @@ public class TurretIOSpark implements TurretIO {
     private final SparkClosedLoopController turretController; 
     private final SparkClosedLoopController hoodController;
     private final SparkClosedLoopController flywheelController1;
+    private final SparkClosedLoopController flywheelController2;
 
     private final Debouncer turretConnectedDebounce =
       new Debouncer(0.5, Debouncer.DebounceType.kFalling);
@@ -60,6 +61,11 @@ public class TurretIOSpark implements TurretIO {
       new Debouncer(0.5, Debouncer.DebounceType.kFalling);
     //
 
+    // Global variables
+    private double turretAngle = 0;
+    private double turretSpeed = 0;
+    private double turretHoodAngle = 10;
+    private double turretAngleSetpoint = 0;
     private double shooterVoltageCommand = 0.0;
 
     public TurretIOSpark() {
@@ -79,8 +85,8 @@ public class TurretIOSpark implements TurretIO {
         // Setup RoboRio Absolute encoders
         // Initializes duty cycle encoders on DIO pins 0 and 1.
         // get() returns position in rotations [0, 1].
-        turnEncoder1 = new DutyCycleEncoder(0, 1, 0.8392072209801805);
-        turnEncoder2 = new DutyCycleEncoder(1, 1, 0.7671258191781455);
+        turnEncoder1 = new DutyCycleEncoder(0, 1, 0.8347440958686024);
+        turnEncoder2 = new DutyCycleEncoder(1, 1, 0.7634904940872623);
 
         // Gets if the encoders are connected, IMPLEMENT LATER
         turnEncoder1.isConnected();
@@ -95,6 +101,7 @@ public class TurretIOSpark implements TurretIO {
         turretController = turretSpark.getClosedLoopController();
         hoodController = hoodSpark.getClosedLoopController();
         flywheelController1 = flywheel1Spark.getClosedLoopController();
+        flywheelController2 = flywheel2Spark.getClosedLoopController();
 
         // Turret parameters
         var turretConfig = new SparkFlexConfig();
@@ -111,8 +118,7 @@ public class TurretIOSpark implements TurretIO {
         turretConfig
             .closedLoop
             .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-            .pid(turretKp, turretKi, turretKd)
-            .allowedClosedLoopError(turretAllowedClosedLoopErrorDeg, ClosedLoopSlot.kSlot0);
+            .pid(turretKp, turretKi, turretKd);
         REVLibError turretErr = turretSpark.configure(
             turretConfig,
             ResetMode.kResetSafeParameters,
@@ -139,8 +145,7 @@ public class TurretIOSpark implements TurretIO {
         hoodConfig
             .closedLoop
             .feedbackSensor(FeedbackSensor.kAbsoluteEncoder)
-            .pid(hoodKp, hoodKi, hoodKd)
-            .allowedClosedLoopError(hoodAllowedClosedLoopErrorDeg, ClosedLoopSlot.kSlot0);
+            .pid(hoodKp, hoodKi, hoodKd);
         //hoodConfig.closedLoop.feedForward.kV(hoodKv);
         REVLibError hoodErr = hoodSpark.configure(
             hoodConfig,
@@ -171,8 +176,7 @@ public class TurretIOSpark implements TurretIO {
         flywheelLeaderConfig
             .closedLoop
             .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
-            .pid(flywheelKp, flywheelKi, flywheelKd)
-            .allowedClosedLoopError(flywheelAllowedClosedLoopErrorMps, ClosedLoopSlot.kSlot0);
+            .pid(flywheelKp, flywheelKi, flywheelKd);
         flywheelLeaderConfig.closedLoop.feedForward.kV(flywheelKv);
         flywheelLeaderConfig.closedLoop.feedForward.kS(flywheelKs);
 
@@ -180,8 +184,20 @@ public class TurretIOSpark implements TurretIO {
         var flywheelFollowerConfig = new SparkFlexConfig();
         flywheelFollowerConfig
             .apply(flywheelBaseConfig)
-            // true means follower output is inverted relative to leader
-            .follow(flywheel1Spark, true);
+            .inverted(!flywheelIsInverted);
+        flywheelFollowerConfig
+            .encoder
+            .positionConversionFactor(flywheelEncoderPositionFactor)
+            .velocityConversionFactor(flywheelEncoderVelocityFactor)
+            .quadratureMeasurementPeriod(5)
+            .quadratureAverageDepth(1);
+        flywheelFollowerConfig
+            .closedLoop
+            .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
+            .pid(flywheelKp, flywheelKi, flywheelKd);
+        flywheelFollowerConfig.closedLoop.feedForward.kV(flywheelKv);
+        flywheelFollowerConfig.closedLoop.feedForward.kS(flywheelKs);
+
         REVLibError flywheel1Err = flywheel1Spark.configure(
             flywheelLeaderConfig,
             ResetMode.kResetSafeParameters,
@@ -229,9 +245,30 @@ public class TurretIOSpark implements TurretIO {
     }
 
 
+    /**
+     * Get turret pose
+     * @return
+     */
+    private double getTurretPos(){
+        return turnRelEncoder.getPosition();
+    }
+    private double getTurretVel(){
+        return turnRelEncoder.getVelocity();
+    }
+
     // I think this is used for logger pro to keep track of things?
     @Override
     public void updateInputs(TurretIOInputs inputs) {
+        double targetHoodEncoderAngle = (turretHoodAngle + hoodAngleOffset);
+        hoodController.setSetpoint(targetHoodEncoderAngle, ControlType.kPosition);
+
+        turretController.setSetpoint(turretAngleSetpoint, ControlType.kPosition);
+
+        //turretAngle = getTurretPos();
+        inputs.turretAngle = turretAngle;
+        inputs.turretSpeed = turretSpeed;
+        inputs.turretHoodAngle = turretHoodAngle;
+        inputs.turretAngleSetpoint = turretAngleSetpoint;
         inputs.turretEnc1Pos = turnEncoder1.get();
         inputs.turretEnc2Pos = turnEncoder2.get();
 
@@ -267,6 +304,7 @@ public class TurretIOSpark implements TurretIO {
             flywheel1Encoder::getPosition,
             (value) -> inputs.flywheelPositionMeters = value);
         ifOk(flywheel1Spark, flywheel1Encoder::getVelocity, (value) -> inputs.flywheelVelocity = value);
+        ifOk(flywheel2Spark, flywheel2Encoder::getVelocity, (value) -> inputs.flywheelFollowerVelocity = value);
         ifOk(
             flywheel1Spark,
             new DoubleSupplier[] {flywheel1Spark::getAppliedOutput, flywheel1Spark::getBusVoltage},
@@ -279,8 +317,7 @@ public class TurretIOSpark implements TurretIO {
 
     @Override
     public void setTurnPosition(Rotation2d rotation) {
-        double clampedAngleDeg = MathUtil.clamp(rotation.getDegrees(), -45, 45);
-        turretController.setSetpoint(clampedAngleDeg, ControlType.kPosition);
+        turretAngleSetpoint = MathUtil.clamp(rotation.getDegrees(), -45, 45);
     }
 
     @Override
@@ -291,8 +328,7 @@ public class TurretIOSpark implements TurretIO {
 
     @Override
     public void setHoodAngle(double angle) {
-        double targetHoodEncoderAngle = angle + hoodAngleOffset;
-        hoodController.setSetpoint(targetHoodEncoderAngle, ControlType.kPosition);
+        turretHoodAngle = angle;
     };
 
     @Override
@@ -308,31 +344,23 @@ public class TurretIOSpark implements TurretIO {
 
     @Override
     public void setShooterSpeed(double speed) {
+        turretSpeed = speed;
         shooterVoltageCommand = 0.0;
-        flywheelController1.setSetpoint(speed, ControlType.kVelocity);
+        flywheelController1.setSetpoint(turretSpeed, ControlType.kVelocity);
+        flywheelController2.setSetpoint(turretSpeed, ControlType.kVelocity);
     };
 
     @Override
     public void setShooterVoltage(double volts) {
         shooterVoltageCommand = MathUtil.clamp(volts, -12.0, 12.0);
         flywheel1Spark.setVoltage(shooterVoltageCommand);
-    }
-
-    @Override
-    public boolean turretAtSetpoint() {
-        return turretController.isAtSetpoint();
-    }
-
-    @Override
-    public boolean hoodAtSetpoint() {
-        return hoodController.isAtSetpoint();
+        flywheel2Spark.setVoltage(shooterVoltageCommand);
     }
 
     @Override
     public boolean flywheelAtSpeed() {
-        return flywheelController1.isAtSetpoint();
+        return flywheel1Encoder.getVelocity() > (turretSpeed * flywheelReadyRatio);
     }
-
     @Override
     public void shootFuel() {
 

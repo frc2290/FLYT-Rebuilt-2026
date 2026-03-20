@@ -77,7 +77,7 @@ public class RobotContainer {
 
     // The driver's controller
     CommandXboxController m_driverController;
-    CommandXboxController m_operatorController = new CommandXboxController(1);
+    //CommandXboxController m_operatorController = new CommandXboxController(1);
 
     SendableChooser<Command> auto_chooser = new SendableChooser<>();
     LoggedDashboardChooser<AutoStart> auto_start = new LoggedDashboardChooser<>("Auto Start");
@@ -197,7 +197,7 @@ public class RobotContainer {
                                     m_intake.runIntakeCommand(),
                                     m_driveStateMachine.tempChangeState(DriveState.SNAKE)));
 
-        m_driverController.axisGreaterThan(2, 0.5).whileTrue(m_intake.agitateIntake());
+        m_driverController.axisGreaterThan(2, 0.5).whileTrue(m_intake.agitateIntake(leftNotIn.getAsBoolean() ? IntakeSide.LEFT : IntakeSide.RIGHT));
 
         m_driverController.povLeft().onTrue(m_driveStateMachine.changeState(DriveState.MANUAL));
         m_driverController.povUp().onTrue(m_driveStateMachine.changeState(DriveState.SHOOT_LOCK));
@@ -209,9 +209,9 @@ public class RobotContainer {
 
         // Override the auto shooting, this same button overrides in both neutral and alliance zone
         // In alliance zone it will stop shooting and in neutral it will start shuttling fuel
-        m_operatorController.a().onTrue(m_stateMachine.setShooterOverrideCommand(true)).onFalse(m_stateMachine.setShooterOverrideCommand(false));
+        //m_operatorController.a().onTrue(m_stateMachine.setShooterOverrideCommand(true)).onFalse(m_stateMachine.setShooterOverrideCommand(false));
 
-        m_operatorController.b().whileTrue(m_intake.agitateIntake());
+        //m_operatorController.b().whileTrue(m_intake.wowowowowoIntake());
 
         // END OPERATOR BUTTONS
     }
