@@ -56,7 +56,8 @@ public class DyeRotorIOSpark implements DyeRotorIO {
                 .encoder
                 .positionConversionFactor(rotorEncoderPositionFactor)
                 .velocityConversionFactor(rotorEncoderVelocityFactor)
-                .quadratureAverageDepth(2);
+                .quadratureMeasurementPeriod(4)
+                .quadratureAverageDepth(9);
         rotorConfig
                 .closedLoop
                 .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
@@ -81,7 +82,8 @@ public class DyeRotorIOSpark implements DyeRotorIO {
                 .encoder
                 .positionConversionFactor(feederEncoderPositionFactor)
                 .velocityConversionFactor(feederEncoderVelocityFactor)
-                .uvwAverageDepth(2);
+                .uvwMeasurementPeriod(14)
+                .uvwAverageDepth(8);
         feederConfig
                 .closedLoop
                 .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
