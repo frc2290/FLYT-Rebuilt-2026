@@ -104,7 +104,11 @@ public final class Constants {
                 new Translation3d(inchesToMeters(16), inchesToMeters(7), inchesToMeters(22)),
                 new Rotation3d(0.0, 0, 0.0));
 
-        public static final String kBackwardCamName = "backward";
+        public static final Transform3d kForwardCamTransform2 = new Transform3d(
+                new Translation3d(inchesToMeters(16.75), inchesToMeters(4.875), inchesToMeters(21.5)),
+                new Rotation3d(degreesToRadians(-3.2), 0, 0.0));
+
+        public static final String kBackwardCamName = "forward2";//"backward";
         public static final Transform3d kBackwardCamTransform = new Transform3d(
                 new Translation3d(inchesToMeters(12.16), inchesToMeters(5.25), inchesToMeters(20.93)),
                 new Rotation3d(0.0, degreesToRadians(-42.0), degreesToRadians(180.0)));
@@ -202,11 +206,11 @@ public final class Constants {
         public static final double kVisionRejectVarianceThreshold = 90000.0;
         public static final double kVisionRotationVarianceFusionCutoff = 1000.0;
 
-        public static final double kVisionXyStdDevCoefficient = 0.25;
-        public static final double kVisionThetaStdDevCoefficient = 0.10;
+        public static final double kVisionXyStdDevCoefficient = 2.5;
+        public static final double kVisionThetaStdDevCoefficient = 1.0;
         public static final double kVisionCameraStdDevFactor = 1.0;
-        public static final double kVisionStdDevDistanceExponent = 2.0;
-        public static final double kVisionStdDevTagCountExponent = 1.0;
+        public static final double kVisionStdDevDistanceExponent = 1.0;
+        public static final double kVisionStdDevTagCountExponent = 2.0;
         public static final double kVisionStdDevMin = 0.01;
 
         public static final double kVisionFinalXyStdDevFloor = 0.05;

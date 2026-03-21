@@ -67,10 +67,7 @@ public class PhotonRunnable implements Runnable {
         }
         layout.setOrigin(OriginPosition.kBlueAllianceWallRightSide);
 
-        this.photonPoseEstimator = new PhotonPoseEstimator(
-                layout,
-                PoseStrategy.MULTI_TAG_PNP_ON_COPROCESSOR,
-                cameraToRobot);
+        this.photonPoseEstimator = new PhotonPoseEstimator(layout, cameraToRobot);
     }
 
     @Override
