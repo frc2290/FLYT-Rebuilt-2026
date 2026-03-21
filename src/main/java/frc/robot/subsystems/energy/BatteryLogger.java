@@ -9,34 +9,58 @@ package frc.robot.subsystems.energy;
 
 import java.util.HashMap;
 import java.util.Map;
-// import lombok.Setter;
+
+import org.littletonrobotics.junction.AutoLog;
 import org.littletonrobotics.junction.Logger;
 
 /** Class for logging current, power, and energy usage. */
 public class BatteryLogger {
+    @AutoLog
+    public static class BatteryIOInputs {
+        public double batteryVoltage = 12.0;
+        public double rioCurrent = 0.0;
+        public double radioCurrent = 0.0;
+        public double cameraCurrent = 0.0;
+    }
+
+    public BatteryIOInputsAutoLogged inputs;
+
     private double totalCurrent = 0.0;
     private double totalPower = 0.0;
     private double totalEnergy = 0.0;
-    private double batteryVoltage = 12.6;
-    private double rioCurrent = 0.0;
 
     private Map<String, Double> subsytemCurrents = new HashMap<>();
     private Map<String, Double> subsytemPowers = new HashMap<>();
     private Map<String, Double> subsytemEnergies = new HashMap<>();
 
-    public void reportCurrentUsage(String key, double... amps) {
-        double totalAmps = 0.0;
-        for (double amp : amps)
-            totalAmps += Math.abs(amp);
+    public BatteryLogger(BatteryIOInputsAutoLogged inputs) {
+        this.inputs = inputs;
+    }
 
-        double power = totalAmps * batteryVoltage;
+    /**
+     * report current usage of a device with battervoltage
+     * @param key name of device, can use slashes like networktables
+     * @param amps amps the device is consuming (at battery voltage)
+     */
+    public void reportCurrentUsage(String key, double amps) {
+        reportCurrentUsage(key, amps, inputs.batteryVoltage);
+    }
+
+    /**
+     * report current usage of a device with specific voltage
+     * @param key name of device, can use slashes like networktables
+     * @param amps amps the device is consuming (at its applied voltage)
+     * @param volts applied voltage
+     */
+    public void reportCurrentUsage(String key, double amps, double volts) {
+        double power = amps * Math.abs(volts);
         double energy = power * 0.02; // loopPeriodSeconds
 
-        totalCurrent += totalAmps;
+        totalCurrent += amps;
         totalPower += power;
         totalEnergy += energy;
 
-        subsytemCurrents.put(key, totalAmps);
+        subsytemCurrents.put(key, amps);
         subsytemPowers.put(key, power);
         subsytemEnergies.merge(key, energy, Double::sum);
 
@@ -51,15 +75,21 @@ public class BatteryLogger {
             if (i < keys.length - 2) {
                 subkey += "/";
             }
-            subsytemCurrents.merge(subkey, totalAmps, Double::sum);
+            subsytemCurrents.merge(subkey, amps, Double::sum);
             subsytemPowers.merge(subkey, power, Double::sum);
             subsytemEnergies.merge(subkey, energy, Double::sum);
         }
     }
 
+    /**
+     * to be run in the main periodic loop after scheduler, records things to logger
+     */
     public void periodicAfterScheduler() {
-        reportCurrentUsage("Controls/roboRIO", rioCurrent);
-        reportCurrentUsage("Controls/Radio", 0.5);
+        Logger.processInputs("BatteryLogger", inputs);
+
+        reportCurrentUsage("Controls/roboRIO", inputs.rioCurrent);
+        reportCurrentUsage("Controls/Radio", inputs.radioCurrent);
+        reportCurrentUsage("Controls/Cameras", inputs.cameraCurrent);
 
         // Log total and subsystem energy usage
         Logger.recordOutput("EnergyLogger/Current", totalCurrent, "amps");
@@ -100,13 +130,5 @@ public class BatteryLogger {
 
     private double joulesToWattHours(double joules) {
         return joules / 3600.0;
-    }
-
-    public void setBatteryVoltage(double volts) {
-        batteryVoltage = volts;
-    }
-
-    public void setRioCurrent(double amps) {
-        rioCurrent = amps;
     }
 }
