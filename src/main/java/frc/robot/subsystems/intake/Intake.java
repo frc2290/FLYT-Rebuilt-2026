@@ -103,13 +103,12 @@ public class Intake extends SubsystemBase {
 
         if (!isIn(IntakeSide.LEFT) && !isIn(IntakeSide.RIGHT)) {
             // panic???
-            
         }
 
-        Robot.batteryLogger.reportCurrentUsage("Intake/Deploy/Left", inputsLeft.deployCurrentAmps);
-        Robot.batteryLogger.reportCurrentUsage("Intake/Deploy/Right", inputsRight.deployCurrentAmps);
-        Robot.batteryLogger.reportCurrentUsage("Intake/Drive/Left", inputsLeft.driveCurrentAmps);
-        Robot.batteryLogger.reportCurrentUsage("Intake/Drive/Right", inputsRight.driveCurrentAmps);
+        Robot.batteryLogger.reportCurrentUsage("Intake/Deploy/Left", inputsLeft.deployCurrentAmps, inputsLeft.deployAppliedVolts);
+        Robot.batteryLogger.reportCurrentUsage("Intake/Deploy/Right", inputsRight.deployCurrentAmps, inputsRight.deployAppliedVolts);
+        Robot.batteryLogger.reportCurrentUsage("Intake/Drive/Left", inputsLeft.driveCurrentAmps, inputsLeft.driveAppliedVolts);
+        Robot.batteryLogger.reportCurrentUsage("Intake/Drive/Right", inputsRight.driveCurrentAmps, inputsRight.driveAppliedVolts);
     }
 
     private IntakeIO getIo(IntakeSide side) {

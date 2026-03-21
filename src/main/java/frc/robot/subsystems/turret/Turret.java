@@ -165,9 +165,9 @@ public class Turret extends SubsystemBase {
         Logger.recordOutput("Turret/ShotAngleSetpointDeg", activeShotAngleSetpointDeg);
         Logger.recordOutput("Turret/CurrentTOFTable", sotf.getCurrentTofTable());
 
-        Robot.batteryLogger.reportCurrentUsage("Turret/Turn", inputs.turretConnected ? inputs.turretCurrentAmps : 0.0);
-        Robot.batteryLogger.reportCurrentUsage("Turret/Hood", inputs.hoodConnected ? inputs.hoodCurrentAmps : 0.0);
-        Robot.batteryLogger.reportCurrentUsage("Turret/Flywheel", inputs.flywheelConnected ? inputs.flywheelCurrentAmps : 0.0);
+        Robot.batteryLogger.reportCurrentUsage("Turret/Turn", inputs.turretConnected ? inputs.turretCurrentAmps : 0.0, inputs.turretAppliedVolts);
+        Robot.batteryLogger.reportCurrentUsage("Turret/Hood", inputs.hoodConnected ? inputs.hoodCurrentAmps : 0.0, inputs.hoodAppliedVolts);
+        Robot.batteryLogger.reportCurrentUsage("Turret/Flywheel", inputs.flywheelConnected ? inputs.flywheelCurrentAmps : 0.0, inputs.flywheelAppliedVolts);
     }
 
     /**
