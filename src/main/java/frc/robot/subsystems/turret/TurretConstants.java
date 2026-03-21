@@ -140,26 +140,21 @@ public class TurretConstants {
     public static final InterpolatingTreeMap<Double, FullShooterParams> SHUTTLE_MAP = new InterpolatingTreeMap<>(
             InverseInterpolator.forDouble(), ShootOnTheFly::interpolateParams);
     static {
-SHUTTLE_MAP.put(1.0000, new FullShooterParams(3.319969, 64.807711, 0.731295));
-        SHUTTLE_MAP.put(2.0000, new FullShooterParams(5.125435, 65.923149, 1.032677));
-        SHUTTLE_MAP.put(3.0000, new FullShooterParams(6.447866, 65.281542, 1.250952));
-        SHUTTLE_MAP.put(4.0000, new FullShooterParams(7.545077, 64.290531, 1.426582));
-        SHUTTLE_MAP.put(5.0000, new FullShooterParams(8.508824, 63.190998, 1.575392));
-        SHUTTLE_MAP.put(6.0000, new FullShooterParams(9.126108, 60.526108, 1.646029));
-        SHUTTLE_MAP.put(7.0000, new FullShooterParams(9.502651, 56.494141, 1.653278));
-        SHUTTLE_MAP.put(8.0000, new FullShooterParams(9.927425, 52.715278, 1.661472));
-        SHUTTLE_MAP.put(9.0000, new FullShooterParams(10.396721, 49.192040, 1.670607));
-        SHUTTLE_MAP.put(10.0000, new FullShooterParams(10.906930, 45.919112, 1.680670));
-        SHUTTLE_MAP.put(11.0000, new FullShooterParams(11.454595, 42.884156, 1.691603));
-        SHUTTLE_MAP.put(12.0000, new FullShooterParams(12.036705, 40.073727, 1.703415));
-        SHUTTLE_MAP.put(13.0000, new FullShooterParams(12.650510, 37.472279, 1.716107));
-        SHUTTLE_MAP.put(14.0000, new FullShooterParams(13.293551, 35.062681, 1.729655));
-        SHUTTLE_MAP.put(15.0000, new FullShooterParams(13.963716, 32.827856, 1.744030));
-        SHUTTLE_MAP.put(16.0000, new FullShooterParams(14.659229, 30.751349, 1.759203));
-        SHUTTLE_MAP.put(17.0000, new FullShooterParams(15.378637, 28.817659, 1.775144));
-        SHUTTLE_MAP.put(18.0000, new FullShooterParams(16.120790, 27.012421, 1.791821));
-        SHUTTLE_MAP.put(19.0000, new FullShooterParams(16.884829, 25.322476, 1.809200));
-        SHUTTLE_MAP.put(20.0000, new FullShooterParams(17.670397, 23.733766, 1.827180));
+        SHUTTLE_MAP.put(1.0000, new FullShooterParams(3.319969, 64.807711, 0.731295));
+        SHUTTLE_MAP.put(2.0000, new FullShooterParams(5.125435, 65.923147, 1.032677));
+        SHUTTLE_MAP.put(3.0000, new FullShooterParams(6.447865, 65.281538, 1.250952));
+        SHUTTLE_MAP.put(4.0000, new FullShooterParams(7.545075, 64.290517, 1.426581));
+        SHUTTLE_MAP.put(5.0000, new FullShooterParams(8.221142, 61.312261, 1.508386));
+        SHUTTLE_MAP.put(6.0000, new FullShooterParams(8.615213, 56.607746, 1.515164));
+        SHUTTLE_MAP.put(7.0000, new FullShooterParams(9.066990, 52.262283, 1.522995));
+        SHUTTLE_MAP.put(8.0000, new FullShooterParams(9.570525, 48.273156, 1.531807));
+        SHUTTLE_MAP.put(9.0000, new FullShooterParams(10.120525, 44.629036, 1.541650));
+        SHUTTLE_MAP.put(10.0000, new FullShooterParams(10.711913, 41.308344, 1.552519));
+        SHUTTLE_MAP.put(11.0000, new FullShooterParams(11.340109, 38.284513, 1.564392));
+        SHUTTLE_MAP.put(12.0000, new FullShooterParams(12.001103, 35.529308, 1.577242));
+        SHUTTLE_MAP.put(13.0000, new FullShooterParams(12.691452, 33.014767, 1.591040));
+        SHUTTLE_MAP.put(14.0000, new FullShooterParams(13.408251, 30.714376, 1.605753));
+        SHUTTLE_MAP.put(15.0000, new FullShooterParams(14.149097, 28.603693, 1.621347));
     };
 
     public static final class SotfConstants {
