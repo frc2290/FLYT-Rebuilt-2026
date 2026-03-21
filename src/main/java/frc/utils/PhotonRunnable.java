@@ -21,6 +21,7 @@ import static frc.robot.Constants.VisionConstants.kVisionMaxPoseZMeters;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFieldLayout.OriginPosition;
 import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.wpilibj.Filesystem;
 import frc.utils.PoseUtils.Heading;
@@ -28,6 +29,7 @@ import frc.utils.PoseUtils.Heading;
 import java.io.IOException;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.function.Supplier;
+import org.littletonrobotics.junction.Logger;
 import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonCamera;
 import org.photonvision.PhotonPoseEstimator;
@@ -83,6 +85,26 @@ public class PhotonRunnable implements Runnable {
             if (!result.hasTargets()) {
                 continue;
             }
+
+            var targets = result.getTargets();
+            long[] tagIds = new long[targets.size()];
+            Pose3d[] cameraToTags = new Pose3d[targets.size()];
+            double[] ambiguities = new double[targets.size()];
+
+            for (int i = 0; i < targets.size(); i++) {
+                var target = targets.get(i);
+                tagIds[i] = target.getFiducialId();
+                var transform = target.getBestCameraToTarget();
+                cameraToTags[i] = new Pose3d(transform.getTranslation(), transform.getRotation());
+                ambiguities[i] = target.getPoseAmbiguity();
+            }
+
+            Logger.recordOutput(
+                    "VisionCalibration/" + cameraName + "/TimestampSec",
+                    result.getTimestampSeconds());
+            Logger.recordOutput("VisionCalibration/" + cameraName + "/TagIds", tagIds);
+            Logger.recordOutput("VisionCalibration/" + cameraName + "/CameraToTag", cameraToTags);
+            Logger.recordOutput("VisionCalibration/" + cameraName + "/Ambiguity", ambiguities);
 
             photonResults = result;
             atomicTargetYaw.set(result.getBestTarget().yaw);
