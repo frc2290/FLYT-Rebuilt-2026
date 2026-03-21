@@ -56,6 +56,27 @@ import org.littletonrobotics.junction.Logger;
 /** Pose estimator that uses odometry and AprilTags with PhotonVision. */
 public class PoseEstimatorSubsystem extends SubsystemBase {
 
+    private static final class VisionMeasurement {
+        private final String cameraName;
+        private final Pose2d pose;
+        private final double timestampSeconds;
+        private final Matrix<N3, N1> stdDevs;
+        private final double stdDevScore;
+
+        private VisionMeasurement(
+                String cameraName,
+                Pose2d pose,
+                double timestampSeconds,
+                Matrix<N3, N1> stdDevs,
+                double stdDevScore) {
+            this.cameraName = cameraName;
+            this.pose = pose;
+            this.timestampSeconds = timestampSeconds;
+            this.stdDevs = stdDevs;
+            this.stdDevScore = stdDevScore;
+        }
+    }
+
     // Kalman Filter configuration. These can be "tuned-to-taste" based on how much
     // you trust your various sensors. Smaller numbers will cause the filter to
     // "trust" the estimate from that particular component more than the others.
@@ -121,7 +142,7 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
         frontPhotonRunnable = new PhotonRunnable(
                 VisionConstants.kForwardCamName, VisionConstants.kForwardCamTransform, () -> getHeading());
         backPhotonRunnable = new PhotonRunnable(
-                VisionConstants.kBackwardCamName, VisionConstants.kBackwardCamTransform, () -> getHeading());
+                VisionConstants.kBackwardCamName, VisionConstants.kForwardCamTransform2, () -> getHeading()); //backward camera
         leftPhotonRunnable = new PhotonRunnable(
                 VisionConstants.kLeftCamName, VisionConstants.kLeftCamTransform, () -> getHeading());
         rightPhotonRunnable = new PhotonRunnable(
@@ -202,10 +223,26 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
         EstimatedRobotPose leftUpdate = leftPhotonRunnable.grabLatestUpdate();
         EstimatedRobotPose rightUpdate = rightPhotonRunnable.grabLatestUpdate();
 
-        processCameraUpdate(frontUpdate, "Front");
-        processCameraUpdate(backUpdate, "Back");
-        processCameraUpdate(leftUpdate, "Left");
-        processCameraUpdate(rightUpdate, "Right");
+        VisionMeasurement bestMeasurement = null;
+        bestMeasurement = chooseBetter(bestMeasurement, processCameraUpdate(frontUpdate, "Front"));
+        bestMeasurement = chooseBetter(bestMeasurement, processCameraUpdate(backUpdate, "Back"));
+        bestMeasurement = chooseBetter(bestMeasurement, processCameraUpdate(leftUpdate, "Left"));
+        bestMeasurement = chooseBetter(bestMeasurement, processCameraUpdate(rightUpdate, "Right"));
+
+        if (bestMeasurement != null) {
+            drive.addVisionMeasurement(
+                    bestMeasurement.pose,
+                    bestMeasurement.timestampSeconds,
+                    bestMeasurement.stdDevs);
+            sawTag = true;
+            Logger.recordOutput("Vision/SelectedCamera", bestMeasurement.cameraName);
+            Logger.recordOutput("Vision/SelectedPose", new Pose2d[] {bestMeasurement.pose});
+            Logger.recordOutput("Vision/SelectedStdDevScore", bestMeasurement.stdDevScore);
+        } else {
+            Logger.recordOutput("Vision/SelectedCamera", "");
+            Logger.recordOutput("Vision/SelectedPose", new Pose2d[] {});
+            Logger.recordOutput("Vision/SelectedStdDevScore", Double.NaN);
+        }
 
         // if (frontUpdate != null) {
         //     Pose2d frontPose = frontUpdate.estimatedPose.toPose2d();
@@ -229,11 +266,11 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
         //poseDash.update(Constants.debugMode);
     }
 
-    /** Processes a single camera frame and feeds it to the pose estimator. */
-    private void processCameraUpdate(EstimatedRobotPose update, String cameraName) {
+    /** Processes a single camera frame and returns a measurement candidate (or null). */
+    private VisionMeasurement processCameraUpdate(EstimatedRobotPose update, String cameraName) {
         if (update == null || update.targetsUsed == null || update.targetsUsed.isEmpty()) {
             Logger.recordOutput("Vision/CameraPoses/" + cameraName, new Pose2d[] {});
-            return;
+            return null;
         }
 
         // Apply legacy hard cutoffs only for single-tag solves.
@@ -243,7 +280,7 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
             double ambiguity = target.getPoseAmbiguity();
             if (distMeters > 3.0 || ambiguity > VisionConstants.APRILTAG_AMBIGUITY_THRESHOLD) {
                 Logger.recordOutput("Vision/CameraPoses/" + cameraName, new Pose2d[] {});
-                return;
+                return null;
             }
         }
 
@@ -251,7 +288,7 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
         double varX = Math.pow(stdDevs.get(0, 0), 2);
         if (varX >= VisionConstants.kVisionRejectVarianceThreshold) {
             Logger.recordOutput("Vision/CameraPoses/" + cameraName, new Pose2d[] {});
-            return;
+            return null;
         }
 
         Pose2d finalPose = update.estimatedPose.toPose2d();
@@ -259,9 +296,27 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
             finalPose = flipAlliance(finalPose);
         }
 
-        drive.addVisionMeasurement(finalPose, update.timestampSeconds, stdDevs);
-        sawTag = true;
         Logger.recordOutput("Vision/CameraPoses/" + cameraName, new Pose2d[] {finalPose});
+
+        double score = stdDevScore(stdDevs);
+        return new VisionMeasurement(cameraName, finalPose, update.timestampSeconds, stdDevs, score);
+    }
+
+    private VisionMeasurement chooseBetter(VisionMeasurement currentBest, VisionMeasurement candidate) {
+        if (candidate == null) {
+            return currentBest;
+        }
+        if (currentBest == null) {
+            return candidate;
+        }
+        return candidate.stdDevScore < currentBest.stdDevScore ? candidate : currentBest;
+    }
+
+    private static double stdDevScore(Matrix<N3, N1> stdDevs) {
+        double x = stdDevs.get(0, 0);
+        double y = stdDevs.get(1, 0);
+        double theta = stdDevs.get(2, 0);
+        return (x * x) + (y * y) + (theta * theta);
     }
 
     /** Calculates dynamic standard deviations using multiplicative scaling. */
