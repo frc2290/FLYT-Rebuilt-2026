@@ -105,8 +105,8 @@ public final class Constants {
                 new Rotation3d(0.0, 0, 0.0));
 
         public static final Transform3d kForwardCamTransform2 = new Transform3d(
-                new Translation3d(inchesToMeters(16.75), inchesToMeters(4.875), inchesToMeters(21.5)),
-                new Rotation3d(degreesToRadians(-3.2), 0, 0.0));
+                new Translation3d(inchesToMeters(17.5), inchesToMeters(-5.25), inchesToMeters(20.5)),
+                new Rotation3d(0.0, degreesToRadians(-10), 0.0));
 
         public static final String kBackwardCamName = "forward2";//"backward";
         public static final Transform3d kBackwardCamTransform = new Transform3d(

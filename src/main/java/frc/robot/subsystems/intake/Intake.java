@@ -216,10 +216,11 @@ public class Intake extends SubsystemBase {
         String logPrefix = side == IntakeSide.LEFT ? "Intake/Left" : "Intake/Right";
         double frequencyHz = 1.0;
         double agitateOutPosition = outPosition;
-        double agitateInPosition = outPosition * 0.65;
+        double agitateInPosition = outPosition * 0.5;
 
         return startRun(() -> {
             agitateTimer.restart();
+            getIo(side).setMaxMotion(false);
         }, () -> {
             double wave = 0.5 + 0.5 * Math.cos(2 * Math.PI * frequencyHz * agitateTimer.get());
             double angle = agitateInPosition + (wave * (agitateOutPosition - agitateInPosition));
@@ -230,6 +231,7 @@ public class Intake extends SubsystemBase {
             agitateTimer.stop();
             driveRoller(side, 0);
             getIo(side).setDeployPosition(outPosition);
+            getIo(side).setMaxMotion(true);
         });
     }
 

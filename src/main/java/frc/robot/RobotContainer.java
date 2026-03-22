@@ -73,7 +73,7 @@ public class RobotContainer {
     private final DyeRotor m_dyeRotor;
     private final Turret m_turret;
 
-    private final LEDUtility _leds = new LEDUtility(0);
+    private final LEDUtility _leds = new LEDUtility(8);
 
     // The driver's controller
     CommandXboxController m_driverController;
@@ -140,8 +140,10 @@ public class RobotContainer {
             instance.start();
         }
 
-        _leds.addStrip("Left", 0, 10);
-        _leds.addStrip("Right", 11, 20);
+        _leds.addStrip("Front", 0, 29);
+        _leds.addStrip("Right", 30, 100); //71
+        _leds.addStrip("Back", 101, 130);
+        _leds.addStrip("Left", 131, 200); //71
         _leds.setDefault();
     }
 
@@ -155,7 +157,7 @@ public class RobotContainer {
         Trigger isLeft = new Trigger(() -> m_stateMachine.getLeftSide());
         Trigger hubActive = new Trigger(() -> m_stateMachine.isHubActive());
         Trigger hubAboutToActive = new Trigger(() -> m_stateMachine.isHubAboutToBecomeActive());
-        Trigger isHoodDown = new Trigger(() -> m_turret.getHoodAngle() < 1);
+        Trigger isHoodDown = new Trigger(() -> m_turret.getHoodAngle() < 2);
 
         //isOnBump.or(isUnderTrench).and(notAuto).whileTrue(m_driveStateMachine.tempChangeState(DriveState.ASSIST));
         // isOnBump.and(notAuto).whileTrue(m_driveStateMachine.tempChangeState(DriveState.BUMP));

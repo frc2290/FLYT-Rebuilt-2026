@@ -37,6 +37,8 @@ public class IntakeIOSpark implements IntakeIO {
 
     private double deploySetpoint = inPosition;
 
+    private boolean maxMotionOn = true;
+
     public IntakeIOSpark(IntakeSide side, boolean inverted, double zeroOffset) {
         this.side = side;
         driveSpark = new SparkFlex(
@@ -131,7 +133,11 @@ public class IntakeIOSpark implements IntakeIO {
 
     @Override
     public void updateInputs(IntakeIOInputs inputs) {
-        deployController.setSetpoint(deploySetpoint + getZeroOffsetAdj(), ControlType.kMAXMotionPositionControl);
+        if (maxMotionOn) {
+                deployController.setSetpoint(deploySetpoint + getZeroOffsetAdj(), ControlType.kMAXMotionPositionControl);
+        } else {
+                deployController.setSetpoint(deploySetpoint + getZeroOffsetAdj(), ControlType.kPosition);
+        }
 
         // Update drive inputs
         ifOk(driveSpark, driveEncoder::getPosition, (value) -> inputs.drivePositionMeters = value);
@@ -172,6 +178,10 @@ public class IntakeIOSpark implements IntakeIO {
     @Override
     public void setDeployPosition(double angle) {
         this.deploySetpoint = angle;
+    }
+    
+    public void setMaxMotion(boolean on) {
+        this.maxMotionOn = on;
     }
 
     public double getPosition() {

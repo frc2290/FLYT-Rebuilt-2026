@@ -23,4 +23,5 @@ public interface IntakeIO {
     public default void setIntakeSpeed(double speed) {}
     public default void setIntakeVoltage(double volts) {}
     public default void setDeployPosition(double rotation) {}
+    public default void setMaxMotion(boolean on) {}    
 }
