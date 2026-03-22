@@ -36,6 +36,7 @@ public class IntakeIOSpark implements IntakeIO {
     private IntakeSide side;
 
     private double deploySetpoint = inPosition;
+    private ControlType deployControlType = ControlType.kMAXMotionPositionControl;
 
     private boolean maxMotionOn = true;
 
@@ -133,11 +134,7 @@ public class IntakeIOSpark implements IntakeIO {
 
     @Override
     public void updateInputs(IntakeIOInputs inputs) {
-        if (maxMotionOn) {
-                deployController.setSetpoint(deploySetpoint + getZeroOffsetAdj(), ControlType.kMAXMotionPositionControl);
-        } else {
-                deployController.setSetpoint(deploySetpoint + getZeroOffsetAdj(), ControlType.kPosition);
-        }
+        deployController.setSetpoint(deploySetpoint + getZeroOffsetAdj(), deployControlType);
 
         // Update drive inputs
         ifOk(driveSpark, driveEncoder::getPosition, (value) -> inputs.drivePositionMeters = value);
@@ -176,8 +173,9 @@ public class IntakeIOSpark implements IntakeIO {
     }
 
     @Override
-    public void setDeployPosition(double angle) {
+    public void setDeployPosition(double angle, boolean useProfile) {
         this.deploySetpoint = angle;
+        deployControlType = useProfile ? ControlType.kMAXMotionPositionControl : ControlType.kPosition;
     }
     
     public void setMaxMotion(boolean on) {

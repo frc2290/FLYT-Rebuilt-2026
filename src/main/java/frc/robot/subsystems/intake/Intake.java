@@ -132,7 +132,7 @@ public class Intake extends SubsystemBase {
     }
 
     public void deploy(IntakeSide side, boolean out) {
-        getIo(side).setDeployPosition(out ? outPosition : inPosition);
+        getIo(side).setDeployPosition(out ? outPosition : inPosition, true);
     }
 
     public void driveRoller(IntakeSide side, double speed) {
@@ -200,12 +200,12 @@ public class Intake extends SubsystemBase {
             double angle = outPosition - (Math.cos(wowowowowoTicks / 15.0) / -2.0 + 0.5) * (outPosition * 0.85);
             outSide.ifPresent(side -> {
                 driveRoller(side, rollerSpeed);
-                getIo(side).setDeployPosition(angle);
+                getIo(side).setDeployPosition(angle, true);
             });
         }).finallyDo(() -> {
             outSide.ifPresent(side -> {
                 driveRoller(side, 0);
-                getIo(side).setDeployPosition(outPosition);
+                getIo(side).setDeployPosition(outPosition, true);
             });
         });
     }
@@ -220,18 +220,16 @@ public class Intake extends SubsystemBase {
 
         return startRun(() -> {
             agitateTimer.restart();
-            getIo(side).setMaxMotion(false);
         }, () -> {
             double wave = 0.5 + 0.5 * Math.cos(2 * Math.PI * frequencyHz * agitateTimer.get());
             double angle = agitateInPosition + (wave * (agitateOutPosition - agitateInPosition));
             driveRoller(side, rollerSpeed/2);
-            getIo(side).setDeployPosition(angle);
+            getIo(side).setDeployPosition(angle, false);
             Logger.recordOutput(logPrefix + "DeployCharacterizeTarget", angle);
         }).finallyDo(() -> {
             agitateTimer.stop();
             driveRoller(side, 0);
-            getIo(side).setDeployPosition(outPosition);
-            getIo(side).setMaxMotion(true);
+            getIo(side).setDeployPosition(outPosition, true);
         });
     }
 
