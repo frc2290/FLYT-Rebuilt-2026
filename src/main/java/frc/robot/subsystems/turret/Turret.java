@@ -17,6 +17,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -29,7 +30,10 @@ import frc.utils.ShootOnTheFly.SOTFResult;
 import frc.utils.ShootOnTheFly.TargetTable;
 
 public class Turret extends SubsystemBase {
-    private static final double shooterVelocityScale = 1.3;
+    private static final String shooterVelocityScaleKey = "Turret_Cal/Speed_Scale";
+    private static final String shotAngleOffsetDegKey = "Turret_Cal/Angle_Offset_Deg";
+    private static final double defaultShooterVelocityScale = 1.3;
+    private static final double defaultShotAngleOffsetDeg = 0.0;
 
     public enum ControlMode {
         NORMAL, // Velocity for shooter, position for turn
@@ -56,6 +60,8 @@ public class Turret extends SubsystemBase {
     private double previousLoopTimestampSec = Timer.getFPGATimestamp();
     private double activeShooterVelocitySetpointMps = 0.0;
     private double activeShotAngleSetpointDeg = 0.0;
+    private double currentShooterVelocityScale = defaultShooterVelocityScale;
+    private double currentShotAngleOffsetDeg = defaultShotAngleOffsetDeg;
 
     public Turret(TurretIO turretIO, Supplier<Pose2d> pose, Supplier<ChassisSpeeds> speeds) {
         this.io = turretIO;
@@ -85,6 +91,9 @@ public class Turret extends SubsystemBase {
                         (voltage) -> sysIdVoltage = voltage.in(Volts),
                         null,
                         this));
+
+        SmartDashboard.putNumber(shooterVelocityScaleKey, defaultShooterVelocityScale);
+        SmartDashboard.putNumber(shotAngleOffsetDegKey, defaultShotAngleOffsetDeg);
     }
 
     @Override
@@ -122,8 +131,10 @@ public class Turret extends SubsystemBase {
         turretPointedAtTarget = result.isValid
                 && Math.abs(error.getDegrees()) < TurretConstants.SotfConstants.pointAtTargetToleranceDeg;
 
-        activeShooterVelocitySetpointMps = result.vel * shooterVelocityScale;
-        activeShotAngleSetpointDeg = result.pitch;
+        currentShooterVelocityScale = SmartDashboard.getNumber(shooterVelocityScaleKey, defaultShooterVelocityScale);
+        currentShotAngleOffsetDeg = SmartDashboard.getNumber(shotAngleOffsetDegKey, defaultShotAngleOffsetDeg);
+        activeShooterVelocitySetpointMps = result.vel * currentShooterVelocityScale;
+        activeShotAngleSetpointDeg = result.pitch + currentShotAngleOffsetDeg;
 
         // TURN CONTROL
         if (currentControlMode == ControlMode.TURN_VOLTAGE) {
@@ -163,6 +174,8 @@ public class Turret extends SubsystemBase {
         Logger.recordOutput("Turret/SysIdVoltage", sysIdVoltage);
         Logger.recordOutput("Turret/FlywheelVelocitySetpointMps", activeShooterVelocitySetpointMps);
         Logger.recordOutput("Turret/ShotAngleSetpointDeg", activeShotAngleSetpointDeg);
+        Logger.recordOutput("Turret/CalibratedSpeedScale", currentShooterVelocityScale);
+        Logger.recordOutput("Turret/CalibratedShotAngleOffsetDeg", currentShotAngleOffsetDeg);
         Logger.recordOutput("Turret/CurrentTOFTable", sotf.getCurrentTofTable());
 
         Robot.batteryLogger.reportCurrentUsage("Turret/Turn", inputs.turretConnected ? inputs.turretCurrentAmps : 0.0, inputs.turretAppliedVolts);
@@ -267,13 +280,13 @@ public class Turret extends SubsystemBase {
         return inputs.flywheelVelocity;
     }
 
-    /** Returns the nominal shot speed command used by this turret for a given distance. */
+    /** Returns the raw, uncalibrated shot speed command for a given distance. */
     public double getShotVelocityForDistanceMeters(double distanceMeters) {
         FullShooterParams params = TurretConstants.HUB_MAP.get(distanceMeters);
         if (params == null) {
             return 0.0;
         }
-        return params.speedMetersPerSecond() * shooterVelocityScale;
+        return params.speedMetersPerSecond();
     }
 
     /** Returns the nominal shot hood-angle command for a given distance. */
