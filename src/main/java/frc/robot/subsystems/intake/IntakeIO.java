@@ -22,5 +22,8 @@ public interface IntakeIO {
     
     public default void setIntakeSpeed(double speed) {}
     public default void setIntakeVoltage(double volts) {}
-    public default void setDeployPosition(double rotation) {}
+    public default void setDeployPosition(double rotation) {
+        setDeployPosition(rotation, true);
+    }
+    public default void setDeployPosition(double rotation, boolean useProfile) {}
 }
