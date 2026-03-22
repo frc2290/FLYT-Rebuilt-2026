@@ -83,8 +83,8 @@ public class Turret extends SubsystemBase {
 
         turnSysId = new SysIdRoutine(
                 new SysIdRoutine.Config(
-                        Volts.of(0.4).per(Second),
-                        Volts.of(10.0),
+                        Volts.of(2.5 / 30.0).per(Second),
+                        Volts.of(2.5),
                         Seconds.of(30),
                         (state) -> Logger.recordOutput("Turret/TurnSysIdState", state.toString())),
                 new SysIdRoutine.Mechanism(
