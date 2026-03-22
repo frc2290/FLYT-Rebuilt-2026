@@ -111,6 +111,10 @@ public class LEDUtility extends SubsystemBase {
     getStrip("Left").setColor(LEDEffects.flytBlue);
     getStrip("Right").setEffect(LEDEffect.PULSE);
     getStrip("Right").setColor(LEDEffects.flytBlue);
+    getStrip("Front").setEffect(LEDEffect.PULSE);
+    getStrip("Front").setColor(LEDEffects.flytBlue);
+    getStrip("Back").setEffect(LEDEffect.PULSE);
+    getStrip("Back").setColor(LEDEffects.flytBlue);
   }
 
   private void setLength(int length) {
@@ -131,6 +135,7 @@ public class LEDUtility extends SubsystemBase {
     try {
       newLedStrips.forEach(strip -> strip.getPattern().applyTo(strip.getBufferView()));
       addressableLED.setData(filler);
+      addressableLED.start();
     } catch (Exception e) {
       System.out.println("LED EXception: " + e);
     }

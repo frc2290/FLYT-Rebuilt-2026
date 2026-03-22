@@ -85,8 +85,8 @@ public class TurretIOSpark implements TurretIO {
         // Setup RoboRio Absolute encoders
         // Initializes duty cycle encoders on DIO pins 0 and 1.
         // get() returns position in rotations [0, 1].
-        turnEncoder1 = new DutyCycleEncoder(0, 1, 0.8347440958686024);
-        turnEncoder2 = new DutyCycleEncoder(1, 1, 0.7634904940872623);
+        turnEncoder1 = new DutyCycleEncoder(8, 1, 0.9091683227292081);
+        turnEncoder2 = new DutyCycleEncoder(9, 1, 0.8347432208685805);
 
         // Gets if the encoders are connected, IMPLEMENT LATER
         turnEncoder1.isConnected();
@@ -214,7 +214,8 @@ public class TurretIOSpark implements TurretIO {
         }
 
         // this is very important line that checks turrets position through absalute encoders then sets relative encoder to same pose + whataever offset we want
-        turnRelEncoder.setPosition(getTurretPosAtStart() + encoderOffset);
+        //turnRelEncoder.setPosition(getTurretPosAtStart() + encoderOffset);
+        turnRelEncoder.setPosition(0.0);
     }
 
 
@@ -281,7 +282,7 @@ public class TurretIOSpark implements TurretIO {
         ifOk(
             turretSpark,
             new DoubleSupplier[] {turretSpark::getAppliedOutput, turretSpark::getBusVoltage},
-            (values) -> inputs.turretAppliedVolts = values[0] * values[1]);
+            (values) -> inputs.turretAppliedVolts = values[0]);
         ifOk(turretSpark, turretSpark::getOutputCurrent, (value) -> inputs.turretCurrentAmps = value);
         inputs.turretConnected = turretConnectedDebounce.calculate(!sparkStickyFault);
 
