@@ -89,7 +89,7 @@ public class IntakeIOSim implements IntakeIO {
     }
 
     @Override
-    public void setDeployPosition(double angle) {
+    public void setDeployPosition(double angle, boolean useProfile) {
         deployController.setSetpoint(degreesToRadians(angle));
     }
 }
