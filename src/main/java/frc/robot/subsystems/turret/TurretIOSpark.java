@@ -62,6 +62,7 @@ public class TurretIOSpark implements TurretIO {
     //
 
     // Global variables
+    private boolean isTurretHomed = false;
     private double turretAngle = 0;
     private double turretSpeed = 0;
     private double turretHoodAngle = 10;
@@ -88,9 +89,13 @@ public class TurretIOSpark implements TurretIO {
         turnEncoder1 = new DutyCycleEncoder(8, 1, 0.9091683227292081);
         turnEncoder2 = new DutyCycleEncoder(9, 1, 0.8347432208685805);
 
-        // Gets if the encoders are connected, IMPLEMENT LATER
-        turnEncoder1.isConnected();
-        turnEncoder2.isConnected();
+        // Help get() compute stable percentages by providing the expected frequency (REV V1)
+        turnEncoder1.setAssumedFrequency(975.6);
+        turnEncoder2.setAssumedFrequency(975.6);
+
+        // Clamp the valid duty cycle range to REV V1 hardware specs (1us to 1024us over 1025us)
+        turnEncoder1.setDutyCycleRange(1.0 / 1025.0, 1024.0 / 1025.0);
+        turnEncoder2.setDutyCycleRange(1.0 / 1025.0, 1024.0 / 1025.0);
 
         /*In 2025 the API changed to remove rollover detection as rollover 
         detection did not work. The get() method returns the value within a
@@ -213,15 +218,15 @@ public class TurretIOSpark implements TurretIO {
             System.err.println("FLYWHEEL2 CONFIG FAILED: " + flywheel2Err.name());
         }
 
-        // this is very important line that checks turrets position through absalute encoders then sets relative encoder to same pose + whataever offset we want
-        //turnRelEncoder.setPosition(getTurretPosAtStart() + encoderOffset);
+        // this is very important line that checks turret position through absolute encoders then sets relative encoder to same pose
+        //turnRelEncoder.setPosition(calculateAbsoluteTurretAngle());
         turnRelEncoder.setPosition(0.0);
     }
 
 
     // Absolute dual encoder position of turret estimator master piece
     // Also I think this function should be run only once to set position for relative encoder
-    private double getTurretPosAtStart() {
+    private double calculateAbsoluteTurretAngle() {
         // Ratios: Turn mechanism gear / encoder pulleys.
         // Limits: Assumes the turret starts within +/- rangeTurret/2 rotations of mechanism travel.
         DualEncoderUnwrapper unwrapper = new DualEncoderUnwrapper(
@@ -241,7 +246,7 @@ public class TurretIOSpark implements TurretIO {
         } else {
             System.err.println(
                 "Turret Unwrap Failed. Status: " + result.status + " | Error: " + result.error);
-            return 0.0;
+            return Double.NaN;
         }
     }
 
@@ -260,12 +265,27 @@ public class TurretIOSpark implements TurretIO {
     // I think this is used for logger pro to keep track of things?
     @Override
     public void updateInputs(TurretIOInputs inputs) {
+        // Delayed absolute seeding: only latch when both absolute encoders are connected.
+        if (!isTurretHomed && turnEncoder1.isConnected() && turnEncoder2.isConnected()) {
+            double startPos = calculateAbsoluteTurretAngle();
+
+            if (!Double.isNaN(startPos)) {
+                turnRelEncoder.setPosition(startPos);
+                isTurretHomed = true;
+            }
+        }
+
         double targetHoodEncoderAngle = (turretHoodAngle + hoodAngleOffset);
         hoodController.setSetpoint(targetHoodEncoderAngle, ControlType.kPosition);
 
-        turretController.setSetpoint(turretAngleSetpoint, ControlType.kPosition);
+        // Gate turret motion until absolute homing completes.
+        if (isTurretHomed) {
+            turretController.setSetpoint(turretAngleSetpoint, ControlType.kPosition);
+        } else {
+            turretController.setSetpoint(0.0, ControlType.kVoltage);
+        }
 
-        //turretAngle = getTurretPos();
+        turretAngle = getTurretPos();
         inputs.turretAngle = turretAngle;
         inputs.turretSpeed = turretSpeed;
         inputs.turretHoodAngle = turretHoodAngle;
@@ -282,7 +302,7 @@ public class TurretIOSpark implements TurretIO {
         ifOk(
             turretSpark,
             new DoubleSupplier[] {turretSpark::getAppliedOutput, turretSpark::getBusVoltage},
-            (values) -> inputs.turretAppliedVolts = values[0]);
+            (values) -> inputs.turretAppliedVolts = values[0] * values[1]);
         ifOk(turretSpark, turretSpark::getOutputCurrent, (value) -> inputs.turretCurrentAmps = value);
         inputs.turretConnected = turretConnectedDebounce.calculate(!sparkStickyFault);
 
