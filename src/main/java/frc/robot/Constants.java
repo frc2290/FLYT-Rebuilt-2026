@@ -167,37 +167,7 @@ public final class Constants {
         public static final Pose2d depotPose = new Pose2d(0.6858, 5.963158, new Rotation2d(0));
         public static final Pose2d towerPose = new Pose2d(1.055624, 3.745484, new Rotation2d(0));
 
-        // R2OC Red and Blue average Pose
-        public static final List<Pose2d> leftBranches = List.of(
-                new Pose2d(3.182, 4.192, new Rotation2d(Math.toRadians(-1.4))), // 18_LEFT
-                new Pose2d(3.682, 2.984, new Rotation2d(Math.toRadians(58.0))), // 17_LEFT
-                new Pose2d(4.994, 2.810, new Rotation2d(Math.toRadians(118.1))), // 22_LEFT
-                new Pose2d(5.795, 3.849, new Rotation2d(Math.toRadians(178.1))), // 21_LEFT
-                new Pose2d(5.287, 5.073, new Rotation2d(Math.toRadians(-121.5))), // 20_LEFT
-                new Pose2d(3.991, 5.245, new Rotation2d(Math.toRadians(-62.1)))); // 19_LEFT
-        public static final List<Pose2d> rightBranches = List.of(
-                new Pose2d(3.181, 3.851, new Rotation2d(Math.toRadians(-0.8))), // 18_RIGHT
-                new Pose2d(3.985, 2.808, new Rotation2d(Math.toRadians(59.1))), // 17_RIGHT
-                new Pose2d(5.288, 2.977, new Rotation2d(Math.toRadians(118.7))), // 22_RIGHT
-                new Pose2d(5.796, 4.206, new Rotation2d(Math.toRadians(179.7))), // 21_RIGHT
-                new Pose2d(4.989, 5.246, new Rotation2d(Math.toRadians(-121.0))), // 20_RIGHT
-                new Pose2d(3.691, 5.073, new Rotation2d(Math.toRadians(-61.4)))); // 19_RIGHT
-
-        public static final Translation2d reefCenter = new Translation2d(176 * inToM, 158.5 * inToM);
-        public static final Translation2d processor = new Translation2d(6, 0);
-
-        /** Pose used when pointing the drivetrain toward the center of the reef. */
-        public static final Pose2d REEF_CENTER_AIM_POSE = new Pose2d(reefCenter, new Rotation2d());
-
-        /** Pose used when aiming the drivetrain at the processor. */
-        public static final Pose2d PROCESSOR_AIM_POSE = new Pose2d(processor, new Rotation2d());
-
         public static final double halfwayAcrossFieldY = (317 / 2) * inToM;
-        public static final double coralStationLeftHeading = -55;
-        public static final double coralStationRightHeading = 55;
-
-        // X value of the translation is irrelevant
-        public static final Translation2d netScore = new Translation2d(295 * inToM, 295 * inToM);
 
         public static final int ATPipelineIndex = 0;
 
