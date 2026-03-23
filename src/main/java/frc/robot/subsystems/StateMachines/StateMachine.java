@@ -16,6 +16,7 @@ import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -47,6 +48,8 @@ public class StateMachine extends SubsystemBase {
     private boolean hubActive = true;
     private Timer hubTimer = new Timer();
     private static final double kHubActiveWarningSeconds = 5.0;
+    private static final double defaultHubInternalTransitSeconds = 1.0;
+    private static final double defaultFuelAssessmentGraceSeconds = 3.0;
 
     private boolean isOnLeftSide = false; // left = high x, right = low x
     private FieldZone fieldZone = FieldZone.ALLIANCE;
@@ -92,42 +95,43 @@ public class StateMachine extends SubsystemBase {
 
     private void updateTime() {
         String gameData = DriverStation.getGameSpecificMessage();
-        double time = hubTimer.get();
-        Logger.recordOutput("StateMachine/GameData", gameData);
-        Logger.recordOutput("StateMachine/HubTimer", time);
-        Logger.recordOutput("StateMachine/MatchTime", DriverStation.getMatchTime());
-        if (gameData.length() <= 0) {return;}
+        double nowSeconds = hubTimer.get();
+        double shotToAssessmentOffsetSeconds = getShotToAssessmentOffsetSeconds();
+        double effectiveSeconds = nowSeconds + shotToAssessmentOffsetSeconds;
+        boolean fuelAssessmentWindowOpen = willFuelBeAssessedIfShotWithOffset(shotToAssessmentOffsetSeconds);
 
-        boolean evenShift;
-        // transition shift or endgame
-        if (time < 10.0 || time >= 110.0) {
+        Logger.recordOutput("StateMachine/GameData", gameData);
+        Logger.recordOutput("StateMachine/HubTimer", nowSeconds);
+        Logger.recordOutput("StateMachine/HubShotToAssessmentOffsetSec", shotToAssessmentOffsetSeconds);
+        Logger.recordOutput("StateMachine/HubEffectiveTimeSec", effectiveSeconds);
+        Logger.recordOutput("StateMachine/FuelAssessmentWindowOpen", fuelAssessmentWindowOpen);
+        Logger.recordOutput("StateMachine/MatchTime", DriverStation.getMatchTime());
+
+        if (gameData == null || gameData.isEmpty()) {
             hubActive = true;
             return;
-        } else if ((time >= 10.0 && time < 35.0) || (time >= 60.0 && time < 85.0)) {
-            evenShift = false;
-        } else if ((time >= 35.0 && time < 60.0) || (time >= 85.0 && time < 110.0)) {
-            evenShift = true;
-        } else {
-            // in theory this will never happen but java complains about evenShift
-            // potentially not being initialized if i don't have this
-            return;
         }
 
-        boolean blueActive;
-        switch (gameData.charAt(0)) {
-            case 'B':
-                blueActive = evenShift;
-                break;
-            case 'R':
-                blueActive = !evenShift;
-                break;
-            default:
-                return; // bad things have happened uhh panic i guess
-        }
+        hubActive = fuelAssessmentWindowOpen
+                && hubActiveAtTime(effectiveSeconds, gameData, DriverStation.getAlliance());
+    }
 
-        // if we're red, hubActive = !blueActive. otherwise (if we're blue,
-        // or if there's no driverstation), hubActive = blueActive.
-        hubActive = blueActive ^ DriverStation.getAlliance().equals(Optional.of(Alliance.Red));
+    /** Time from shooting now to fuel being assessed in the hub, in seconds. */
+    private double getShotToAssessmentOffsetSeconds() {
+        double tofSeconds = Math.max(0.0, m_turret == null ? 0.0 : m_turret.getTof());
+        return tofSeconds + defaultHubInternalTransitSeconds;
+    }
+
+    /**
+     * Whether fuel would still be assessed if it arrives in {@code shotToAssessmentOffsetSeconds}.
+     * Accounts for the "up to 3 seconds after 0:00" rule (configurable via SmartDashboard).
+     */
+    private boolean willFuelBeAssessedIfShotWithOffset(double shotToAssessmentOffsetSeconds) {
+        double matchTimeRemainingSeconds = DriverStation.getMatchTime();
+        if (!Double.isFinite(matchTimeRemainingSeconds) || matchTimeRemainingSeconds < 0.0) {
+            return true; // Unknown/not in a period; don't block shooting.
+        }
+        return matchTimeRemainingSeconds + defaultFuelAssessmentGraceSeconds >= shotToAssessmentOffsetSeconds;
     }
 
     private boolean hubActiveAtTime(double timeSeconds, String gameData, Optional<Alliance> alliance) {
@@ -174,7 +178,12 @@ public class StateMachine extends SubsystemBase {
             return Double.POSITIVE_INFINITY;
         }
 
-        double now = hubTimer.get();
+        double shotToAssessmentOffsetSeconds = getShotToAssessmentOffsetSeconds();
+        if (!willFuelBeAssessedIfShotWithOffset(shotToAssessmentOffsetSeconds)) {
+            return Double.POSITIVE_INFINITY;
+        }
+
+        double now = hubTimer.get() + shotToAssessmentOffsetSeconds;
         Optional<Alliance> alliance = DriverStation.getAlliance();
         if (hubActiveAtTime(now, gameData, alliance)) {
             return 0.0;
@@ -224,8 +233,8 @@ public class StateMachine extends SubsystemBase {
         double coeff = 0.2 * fieldVelocity.getX();
         double bumpBoundNear = LinesVertical.allianceZone - baseBumpBuffer - Math.max(0, coeff);
         double bumpBoundFar = LinesVertical.neutralZoneNear + baseBumpBuffer - Math.min(0, coeff);
-        Logger.recordOutput("StateMachine/BoundNear", new Pose2d(bumpBoundNear, 0, new Rotation2d()));
-        Logger.recordOutput("StateMachine/BoundFar", new Pose2d(bumpBoundFar, 0, new Rotation2d()));
+        //Logger.recordOutput("StateMachine/BoundNear", new Pose2d(bumpBoundNear, 0, new Rotation2d()));
+        //Logger.recordOutput("StateMachine/BoundFar", new Pose2d(bumpBoundFar, 0, new Rotation2d()));
 
         isOnLeftSide = y > LinesHorizontal.center;
 
@@ -259,7 +268,7 @@ public class StateMachine extends SubsystemBase {
                         shootOnTheFly.setCurrentTofTable(TargetTable.HUB);
                         // point at the hub, but only shoot if hub is active
                         m_turret.setTargetTranslation(Hub.topCenterPoint.toTranslation2d());
-                        if (shootOverride) { //&& (hubActive || isAuto) && m_turret.isTurretPointedAtTarget()) {
+                        if (!shootOverride) { //&& (hubActive || isAuto) && m_turret.isTurretPointedAtTarget()) {
                             m_dyeRotor.runDyeRotor(true);
                         } else {
                             m_dyeRotor.runDyeRotor(false);
@@ -332,6 +341,11 @@ public class StateMachine extends SubsystemBase {
 
     public boolean isHubActive() {
         return hubActive;
+    }
+
+    /** True if fuel shot "now" would still be assessed before the period's assessment window closes. */
+    public boolean willFuelBeAssessedIfShotNow() {
+        return willFuelBeAssessedIfShotWithOffset(getShotToAssessmentOffsetSeconds());
     }
 
     /**

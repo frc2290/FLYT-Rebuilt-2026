@@ -72,8 +72,8 @@ public class RobotContainer {
     private final Intake m_intake;
     private final DyeRotor m_dyeRotor;
     private final Turret m_turret;
+    private final LEDUtility _leds;
 
-    private final LEDUtility _leds = new LEDUtility(8);
 
     // The driver's controller
     CommandXboxController m_driverController;
@@ -97,7 +97,8 @@ public class RobotContainer {
             Intake _intake,
             DyeRotor _dyeRotor,
             Turret _turret,
-            CommandXboxController _driverController) {
+            CommandXboxController _driverController,
+            LEDUtility _leds) {
 
         m_drive = _drive;
         m_poseEstimator = _poseEstimator;
@@ -107,6 +108,7 @@ public class RobotContainer {
         m_dyeRotor = _dyeRotor;
         m_turret = _turret;
         m_driverController = _driverController;
+        this._leds = _leds;
 
         // Configure the button bindings
         configureButtonBindings();
@@ -139,12 +141,6 @@ public class RobotContainer {
             instance.registerRobot(inchesToMeters(30), inchesToMeters(37), inchesToMeters(5.0), _poseEstimator::getCurrentPose, _drive::getChassisSpeeds);
             instance.start();
         }
-
-        _leds.addStrip("Front", 0, 29);
-        _leds.addStrip("Right", 30, 100); //71
-        _leds.addStrip("Back", 101, 130);
-        _leds.addStrip("Left", 131, 200); //71
-        _leds.setDefault();
     }
 
     private void configureButtonBindings() {
@@ -178,8 +174,8 @@ public class RobotContainer {
         hubAboutToActive.and(hubActive.negate()).onTrue(_leds.setAllCommand(LEDEffect.FLASH, LEDEffects.flytBlue));
         // If going under the trench and hood is not down, flash LEDs red
         isUnderTrench.and(isHoodDown.negate()).onTrue(_leds.setAllCommand(LEDEffect.FLASH, Color.kRed));
-        // If going udner the trench and hood is down, flash LEDs green
-        isUnderTrench.and(isHoodDown).onTrue(_leds.setAllCommand(LEDEffect.FLASH, Color.kGreen));
+        // If going under the trench and hood is down, flash LEDs green (turned off so it just goes back to what it was)
+        //isUnderTrench.and(isHoodDown).onTrue(_leds.setAllCommand(LEDEffect.FLASH, Color.kGreen));
 
         // END TRIGGERS
 
