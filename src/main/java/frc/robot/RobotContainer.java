@@ -7,7 +7,6 @@ package frc.robot;
 import frc.robot.subsystems.drive.Drive;
 import frc.utils.PoseEstimatorSubsystem;
 import frc.utils.LEDEffects.LEDEffect;
-import frc.robot.Commands.Autos.AutoBuilder;
 import frc.robot.Commands.Autos.FlytSequentialAuto;
 import frc.robot.Commands.Autos.SitAndShoot;
 import frc.robot.Commands.Autos.TrenchToNeutralAuto;
@@ -23,39 +22,21 @@ import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.IntakeConstants.IntakeSide;
 import frc.robot.subsystems.dyerotor.DyeRotor;
 import frc.robot.subsystems.turret.Turret;
-import edu.wpi.first.epilogue.Logged;
-import edu.wpi.first.wpilibj.LEDPattern;
-import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import edu.wpi.first.wpilibj2.command.button.JoystickButton;
-import edu.wpi.first.wpilibj2.command.button.POVButton;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
-import edu.wpi.first.wpilibj.XboxController.Button;
-
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
-import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
-import edu.wpi.first.wpilibj2.command.StartEndCommand;
-
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import frc.utils.FuelSim;
 import frc.utils.LEDEffects;
 import frc.utils.LEDUtility;
-
 import static edu.wpi.first.math.util.Units.inchesToMeters;
-
-import java.lang.runtime.ObjectMethods;
-import java.util.Objects;
 import java.util.function.BiConsumer;
-import java.util.function.Consumer;
-
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
-import com.pathplanner.lib.auto.NamedCommands;
 
 /*
  * This class is where the bulk of the robot should be declared.  Since Command-based is a

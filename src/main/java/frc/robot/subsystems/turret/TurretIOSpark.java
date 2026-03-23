@@ -12,7 +12,6 @@ import com.revrobotics.PersistMode;
 import com.revrobotics.REVLibError;
 import com.revrobotics.RelativeEncoder;
 import com.revrobotics.ResetMode;
-import com.revrobotics.spark.ClosedLoopSlot;
 import com.revrobotics.spark.FeedbackSensor;
 import com.revrobotics.spark.SparkBase;
 import com.revrobotics.spark.SparkClosedLoopController;
@@ -41,7 +40,6 @@ public class TurretIOSpark implements TurretIO {
 
     // Fo turret
     private RelativeEncoder turnRelEncoder; // Experimental for using one encoder for two things at the same time
-    private AbsoluteEncoder turnEncoder;
     private DutyCycleEncoder turnEncoder1;
     private DutyCycleEncoder turnEncoder2;
     //private AbsoluteEncoder turnEncoder2;
@@ -246,9 +244,6 @@ public class TurretIOSpark implements TurretIO {
      */
     private double getTurretPos(){
         return turnRelEncoder.getPosition();
-    }
-    private double getTurretVel(){
-        return turnRelEncoder.getVelocity();
     }
 
     // I think this is used for logger pro to keep track of things?

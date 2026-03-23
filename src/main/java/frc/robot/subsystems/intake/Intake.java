@@ -17,7 +17,6 @@ import frc.robot.Robot;
 import frc.robot.subsystems.intake.IntakeConstants.IntakeSide;
 
 import static edu.wpi.first.math.util.Units.feetToMeters;
-import static edu.wpi.first.math.util.Units.radiansToDegrees;
 import static frc.robot.subsystems.intake.IntakeConstants.*;
 
 import java.util.Optional;
@@ -45,8 +44,8 @@ public class Intake extends SubsystemBase {
 
     // Dashboard booleans to disable an intake side in a match
     // TODO IMPLEMENT
-    private final LoggedNetworkBoolean leftDisabledDash = new LoggedNetworkBoolean("Left Intake Disabled", false);
-    private final LoggedNetworkBoolean rightDisabledDash = new LoggedNetworkBoolean("Right Intake Disabled", false);
+    //private final LoggedNetworkBoolean leftDisabledDash = new LoggedNetworkBoolean("Left Intake Disabled", false);
+    //private final LoggedNetworkBoolean rightDisabledDash = new LoggedNetworkBoolean("Right Intake Disabled", false);
 
     public Intake(IntakeIO ioLeft, IntakeIO ioRight) {
         this.ioLeft = ioLeft;
