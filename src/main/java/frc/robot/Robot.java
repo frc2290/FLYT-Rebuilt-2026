@@ -4,6 +4,9 @@
 
 package frc.robot;
 
+import static frc.robot.subsystems.intake.IntakeConstants.leftZeroOffset;
+import static frc.robot.subsystems.intake.IntakeConstants.rightZeroOffset;
+
 import org.littletonrobotics.conduit.ConduitApi;
 import org.littletonrobotics.junction.AutoLog;
 import org.littletonrobotics.junction.LogFileUtil;
@@ -105,7 +108,7 @@ public class Robot extends LoggedRobot {
         switch (Constants.currentMode) {
         case REAL:
             // Running on a real robot, log to a USB stick ("/U/logs")
-            Logger.addDataReceiver(new WPILOGWriter("/home/lvuser/logs"));
+            Logger.addDataReceiver(new WPILOGWriter("/U/logs"));
             Logger.addDataReceiver(new NT4Publisher());
             break;
 
@@ -136,7 +139,7 @@ public class Robot extends LoggedRobot {
                                new ModuleIOSpark(2),
                                new ModuleIOSpark(3));
                 m_poseEstimator = new PoseEstimatorSubsystem(m_robotDrive);
-                m_intake = new Intake(new IntakeIOSpark(IntakeSide.LEFT, false, 0.45), new IntakeIOSpark(IntakeSide.RIGHT, true, 0.5));
+                m_intake = new Intake(new IntakeIOSpark(IntakeSide.LEFT, false, leftZeroOffset), new IntakeIOSpark(IntakeSide.RIGHT, true, rightZeroOffset));
                 // m_dyeRotor = new DyeRotor(new DyeRotorIOSpark());
                 m_dyeRotor = new DyeRotor(new DyeRotorIOSpark());
                 m_turret = new Turret(new TurretIOSpark(),

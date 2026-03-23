@@ -233,6 +233,16 @@ public class Intake extends SubsystemBase {
         });
     }
 
+    public Command syringeIntake(IntakeSide side) {
+        return run(() -> {
+            getIo(side).setDeployPosition(outPosition * 0.5);
+            driveRoller(side, rollerSpeed/2);
+        }).finallyDo(() -> {
+            driveRoller(side, 0);
+            getIo(side).setDeployPosition(outPosition);
+        });
+    }
+
     public Command agitateIntakeLeft() {
         return agitateIntake(IntakeSide.LEFT);
     }
