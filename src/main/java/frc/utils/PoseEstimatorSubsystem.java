@@ -170,22 +170,6 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
             // Handle exception as needed
             e.printStackTrace();
         }
-
-        // poseDash.addStringPublisher("Pose", false, () -> getCurrentPose().toString());
-        // Logger.recordOutput("PoseEstimator/Pose", getCurrentPose());
-        // poseDash.addBoolPublisher("At Target Pose", false, () -> atTargetPose());
-        // poseDash.addDoublePublisher(
-        //         "Relative To X",
-        //         true,
-        //         () -> drive.getPose().relativeTo(targetPose).getX());
-        // poseDash.addDoublePublisher(
-        //         "Relative To Y",
-        //         true,
-        //         () -> drive.getPose().relativeTo(targetPose).getY());
-        // poseDash.addDoublePublisher(
-        //         "Relative To T",
-        //         true,
-        //         () -> drive.getPose().relativeTo(targetPose).getRotation().getDegrees());
     }
 
     /** Updates the AprilTag origin based on the current alliance color. */
@@ -236,40 +220,19 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
                     bestMeasurement.stdDevs);
             sawTag = true;
             Logger.recordOutput("Vision/SelectedCamera", bestMeasurement.cameraName);
-            Logger.recordOutput("Vision/SelectedPose", new Pose2d[] {bestMeasurement.pose});
+            Logger.recordOutput("Vision/SelectedPose", bestMeasurement.pose);
             Logger.recordOutput("Vision/SelectedStdDevScore", bestMeasurement.stdDevScore);
         } else {
             Logger.recordOutput("Vision/SelectedCamera", "");
-            Logger.recordOutput("Vision/SelectedPose", new Pose2d[] {});
+            Logger.recordOutput("Vision/SelectedPose", new Pose2d());
             Logger.recordOutput("Vision/SelectedStdDevScore", Double.NaN);
         }
-
-        // if (frontUpdate != null) {
-        //     Pose2d frontPose = frontUpdate.estimatedPose.toPose2d();
-        //     if (originPosition != kBlueAllianceWallRightSide) {
-        //         frontPose = flipAlliance(frontPose);
-        //     }
-
-        //     drive.addVisionMeasurement(frontPose, frontUpdate.timestampSeconds, VisionPoseFuser.calculateStdDevs(frontUpdate));
-        //     sawTag = true;
-        // }
-
-        // Set the pose on the dashboard.
-        //var dashboardPose = drive.getPose();
-        //if (originPosition == kRedAllianceWallRightSide) {
-        //    // Flip the pose when red, since the dashboard field photo cannot be rotated.
-        //    dashboardPose = flipAlliance(dashboardPose);
-        //}
-        //field2d.setRobotPose(dashboardPose);
-        //target2d.setPose(targetPose);
-        //SmartDashboard.putData("Field", field2d);
-        //poseDash.update(Constants.debugMode);
     }
 
     /** Processes a single camera frame and returns a measurement candidate (or null). */
     private VisionMeasurement processCameraUpdate(EstimatedRobotPose update, String cameraName) {
         if (update == null || update.targetsUsed == null || update.targetsUsed.isEmpty()) {
-            Logger.recordOutput("Vision/CameraPoses/" + cameraName, new Pose2d[] {});
+            //Logger.recordOutput("Vision/CameraPoses/" + cameraName, new Pose2d[] {});
             return null;
         }
 
@@ -279,7 +242,7 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
             double distMeters = target.getBestCameraToTarget().getTranslation().getNorm();
             double ambiguity = target.getPoseAmbiguity();
             if (distMeters > 3.0 || ambiguity > VisionConstants.APRILTAG_AMBIGUITY_THRESHOLD) {
-                Logger.recordOutput("Vision/CameraPoses/" + cameraName, new Pose2d[] {});
+                //Logger.recordOutput("Vision/CameraPoses/" + cameraName, new Pose2d[] {});
                 return null;
             }
         }
@@ -287,7 +250,7 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
         Matrix<N3, N1> stdDevs = calculateStdDevs(update);
         double varX = Math.pow(stdDevs.get(0, 0), 2);
         if (varX >= VisionConstants.kVisionRejectVarianceThreshold) {
-            Logger.recordOutput("Vision/CameraPoses/" + cameraName, new Pose2d[] {});
+            //Logger.recordOutput("Vision/CameraPoses/" + cameraName, new Pose2d[] {});
             return null;
         }
 
@@ -296,7 +259,7 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
             finalPose = flipAlliance(finalPose);
         }
 
-        Logger.recordOutput("Vision/CameraPoses/" + cameraName, new Pose2d[] {finalPose});
+        //Logger.recordOutput("Vision/CameraPoses/" + cameraName, new Pose2d[] {finalPose});
 
         double score = stdDevScore(stdDevs);
         return new VisionMeasurement(cameraName, finalPose, update.timestampSeconds, stdDevs, score);

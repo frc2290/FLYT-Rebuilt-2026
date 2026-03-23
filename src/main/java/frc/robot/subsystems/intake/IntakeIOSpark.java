@@ -38,8 +38,6 @@ public class IntakeIOSpark implements IntakeIO {
     private double deploySetpoint = inPosition;
     private ControlType deployControlType = ControlType.kMAXMotionPositionControl;
 
-    private boolean maxMotionOn = true;
-
     public IntakeIOSpark(IntakeSide side, boolean inverted, double zeroOffset) {
         this.side = side;
         driveSpark = new SparkFlex(
@@ -176,10 +174,6 @@ public class IntakeIOSpark implements IntakeIO {
     public void setDeployPosition(double angle, boolean useProfile) {
         this.deploySetpoint = angle;
         deployControlType = useProfile ? ControlType.kMAXMotionPositionControl : ControlType.kPosition;
-    }
-    
-    public void setMaxMotion(boolean on) {
-        this.maxMotionOn = on;
     }
 
     public double getPosition() {
