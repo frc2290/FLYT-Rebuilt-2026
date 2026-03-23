@@ -349,8 +349,7 @@ public class TurretIOSpark implements TurretIO {
 
     @Override
     public void setShotAngle(double angle) {
-        double targetHoodAngle = hoodShotAngleOffset - angle;
-        setHoodAngle(MathUtil.clamp(targetHoodAngle, 0, 78.5));
+        setHoodAngle(MathUtil.clamp(angle, 0.0, 78.5));
     }
 
     @Override
