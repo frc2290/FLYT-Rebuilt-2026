@@ -353,22 +353,6 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
         return VecBuilder.fill(xyStd, xyStd, rotStd);
     }
 
-    public boolean isClosestStationRight() {
-        if (drive.getPose().getY() > VisionConstants.halfwayAcrossFieldY) {
-            return false;
-        } else {
-            return true;
-        }
-    }
-
-    public Pose2d getClosestBranch(boolean right) {
-        if (right) {
-            return drive.getPose().nearest(VisionConstants.rightBranches);
-        } else {
-            return drive.getPose().nearest(VisionConstants.leftBranches);
-        }
-    }
-
     public double getAlignX(Translation2d target) {
         return target.getX() - drive.getPose().getX();
     }
