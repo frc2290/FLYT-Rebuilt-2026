@@ -199,11 +199,13 @@ public class RobotContainer {
                                     m_intake.runIntakeCommand(),
                                     m_driveStateMachine.tempChangeState(DriveState.SNAKE)));
 
-        m_driverController.axisGreaterThan(2, 0.5).whileTrue(m_intake.agitateIntake(leftNotIn.getAsBoolean() ? IntakeSide.LEFT : IntakeSide.RIGHT));
+        m_driverController.axisGreaterThan(2, 0.5).whileTrue(m_intake.syringeIntake(leftNotIn.getAsBoolean() ? IntakeSide.LEFT : IntakeSide.RIGHT));
 
         m_driverController.povLeft().onTrue(m_driveStateMachine.changeState(DriveState.MANUAL));
         m_driverController.povUp().onTrue(m_driveStateMachine.changeState(DriveState.SHOOT_LOCK));
         m_driverController.povRight().onTrue(Commands.runOnce(() -> m_drive.resetGyro())); // Reset Gyro Heading
+
+        //m_driverController.back().onTrue(m_turret.resetTurretPosition());
 
         // END DRIVER BUTTONS
 

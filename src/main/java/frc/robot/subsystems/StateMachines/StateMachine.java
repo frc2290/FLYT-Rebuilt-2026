@@ -259,7 +259,7 @@ public class StateMachine extends SubsystemBase {
                         shootOnTheFly.setCurrentTofTable(TargetTable.HUB);
                         // point at the hub, but only shoot if hub is active
                         m_turret.setTargetTranslation(Hub.topCenterPoint.toTranslation2d());
-                        if (!shootOverride && hubActive && m_turret.isTurretPointedAtTarget()) {
+                        if (shootOverride) { //&& (hubActive || isAuto) && m_turret.isTurretPointedAtTarget()) {
                             m_dyeRotor.runDyeRotor(true);
                         } else {
                             m_dyeRotor.runDyeRotor(false);

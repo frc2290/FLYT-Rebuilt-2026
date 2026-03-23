@@ -5,6 +5,8 @@ import static frc.utils.SparkUtil.*;
 
 import java.util.function.DoubleSupplier;
 
+import org.littletonrobotics.junction.Logger;
+
 import com.revrobotics.AbsoluteEncoder;
 import com.revrobotics.PersistMode;
 import com.revrobotics.REVLibError;
@@ -86,21 +88,8 @@ public class TurretIOSpark implements TurretIO {
         // Setup RoboRio Absolute encoders
         // Initializes duty cycle encoders on DIO pins 0 and 1.
         // get() returns position in rotations [0, 1].
-        turnEncoder1 = new DutyCycleEncoder(8, 1, 0.9091683227292081);
-        turnEncoder2 = new DutyCycleEncoder(9, 1, 0.8347432208685805);
-
-        // Help get() compute stable percentages by providing the expected frequency (REV V1)
-        turnEncoder1.setAssumedFrequency(975.6);
-        turnEncoder2.setAssumedFrequency(975.6);
-
-        // Clamp the valid duty cycle range to REV V1 hardware specs (1us to 1024us over 1025us)
-        turnEncoder1.setDutyCycleRange(1.0 / 1025.0, 1024.0 / 1025.0);
-        turnEncoder2.setDutyCycleRange(1.0 / 1025.0, 1024.0 / 1025.0);
-
-        /*In 2025 the API changed to remove rollover detection as rollover 
-        detection did not work. The get() method returns the value within a
-        rotation where the maximum value in a rotation is defined in the constructor\
-        (default 1).*/
+        turnEncoder1 = new DutyCycleEncoder(8, 1, 0.9226061230651531); // Large 
+        turnEncoder2 = new DutyCycleEncoder(9, 1, 0.6427130660678266); // Small
 
         // Setup Controllers
         turretController = turretSpark.getClosedLoopController();
@@ -220,7 +209,7 @@ public class TurretIOSpark implements TurretIO {
 
         // this is very important line that checks turret position through absolute encoders then sets relative encoder to same pose
         //turnRelEncoder.setPosition(calculateAbsoluteTurretAngle());
-        turnRelEncoder.setPosition(0.0);
+        //turnRelEncoder.setPosition(0.0);
     }
 
 
@@ -274,6 +263,7 @@ public class TurretIOSpark implements TurretIO {
                 isTurretHomed = true;
             }
         }
+        Logger.recordOutput("Turret/absoluteTurretAngle", calculateAbsoluteTurretAngle());
 
         double targetHoodEncoderAngle = (turretHoodAngle + hoodAngleOffset);
         hoodController.setSetpoint(targetHoodEncoderAngle, ControlType.kPosition);
@@ -360,7 +350,7 @@ public class TurretIOSpark implements TurretIO {
     @Override
     public void setShotAngle(double angle) {
         double targetHoodAngle = hoodShotAngleOffset - angle;
-        setHoodAngle(MathUtil.clamp(targetHoodAngle, 15, 78.5));
+        setHoodAngle(MathUtil.clamp(targetHoodAngle, 0, 78.5));
     }
 
     @Override
@@ -382,6 +372,7 @@ public class TurretIOSpark implements TurretIO {
     public boolean flywheelAtSpeed() {
         return flywheel1Encoder.getVelocity() > (turretSpeed * flywheelReadyRatio);
     }
+
     @Override
     public void shootFuel() {
 
@@ -390,5 +381,7 @@ public class TurretIOSpark implements TurretIO {
 
     }
 
-       
+    public void setTurretHomed(boolean homed) {
+        this.isTurretHomed = homed;
+    }
 }

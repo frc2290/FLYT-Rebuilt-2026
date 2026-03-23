@@ -46,4 +46,5 @@ public interface TurretIO {
     public default void setShooterVoltage(double volts) {};
     public default void setShotAngle(double angle) {};
     public default boolean flywheelAtSpeed() { return false; };
+    public default void setTurretHomed(boolean homed) {};
 }
