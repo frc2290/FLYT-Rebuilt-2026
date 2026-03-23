@@ -18,22 +18,14 @@ package frc.robot.subsystems.StateMachines;
 
 import org.littletonrobotics.junction.Logger;
 
-import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.wpilibj.XboxController;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.subsystems.drive.Drive;
-import frc.robot.subsystems.drive.DriveConstants;
 import frc.robot.subsystems.intake.IntakeConstants.IntakeSide;
 import frc.robot.Commands.DriveCommandFactory;
-import frc.utils.FlytDashboard;
 import frc.utils.PoseEstimatorSubsystem;
-import frc.utils.FieldConstants.LinesHorizontal;
-import frc.utils.FieldConstants.LinesVertical;
 
 public class DriveStateMachine extends SubsystemBase {
     public enum DriveState {
@@ -48,7 +40,6 @@ public class DriveStateMachine extends SubsystemBase {
         SHOOT_LOCK      // lock to sotf heading
     }
 
-    private FlytDashboard dashboard = new FlytDashboard("DriveStateMachine");
     private Drive drive;
     private PoseEstimatorSubsystem pose;
     private CommandXboxController driverController;
