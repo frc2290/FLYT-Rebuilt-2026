@@ -333,7 +333,7 @@ public class Robot extends LoggedRobot {
     @Override
     public void teleopPeriodic() {
         // TEMP POINT UPDATE DRIVE TARGET HEADING TO TURRET HEADING FROM SOTF
-        m_driveStateMachine.setSotfHeading(m_turret.getTurretPos());
+        m_driveStateMachine.setDriveAngleCorrection(m_turret.getDriveAngleCorrection());
     }
 
     @Override

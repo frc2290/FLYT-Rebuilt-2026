@@ -55,7 +55,7 @@ public class Turret extends SubsystemBase {
     private Translation2d targetTranslation = Hub.topCenterPoint.toTranslation2d();
     private boolean sotfEnabled = true;
 
-    private double sotfYaw = 0.0;
+    private double driveAngleCorrection = 0.0;
     private boolean turretPointedAtTarget = false;
     private double currentTof = 0.0;
     private double previousLoopTimestampSec = Timer.getFPGATimestamp();
@@ -122,18 +122,18 @@ public class Turret extends SubsystemBase {
                 currentTurretAngle,
                 turretOmegaRadPerSecond,
                 dt);
-        if (result.isValid) {
-            sotfYaw = result.yaw;
-            currentTof = result.tof;
-        } else {
-            currentTof = 0.0;
-        }
 
         Rotation2d turretPointedAt = currentTurretAngle.rotateBy(currentPose.getRotation());
         Rotation2d targetYaw = Rotation2d.fromDegrees(result.yaw);
         Rotation2d error = turretPointedAt.minus(targetYaw);
         turretPointedAtTarget = result.isValid
                 && Math.abs(error.getDegrees()) < TurretConstants.SotfConstants.pointAtTargetToleranceDeg;
+        if (result.isValid) {
+            driveAngleCorrection = targetYaw.minus(turretPointedAt).getDegrees();
+            currentTof = result.tof;
+        } else {
+            currentTof = 0.0;
+        }
 
         currentShooterVelocityScale = SmartDashboard.getNumber(shooterVelocityScaleKey, defaultShooterVelocityScale);
         currentShotAngleOffsetDeg = SmartDashboard.getNumber(shotAngleOffsetDegKey, defaultShotAngleOffsetDeg);
@@ -432,8 +432,8 @@ public class Turret extends SubsystemBase {
         return io.flywheelAtSpeed();
     }
 
-    public double getSotfYaw() {
-        return sotfYaw;
+    public double getDriveAngleCorrection() {
+        return driveAngleCorrection;
     }
 
     public double getTurretPos() {
