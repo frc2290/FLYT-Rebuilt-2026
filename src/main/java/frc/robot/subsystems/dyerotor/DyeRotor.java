@@ -198,6 +198,46 @@ public class DyeRotor extends SubsystemBase {
         return Commands.startEnd(() -> runDyeRotor(true), () -> runDyeRotor(false), this);
     }
 
+    /**
+     * Agitates the dye rotor using a sinusoidal velocity wave derived from a
+     * position amplitude.
+     *
+     * <p>Equivalent position profile: x(t) = A * cos(2πft), where A = 0.1 rev and
+     * f = 1 Hz.
+     * Velocity profile: v(t) = -2πfA * sin(2πft).
+     */
+    public Command agitateDyeRotor() {
+        Timer agitateTimer = new Timer();
+        double positionAmplitudeRev = 0.1;
+        double frequencyHz = 1.0;
+        double rotorVelocityAmplitudeRps = 2.0 * Math.PI * frequencyHz * positionAmplitudeRev;
+
+        double feedMultiplier =
+                (ballsPerRotation * fuelDiameterInches * overfeedRatio) / (Math.PI * feedWheelRadiusInches);
+        double feederToRotorRatio = feedMultiplier - 1.0;
+
+        return startRun(() -> {
+            runDyeRotor(false);
+            setRotorControlMode(ControlMode.VELOCITY);
+            setFeederControlMode(ControlMode.VELOCITY);
+            agitateTimer.restart();
+        }, () -> {
+            double rotorVelocityTargetRps =
+                    -rotorVelocityAmplitudeRps * Math.sin(2.0 * Math.PI * frequencyHz * agitateTimer.get());
+            double feederVelocityTargetRps = rotorVelocityTargetRps * feederToRotorRatio;
+
+            driveRotor(rotorVelocityTargetRps);
+            driveFeeder(feederVelocityTargetRps);
+
+            Logger.recordOutput("DyeRotor/Agitate/RotorVelocityTargetRps", rotorVelocityTargetRps);
+            Logger.recordOutput("DyeRotor/Agitate/FeederVelocityTargetRps", feederVelocityTargetRps);
+        }).finallyDo(() -> {
+            agitateTimer.stop();
+            driveRotor(0.0);
+            driveFeeder(0.0);
+        });
+    }
+
     public void resetIntegrator() {
         io.resetIntegrator();
     }
