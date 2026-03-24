@@ -111,6 +111,13 @@ public class TurretIOSpark implements TurretIO {
             .closedLoop
             .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
             .pid(turretKp, turretKi, turretKd);
+        // turretConfig.closedLoop
+        //         .maxMotion
+        //         // Calculated for a 0.5s, 86-degree move
+        //         .cruiseVelocity(100)
+        //         .maxAcceleration(1400)
+        //         // Keep this loose during tuning to prevent premature profile regeneration
+        //         .allowedProfileError(20);
         REVLibError turretErr = turretSpark.configure(
             turretConfig,
             ResetMode.kResetSafeParameters,
@@ -323,7 +330,7 @@ public class TurretIOSpark implements TurretIO {
 
     @Override
     public void setTurnPosition(Rotation2d rotation) {
-        turretAngleSetpoint = MathUtil.clamp(rotation.getDegrees(), -45, 45);
+        turretAngleSetpoint = MathUtil.clamp(rotation.getDegrees(), -30, 329); // -30 340
     }
 
     @Override
