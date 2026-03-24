@@ -17,6 +17,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -30,6 +31,11 @@ import frc.utils.ShootOnTheFly.SOTFResult;
 import frc.utils.ShootOnTheFly.TargetTable;
 
 public class Turret extends SubsystemBase {
+    private static final String shooterVelocityScaleKey = "Turret_Cal/Speed_Scale";
+    private static final String shotAngleOffsetDegKey = "Turret_Cal/Angle_Offset_Deg";
+    private static final double defaultShooterVelocityScale = 1.0;
+    private static final double defaultShotAngleOffsetDeg = 0.0;
+
     public enum ControlMode {
         NORMAL, // Velocity for shooter, position for turn
         SHOOTER_VOLTAGE,
@@ -55,6 +61,8 @@ public class Turret extends SubsystemBase {
     private double previousLoopTimestampSec = Timer.getFPGATimestamp();
     private double activeShooterVelocitySetpointMps = 0.0;
     private double activeShotAngleSetpointDeg = 0.0;
+    private double currentShooterVelocityScale = defaultShooterVelocityScale;
+    private double currentShotAngleOffsetDeg = defaultShotAngleOffsetDeg;
 
     public Turret(TurretIO turretIO, Supplier<Pose2d> pose, Supplier<ChassisSpeeds> speeds) {
         this.io = turretIO;
@@ -84,6 +92,9 @@ public class Turret extends SubsystemBase {
                         (voltage) -> sysIdVoltage = voltage.in(Volts),
                         null,
                         this));
+
+        SmartDashboard.putNumber(shooterVelocityScaleKey, defaultShooterVelocityScale);
+        SmartDashboard.putNumber(shotAngleOffsetDegKey, defaultShotAngleOffsetDeg);
     }
 
     @Override
@@ -124,11 +135,16 @@ public class Turret extends SubsystemBase {
             currentTof = 0.0;
         }
 
+        currentShooterVelocityScale = SmartDashboard.getNumber(shooterVelocityScaleKey, defaultShooterVelocityScale);
+        currentShotAngleOffsetDeg = SmartDashboard.getNumber(shotAngleOffsetDegKey, defaultShotAngleOffsetDeg);
+        double tunedShotVelocityMps = result.vel * currentShooterVelocityScale;
+        double tunedShotAngleDeg = result.pitch + currentShotAngleOffsetDeg;
+
         // Convert desired SOTF projectile behavior into mechanism commands using
         // inverse linear-fit calibration.
-        activeShooterVelocitySetpointMps = (result.vel - TurretConstants.flywheelSpeedCalibrationOffset)
+        activeShooterVelocitySetpointMps = (tunedShotVelocityMps - TurretConstants.flywheelSpeedCalibrationOffset)
                 / TurretConstants.flywheelSpeedCalibrationGain;
-        activeShotAngleSetpointDeg = (result.pitch - TurretConstants.hoodPitchCalibrationOffset)
+        activeShotAngleSetpointDeg = (tunedShotAngleDeg - TurretConstants.hoodPitchCalibrationOffset)
                 / TurretConstants.hoodPitchCalibrationGain;
 
 
@@ -172,6 +188,8 @@ public class Turret extends SubsystemBase {
         Logger.recordOutput("Turret/SysIdVoltage", sysIdVoltage);
         Logger.recordOutput("Turret/FlywheelVelocitySetpointMps", activeShooterVelocitySetpointMps);
         Logger.recordOutput("Turret/ShotAngleSetpointDeg", activeShotAngleSetpointDeg);
+        Logger.recordOutput("Turret/CalibratedSpeedScale", currentShooterVelocityScale);
+        Logger.recordOutput("Turret/CalibratedShotAngleOffsetDeg", currentShotAngleOffsetDeg);
         Logger.recordOutput("Turret/CurrentTOFTable", sotf.getCurrentTofTable());
 
         Robot.batteryLogger.reportCurrentUsage("Turret/Turn", inputs.turretConnected ? inputs.turretCurrentAmps : 0.0, inputs.turretAppliedVolts);
