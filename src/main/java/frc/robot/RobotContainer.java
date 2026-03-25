@@ -140,10 +140,10 @@ public class RobotContainer {
         // isOnBump.and(notAuto).whileTrue(m_driveStateMachine.tempChangeState(DriveState.BUMP));
         // isUnderTrench.and(notAuto).whileTrue(m_driveStateMachine.tempChangeState(DriveState.TRENCH));
 
-        Trigger leftNotIn = new Trigger(() -> m_intake.isOut(IntakeSide.LEFT));
-        Trigger rightNotIn = new Trigger(() -> m_intake.isOut(IntakeSide.RIGHT));
-        leftNotIn.onTrue(m_driveStateMachine.changeSnakeDirection(IntakeSide.LEFT));
-        rightNotIn.onTrue(m_driveStateMachine.changeSnakeDirection(IntakeSide.RIGHT));
+        Trigger leftSelected = new Trigger(() -> m_intake.isSelected(IntakeSide.LEFT));
+        Trigger rightSelected = new Trigger(() -> m_intake.isSelected(IntakeSide.RIGHT));
+        leftSelected.onTrue(m_driveStateMachine.changeSnakeDirection(IntakeSide.LEFT));
+        rightSelected.onTrue(m_driveStateMachine.changeSnakeDirection(IntakeSide.RIGHT));
 
         // LED Settings
         // If hub is active, set the LEDs to be solid green. If hub not active, set LEDs to solid blue
@@ -176,8 +176,8 @@ public class RobotContainer {
                                     m_intake.runIntakeCommand(),
                                     m_driveStateMachine.tempChangeState(DriveState.SNAKE)));
 
-        m_driverController.axisGreaterThan(2, 0.5).and(leftNotIn).whileTrue(m_intake.syringeIntake(IntakeSide.LEFT));
-        m_driverController.axisGreaterThan(2, 0.5).and(rightNotIn).whileTrue(m_intake.syringeIntake(IntakeSide.RIGHT));
+        m_driverController.axisGreaterThan(2, 0.5).and(leftSelected).whileTrue(m_intake.syringeIntake(IntakeSide.LEFT));
+        m_driverController.axisGreaterThan(2, 0.5).and(rightSelected).whileTrue(m_intake.syringeIntake(IntakeSide.RIGHT));
 
         m_driverController.povLeft().onTrue(m_driveStateMachine.changeState(DriveState.MANUAL));
         m_driverController.povUp().onTrue(m_driveStateMachine.changeState(DriveState.SHOOT_LOCK));
