@@ -44,10 +44,10 @@ public class TurretConstants {
     public static final double hoodEncoderZeroOffset = 0.8;
     public static final double hoodAngleOffset = 10.0;
     public static final double hoodShotAngleToleranceDeg = 2.0;
-    public static final double hoodPitchCalibrationGain = -1.1296;//-0.8475;
-    public static final double hoodPitchCalibrationOffset = 79.8453;//79.007;
-    public static final double flywheelSpeedCalibrationGain = 0.8483;//0.5344;
-    public static final double flywheelSpeedCalibrationOffset = -0.1178;//1.1015;
+    public static final double hoodPitchCalibrationGain = -0.9929;//-0.8475;
+    public static final double hoodPitchCalibrationOffset = 80.7918;//79.007;
+    public static final double flywheelSpeedCalibrationGain = 1.0405;//0.5344;
+    public static final double flywheelSpeedCalibrationOffset = -1.0965;//1.1015;
 
     // Spark relative encoder is on the turret turn motor.
     // Position factor: motor rotations -> turret mechanism degrees.
