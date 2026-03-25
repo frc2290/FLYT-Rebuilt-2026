@@ -130,6 +130,11 @@ public class Intake extends SubsystemBase {
         return getPosition(side) > (outPosition - positionBuffer);
     }
 
+    // when it was selected and is now out
+    public boolean isSelected(IntakeSide side) {
+        return outSide.equals(Optional.of(side));
+    }
+
     public void deploy(IntakeSide side, boolean out) {
         getIo(side).setDeployPosition(out ? outPosition : inPosition, true);
     }
