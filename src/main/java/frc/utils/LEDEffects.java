@@ -58,7 +58,7 @@ public class LEDEffects {
       case PULSE:
         return pulsing(strip.getColor(), 2.0);
       case CHASING:
-        return chasing(strip.getColor(), 0.25);
+        return chasing(strip.getColor(), 100.0);
       case ALLIANCE:
         return allianceBreathe(2.0);
       case NAVLIGHTS:
@@ -93,7 +93,7 @@ public class LEDEffects {
   }
 
   public static LEDPattern chasing(Color color, double intervalSeconds) {
-    Map<Double, Color> maskSteps = Map.of(0.0, Color.kWhite, 0.5, Color.kBlack);
+    Map<Double, Color> maskSteps = Map.of(0.0, Color.kWhite, 0.2, Color.kBlack);
     LEDPattern mask =
         LEDPattern.steps(maskSteps)
             .scrollAtRelativeSpeed(Percent.per(Second).of(intervalSeconds));
