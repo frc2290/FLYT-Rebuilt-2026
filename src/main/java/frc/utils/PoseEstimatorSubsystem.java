@@ -232,7 +232,7 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
     /** Processes a single camera frame and returns a measurement candidate (or null). */
     private VisionMeasurement processCameraUpdate(EstimatedRobotPose update, String cameraName) {
         if (update == null || update.targetsUsed == null || update.targetsUsed.isEmpty()) {
-            //Logger.recordOutput("Vision/CameraPoses/" + cameraName, new Pose2d[] {});
+            Logger.recordOutput("Vision/CameraPoses/" + cameraName, new Pose2d[] {});
             return null;
         }
 
@@ -242,7 +242,7 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
             double distMeters = target.getBestCameraToTarget().getTranslation().getNorm();
             double ambiguity = target.getPoseAmbiguity();
             if (distMeters > 3.0 || ambiguity > VisionConstants.APRILTAG_AMBIGUITY_THRESHOLD) {
-                //Logger.recordOutput("Vision/CameraPoses/" + cameraName, new Pose2d[] {});
+                Logger.recordOutput("Vision/CameraPoses/" + cameraName, new Pose2d[] {});
                 return null;
             }
         }
@@ -250,7 +250,7 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
         Matrix<N3, N1> stdDevs = calculateStdDevs(update);
         double varX = Math.pow(stdDevs.get(0, 0), 2);
         if (varX >= VisionConstants.kVisionRejectVarianceThreshold) {
-            //Logger.recordOutput("Vision/CameraPoses/" + cameraName, new Pose2d[] {});
+            Logger.recordOutput("Vision/CameraPoses/" + cameraName, new Pose2d[] {});
             return null;
         }
 
@@ -259,7 +259,7 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
             finalPose = flipAlliance(finalPose);
         }
 
-        //Logger.recordOutput("Vision/CameraPoses/" + cameraName, new Pose2d[] {finalPose});
+        Logger.recordOutput("Vision/CameraPoses/" + cameraName, new Pose2d[] {finalPose});
 
         double score = stdDevScore(stdDevs);
         return new VisionMeasurement(cameraName, finalPose, update.timestampSeconds, stdDevs, score);

@@ -115,13 +115,13 @@ public final class Constants {
 
         public static final String kLeftCamName = "left";
         public static final Transform3d kLeftCamTransform = new Transform3d(
-                new Translation3d(-0.3175, 0.2921, 0.523875),
-                new Rotation3d(0.0, degreesToRadians(10.0), degreesToRadians(90.0)));
+                new Translation3d(inchesToMeters(-10.25), inchesToMeters(-7.25), inchesToMeters(20.5)),
+                new Rotation3d(degreesToRadians(-90), degreesToRadians(-40), 0.0));
 
         public static final String kRightCamName = "right";
         public static final Transform3d kRightCamTransform = new Transform3d(
-                new Translation3d(-0.317251, -0.293112, 0.521863),
-                new Rotation3d(0.0, degreesToRadians(-10.0), degreesToRadians(-90.0)));
+                new Translation3d(inchesToMeters(-11.5), inchesToMeters(-12), inchesToMeters(20.75)),
+                new Rotation3d(0.0, degreesToRadians(-20.0), degreesToRadians(-90.0)));
 
         public static final double FIELD_LENGTH_METERS = 16.541;
         public static final double FIELD_WIDTH_METERS = 8.069;

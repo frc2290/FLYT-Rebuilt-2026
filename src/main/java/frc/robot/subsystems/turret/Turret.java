@@ -453,6 +453,10 @@ public class Turret extends SubsystemBase {
         return turretPointedAtTarget;
     }
 
+    public boolean turretReadyToShoot() {
+        return isTurretPointedAtTarget() && flywheelAtSpeed();
+    }
+
     public Command resetTurretPosition() {
         return Commands.runOnce(() -> io.setTurretHomed(false));
     }
