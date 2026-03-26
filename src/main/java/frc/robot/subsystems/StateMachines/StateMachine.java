@@ -230,6 +230,8 @@ public class StateMachine extends SubsystemBase {
         double coeff = 0.2 * fieldVelocity.getX();
         double bumpBoundNear = LinesVertical.allianceZone - baseBumpBuffer - Math.max(0, coeff);
         double bumpBoundFar = LinesVertical.neutralZoneNear + baseBumpBuffer - Math.min(0, coeff);
+        double oppBumpBoundNear = LinesVertical.neutralZoneFar - baseBumpBuffer - Math.max(0, coeff);
+        double oppBumpBoundFar = LinesVertical.oppAllianceZone + baseBumpBuffer - Math.min(0, coeff);
         //Logger.recordOutput("StateMachine/BoundNear", new Pose2d(bumpBoundNear, 0, new Rotation2d()));
         //Logger.recordOutput("StateMachine/BoundFar", new Pose2d(bumpBoundFar, 0, new Rotation2d()));
 
@@ -246,7 +248,8 @@ public class StateMachine extends SubsystemBase {
         specialZone = SpecialZone.NONE;
         if (translationInBound(currentPose.getTranslation(), Tower.rightBackCorner, Tower.leftUpright)) {
             specialZone = SpecialZone.TOWER;
-        } else if (x >= bumpBoundNear && x <= bumpBoundFar) {
+        } else if ((x >= bumpBoundNear && x <= bumpBoundFar) ||
+                   (x >= oppBumpBoundNear && x <= oppBumpBoundFar)) {
             if (y < LinesHorizontal.rightTrenchOpenStart + inchesToMeters(6.0) || y > LinesHorizontal.leftTrenchOpenEnd - inchesToMeters(6.0)) {
                 specialZone = SpecialZone.TRENCH;
             } else {

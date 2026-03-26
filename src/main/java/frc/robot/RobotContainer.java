@@ -118,7 +118,7 @@ public class RobotContainer {
 
         if (Robot.isSimulation()) {
             FuelSim instance = FuelSim.getInstance();
-            instance.spawnStartingFuel();
+            // instance.spawnStartingFuel();
             instance.registerRobot(inchesToMeters(30), inchesToMeters(37), inchesToMeters(5.0), _poseEstimator::getCurrentPose, _drive::getChassisSpeeds);
             instance.start();
         }
@@ -135,6 +135,10 @@ public class RobotContainer {
         Trigger hubActive = new Trigger(() -> m_stateMachine.isHubActive());
         Trigger hubAboutToActive = new Trigger(() -> m_stateMachine.isHubAboutToBecomeActive());
         Trigger isHoodDown = new Trigger(() -> m_turret.getHoodAngle() < 5);
+        Trigger isShooting = new Trigger(m_dyeRotor::isRunning);
+
+        isShooting.onTrue(m_driveStateMachine.setSlowMode(true));
+        isShooting.onFalse(m_driveStateMachine.setSlowMode(false));
 
         //isOnBump.or(isUnderTrench).and(notAuto).whileTrue(m_driveStateMachine.tempChangeState(DriveState.ASSIST));
         // isOnBump.and(notAuto).whileTrue(m_driveStateMachine.tempChangeState(DriveState.BUMP));

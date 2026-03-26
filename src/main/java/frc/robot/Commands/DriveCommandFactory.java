@@ -66,6 +66,7 @@ public final class DriveCommandFactory {
   private final StickExpo rotationExpo = new StickExpo(3.0);
   private final AngleSlewRateLimiter snakeLimiter =
       new AngleSlewRateLimiter(DriveConstants.snakeHeadingSlewRateRadPerSec);
+  private boolean slowMode = false;
 
   /**
    * Constructs a drive command factory that can create commands using the shared drivetrain, pose
@@ -126,8 +127,9 @@ public final class DriveCommandFactory {
 
   /** Grabs a snapshot of the driver inputs so each command can reason about the same numbers. */
   public DriverInputs sampleDriverInputs() {
-    double fwdInput = sampleForwardInput();
-    double strafeInput = sampleStrafeInput();
+    double coefficient = slowMode ? 0.75 : 1.0;
+    double fwdInput = sampleForwardInput() * coefficient;
+    double strafeInput = sampleStrafeInput() * coefficient;
     double rotInput = sampleRotationInput();
 
     Translation2d shapedTranslation = translationExpo.shape2D(fwdInput, strafeInput);
@@ -511,5 +513,9 @@ public final class DriveCommandFactory {
           double omega = toAngularSpeed(inputs.rotSpeed);
           drive.driveVelocity(vx, vy, omega, true);
         });
+  }
+
+  public void setSlowMode(boolean slowMode) {
+    this.slowMode = slowMode;
   }
 }
