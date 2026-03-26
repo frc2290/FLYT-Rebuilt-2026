@@ -185,10 +185,10 @@ public class Robot extends LoggedRobot {
         m_driveStateMachine = new DriveStateMachine(m_robotDrive, m_poseEstimator,
             m_driver);
 
-        _leds.addStrip("Front", 0, 29); // 30
-        _leds.addStrip("Right", 30, 100); //71
-        _leds.addStrip("Back", 101, 130); // 30
-        _leds.addStrip("Left", 131, 200); //71
+        _leds.addStrip("Front", 0, 65); // 66
+        _leds.addStrip("Right", 66, 136); //71
+        _leds.addStrip("Back", 137, 166); // 30
+        _leds.addStrip("Left", 167, 237); //71
         _leds.setDefault();
     }
 
