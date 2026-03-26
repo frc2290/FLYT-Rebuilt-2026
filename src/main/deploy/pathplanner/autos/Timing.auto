@@ -1,0 +1,37 @@
+{
+  "version": "2025.0",
+  "command": {
+    "type": "sequential",
+    "data": {
+      "commands": [
+        {
+          "type": "path",
+          "data": {
+            "pathName": "TrenchNeutralRight"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "NeutralTrenchRight"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "TrenchNeutralRight2"
+          }
+        },
+        {
+          "type": "path",
+          "data": {
+            "pathName": "NeutralTrenchRight2"
+          }
+        }
+      ]
+    }
+  },
+  "resetOdom": true,
+  "folder": null,
+  "choreoAuto": false
+}
