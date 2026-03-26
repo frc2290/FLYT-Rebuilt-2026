@@ -77,7 +77,17 @@ public class PhotonRunnable implements Runnable {
             return;
         }
 
+        boolean connected = photonCamera.isConnected();
+        Logger.recordOutput("VisionCalibration/" + cameraName + "/Connected", connected);
+        if (!connected) {
+            photonResults = null;
+            atomicTargetYaw.set(null);
+            atomicEstimatedRobotPose.set(null);
+            return;
+        }
+
         var results = photonCamera.getAllUnreadResults();
+        //Logger.recordOutput("VisionCalibration/" + cameraName + "/UnreadResultCount", results.size());
         EstimatedRobotPose newestPose = null;
 
         for (PhotonPipelineResult result : results) {
@@ -89,6 +99,7 @@ public class PhotonRunnable implements Runnable {
             long[] tagIds = new long[targets.size()];
             Pose3d[] cameraToTags = new Pose3d[targets.size()];
             double[] ambiguities = new double[targets.size()];
+            boolean[] tagInLayout = new boolean[targets.size()];
 
             for (int i = 0; i < targets.size(); i++) {
                 var target = targets.get(i);
@@ -96,14 +107,16 @@ public class PhotonRunnable implements Runnable {
                 var transform = target.getBestCameraToTarget();
                 cameraToTags[i] = new Pose3d(transform.getTranslation(), transform.getRotation());
                 ambiguities[i] = target.getPoseAmbiguity();
+                tagInLayout[i] = layout.getTagPose((int) tagIds[i]).isPresent();
             }
 
-            Logger.recordOutput(
-                    "VisionCalibration/" + cameraName + "/TimestampSec",
-                    result.getTimestampSeconds());
-            Logger.recordOutput("VisionCalibration/" + cameraName + "/TagIds", tagIds);
-            Logger.recordOutput("VisionCalibration/" + cameraName + "/CameraToTag", cameraToTags);
-            Logger.recordOutput("VisionCalibration/" + cameraName + "/Ambiguity", ambiguities);
+            //Logger.recordOutput(
+            //        "VisionCalibration/" + cameraName + "/TimestampSec",
+            //        result.getTimestampSeconds());
+            //Logger.recordOutput("VisionCalibration/" + cameraName + "/TagIds", tagIds);
+            //Logger.recordOutput("VisionCalibration/" + cameraName + "/TagInLayout", tagInLayout);
+            //Logger.recordOutput("VisionCalibration/" + cameraName + "/CameraToTag", cameraToTags);
+            //Logger.recordOutput("VisionCalibration/" + cameraName + "/Ambiguity", ambiguities);
 
             photonResults = result;
             atomicTargetYaw.set(result.getBestTarget().yaw);
@@ -112,9 +125,15 @@ public class PhotonRunnable implements Runnable {
                     .estimateCoprocMultiTagPose(result)
                     .or(() -> photonPoseEstimator.estimateLowestAmbiguityPose(result));
 
-            if (photonPose.isEmpty()) {
-                continue;
-            }
+            //if (photonPose.isEmpty()) {
+                //int bestId = result.getBestTarget().getFiducialId();
+                //boolean bestIdInLayout = layout.getTagPose(bestId).isPresent();
+                //Logger.recordOutput("VisionCalibration/" + cameraName + "/PoseEstimateEmpty", true);
+                //Logger.recordOutput("VisionCalibration/" + cameraName + "/BestTargetId", bestId);
+                //Logger.recordOutput("VisionCalibration/" + cameraName + "/BestTargetInLayout", bestIdInLayout);
+                //continue;
+            //}
+            //Logger.recordOutput("VisionCalibration/" + cameraName + "/PoseEstimateEmpty", false);
 
             var est = photonPose.get();
             if (Math.abs(est.estimatedPose.getZ()) > kVisionMaxPoseZMeters) {
