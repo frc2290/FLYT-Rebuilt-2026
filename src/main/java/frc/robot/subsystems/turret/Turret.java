@@ -137,15 +137,18 @@ public class Turret extends SubsystemBase {
 
         currentShooterVelocityScale = SmartDashboard.getNumber(shooterVelocityScaleKey, defaultShooterVelocityScale);
         currentShotAngleOffsetDeg = SmartDashboard.getNumber(shotAngleOffsetDegKey, defaultShotAngleOffsetDeg);
-        double tunedShotVelocityMps = result.vel * currentShooterVelocityScale;
-        double tunedShotAngleDeg = result.pitch + currentShotAngleOffsetDeg;
 
-        // Convert desired SOTF projectile behavior into mechanism commands using
-        // inverse linear-fit calibration.
-        activeShooterVelocitySetpointMps = (tunedShotVelocityMps - TurretConstants.flywheelSpeedCalibrationOffset)
-                / TurretConstants.flywheelSpeedCalibrationGain;
-        activeShotAngleSetpointDeg = (tunedShotAngleDeg - TurretConstants.hoodPitchCalibrationOffset)
-                / TurretConstants.hoodPitchCalibrationGain;
+        if (result.isValid) {
+            double tunedShotVelocityMps = result.vel * currentShooterVelocityScale;
+            double tunedShotAngleDeg = result.pitch + currentShotAngleOffsetDeg;
+
+            // Convert desired SOTF projectile behavior into mechanism commands using
+            // inverse linear-fit calibration.
+            activeShooterVelocitySetpointMps = (tunedShotVelocityMps - TurretConstants.flywheelSpeedCalibrationOffset)
+                    / TurretConstants.flywheelSpeedCalibrationGain;
+            activeShotAngleSetpointDeg = (tunedShotAngleDeg - TurretConstants.hoodPitchCalibrationOffset)
+                    / TurretConstants.hoodPitchCalibrationGain;
+        }
 
 
 
