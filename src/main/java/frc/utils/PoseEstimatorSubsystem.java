@@ -159,10 +159,10 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
         leftPhotonNotifier.setName("PhotonRunnableLeft");
         rightPhotonNotifier.setName("PhotonRunnableRight");
 
-        frontPhotonNotifier.startPeriodic(0.01);
-        backPhotonNotifier.startPeriodic(0.01);
-        leftPhotonNotifier.startPeriodic(0.01);
-        rightPhotonNotifier.startPeriodic(0.01);
+        frontPhotonNotifier.startPeriodic(0.02);
+        backPhotonNotifier.startPeriodic(0.02);
+        leftPhotonNotifier.startPeriodic(0.02);
+        rightPhotonNotifier.startPeriodic(0.02);
 
         try {
             config = RobotConfig.fromGUISettings();
@@ -207,26 +207,36 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
         EstimatedRobotPose leftUpdate = leftPhotonRunnable.grabLatestUpdate();
         EstimatedRobotPose rightUpdate = rightPhotonRunnable.grabLatestUpdate();
 
-        VisionMeasurement bestMeasurement = null;
-        bestMeasurement = chooseBetter(bestMeasurement, processCameraUpdate(frontUpdate, "Front"));
-        bestMeasurement = chooseBetter(bestMeasurement, processCameraUpdate(backUpdate, "Back"));
-        bestMeasurement = chooseBetter(bestMeasurement, processCameraUpdate(leftUpdate, "Left"));
-        bestMeasurement = chooseBetter(bestMeasurement, processCameraUpdate(rightUpdate, "Right"));
+        VisionMeasurement front = processCameraUpdate(frontUpdate, "Front");
+        VisionMeasurement back = processCameraUpdate(backUpdate, "Back");
+        VisionMeasurement left = processCameraUpdate(leftUpdate, "Left");
+        VisionMeasurement right = processCameraUpdate(rightUpdate, "Right");
 
-        if (bestMeasurement != null) {
-            drive.addVisionMeasurement(
-                    bestMeasurement.pose,
-                    bestMeasurement.timestampSeconds,
-                    bestMeasurement.stdDevs);
-            sawTag = true;
-            Logger.recordOutput("Vision/SelectedCamera", bestMeasurement.cameraName);
-            Logger.recordOutput("Vision/SelectedPose", bestMeasurement.pose);
-            Logger.recordOutput("Vision/SelectedStdDevScore", bestMeasurement.stdDevScore);
-        } else {
-            Logger.recordOutput("Vision/SelectedCamera", "");
-            Logger.recordOutput("Vision/SelectedPose", new Pose2d());
-            Logger.recordOutput("Vision/SelectedStdDevScore", Double.NaN);
-        }
+        drive.addVisionMeasurement(front.pose, front.timestampSeconds, front.stdDevs);
+        drive.addVisionMeasurement(back.pose, back.timestampSeconds, back.stdDevs);
+        drive.addVisionMeasurement(left.pose, left.timestampSeconds, left.stdDevs);
+        drive.addVisionMeasurement(right.pose, right.timestampSeconds, right.stdDevs);
+
+        //VisionMeasurement bestMeasurement = null;
+        //bestMeasurement = chooseBetter(bestMeasurement, processCameraUpdate(frontUpdate, "Front"));
+        //bestMeasurement = chooseBetter(bestMeasurement, processCameraUpdate(backUpdate, "Back"));
+        //bestMeasurement = chooseBetter(bestMeasurement, processCameraUpdate(leftUpdate, "Left"));
+        //bestMeasurement = chooseBetter(bestMeasurement, processCameraUpdate(rightUpdate, "Right"));
+
+        // if (bestMeasurement != null) {
+        //     drive.addVisionMeasurement(
+        //             bestMeasurement.pose,
+        //             bestMeasurement.timestampSeconds,
+        //             bestMeasurement.stdDevs);
+        //     sawTag = true;
+        //     Logger.recordOutput("Vision/SelectedCamera", bestMeasurement.cameraName);
+        //     Logger.recordOutput("Vision/SelectedPose", bestMeasurement.pose);
+        //     Logger.recordOutput("Vision/SelectedStdDevScore", bestMeasurement.stdDevScore);
+        // } else {
+        //     Logger.recordOutput("Vision/SelectedCamera", "");
+        //     Logger.recordOutput("Vision/SelectedPose", new Pose2d());
+        //     Logger.recordOutput("Vision/SelectedStdDevScore", Double.NaN);
+        // }
     }
 
     /** Processes a single camera frame and returns a measurement candidate (or null). */
