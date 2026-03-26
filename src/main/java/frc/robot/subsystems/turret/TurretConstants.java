@@ -113,42 +113,31 @@ public class TurretConstants {
     public static final InterpolatingTreeMap<Double, FullShooterParams> HUB_MAP = new InterpolatingTreeMap<>(
             InverseInterpolator.forDouble(), ShootOnTheFly::interpolateParams);
     static {
-        HUB_MAP.put(1.0000, new FullShooterParams(5.983381, 77.203497, 0.845446));
-        HUB_MAP.put(1.2500, new FullShooterParams(5.974283, 73.009765, 0.807618));
-        HUB_MAP.put(1.5000, new FullShooterParams(6.017143, 68.972239, 0.775341));
-        HUB_MAP.put(1.7500, new FullShooterParams(6.111851, 65.146562, 0.750499));
-        HUB_MAP.put(2.0000, new FullShooterParams(6.253331, 61.744907, 0.736964));
-        HUB_MAP.put(2.2500, new FullShooterParams(6.426015, 58.713505, 0.731260));
-        HUB_MAP.put(2.5000, new FullShooterParams(6.617694, 56.154104, 0.733982));
-        HUB_MAP.put(2.7500, new FullShooterParams(6.819126, 53.921117, 0.740777));
-        HUB_MAP.put(3.0000, new FullShooterParams(7.023836, 52.027423, 0.751557));
-        HUB_MAP.put(3.2500, new FullShooterParams(7.229943, 50.359070, 0.763955));
-        HUB_MAP.put(3.5000, new FullShooterParams(7.435390, 48.887859, 0.777531));
-        HUB_MAP.put(3.7500, new FullShooterParams(7.639604, 47.553750, 0.791123));
-        HUB_MAP.put(4.0000, new FullShooterParams(7.843395, 46.347213, 0.805244));
-        HUB_MAP.put(4.2500, new FullShooterParams(8.046361, 45.250828, 0.819734));
-        HUB_MAP.put(4.5000, new FullShooterParams(8.248222, 44.237410, 0.834062));
-        HUB_MAP.put(4.7500, new FullShooterParams(8.448753, 43.294974, 0.848116));
-        HUB_MAP.put(5.0000, new FullShooterParams(8.647817, 42.417063, 0.861936));
-        HUB_MAP.put(5.2500, new FullShooterParams(8.846569, 41.614685, 0.876394));
-        HUB_MAP.put(5.5000, new FullShooterParams(9.043400, 40.846238, 0.889938));
-        HUB_MAP.put(5.7500, new FullShooterParams(9.239531, 40.116972, 0.903165));
-        HUB_MAP.put(6.0000, new FullShooterParams(9.434686, 39.427523, 0.916190));
-        HUB_MAP.put(6.2500, new FullShooterParams(9.629062, 38.773331, 0.929022));
-        HUB_MAP.put(6.5000, new FullShooterParams(9.822555, 38.152229, 0.941683));
-        HUB_MAP.put(6.7500, new FullShooterParams(10.015439, 37.560121, 0.954178));
-        HUB_MAP.put(7.0000, new FullShooterParams(10.208108, 36.993503, 0.966534));
-    };
-
-    public static final InterpolatingTreeMap<Double, FullShooterParams> RealHubTable = new InterpolatingTreeMap<>(
-            InverseInterpolator.forDouble(), ShootOnTheFly::interpolateParams);
-    static {
-        RealHubTable.put(1.0000, new FullShooterParams(6.400004, 78.992201, 0.961837));
-        RealHubTable.put(2.0000, new FullShooterParams(7.456491, 74.315214, 1.184526));
-        RealHubTable.put(3.0000, new FullShooterParams(7.823117, 68.075232, 1.209609));
-        RealHubTable.put(4.0000, new FullShooterParams(8.236257, 62.219316, 1.225095));
-        RealHubTable.put(5.0000, new FullShooterParams(8.649912, 55.737812, 1.205485));
-        RealHubTable.put(6.0000, new FullShooterParams(9.245883, 51.499250, 1.237826));
+        HUB_MAP.put(1.0000, new FullShooterParams(6.147028, 78.496767, 0.901282));
+        HUB_MAP.put(1.2500, new FullShooterParams(6.381843, 77.066419, 0.956336));
+        HUB_MAP.put(1.5000, new FullShooterParams(6.594766, 75.672714, 1.001805));
+        HUB_MAP.put(1.7500, new FullShooterParams(6.788510, 74.327680, 1.039848));
+        HUB_MAP.put(2.0000, new FullShooterParams(6.947880, 72.912725, 1.066687));
+        HUB_MAP.put(2.2500, new FullShooterParams(7.088114, 71.477048, 1.086901));
+        HUB_MAP.put(2.5000, new FullShooterParams(7.200552, 69.914451, 1.097665));
+        HUB_MAP.put(2.7500, new FullShooterParams(7.302148, 68.302394, 1.103653));
+        HUB_MAP.put(3.0000, new FullShooterParams(7.392960, 66.619610, 1.104560));
+        HUB_MAP.put(3.2500, new FullShooterParams(7.503429, 65.055022, 1.109480));
+        HUB_MAP.put(3.5000, new FullShooterParams(7.608387, 63.453708, 1.110863));
+        HUB_MAP.put(3.7500, new FullShooterParams(7.716406, 61.858177, 1.111115));
+        HUB_MAP.put(4.0000, new FullShooterParams(7.831878, 60.308007, 1.111767));
+        HUB_MAP.put(4.2500, new FullShooterParams(7.953353, 58.798786, 1.112477));
+        HUB_MAP.put(4.5000, new FullShooterParams(8.080537, 57.330205, 1.113218));
+        HUB_MAP.put(4.7500, new FullShooterParams(8.213800, 55.908084, 1.114214));
+        HUB_MAP.put(5.0000, new FullShooterParams(8.351401, 54.513786, 1.114796));
+        HUB_MAP.put(5.2500, new FullShooterParams(8.495406, 53.166448, 1.115791));
+        HUB_MAP.put(5.5000, new FullShooterParams(8.640046, 51.809137, 1.114865));
+        HUB_MAP.put(5.7500, new FullShooterParams(8.796338, 50.590448, 1.117526));
+        HUB_MAP.put(6.0000, new FullShooterParams(8.953276, 49.365023, 1.118454));
+        HUB_MAP.put(6.2500, new FullShooterParams(9.115068, 48.174061, 1.119426));
+        HUB_MAP.put(6.5000, new FullShooterParams(9.281439, 47.017992, 1.120441));
+        HUB_MAP.put(6.7500, new FullShooterParams(9.450670, 45.875516, 1.120650));
+        HUB_MAP.put(7.0000, new FullShooterParams(9.624957, 44.819522, 1.122511));
     };
 
     public static final InterpolatingTreeMap<Double, FullShooterParams> SHUTTLE_MAP = new InterpolatingTreeMap<>(
