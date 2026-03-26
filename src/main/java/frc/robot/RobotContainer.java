@@ -163,10 +163,10 @@ public class RobotContainer {
         // DRIVER Control definitions
 
         m_driverController.a().onTrue(m_stateMachine.setShooterOverrideCommand(true)).onFalse(m_stateMachine.setShooterOverrideCommand(false));
-        m_driverController.b().whileTrue(
-                new ParallelCommandGroup(
-                        m_intake.runIntakeCommand(),
-                        m_driveStateMachine.tempChangeState(DriveState.SNAKE)));
+        m_driverController.b().whileTrue(m_intake.runIntakeCommand());
+                // new ParallelCommandGroup(
+                //         m_intake.runIntakeCommand(),
+                //         m_driveStateMachine.tempChangeState(DriveState.SNAKE)));
 
         m_driverController.x().onTrue(m_intake.intakeOut(IntakeSide.LEFT));
         m_driverController.y().onTrue(m_intake.intakeOut(IntakeSide.RIGHT));
@@ -182,8 +182,9 @@ public class RobotContainer {
         m_driverController.povLeft().onTrue(m_driveStateMachine.changeState(DriveState.MANUAL));
         m_driverController.povUp().onTrue(m_driveStateMachine.changeState(DriveState.SHOOT_LOCK));
         m_driverController.povRight().onTrue(Commands.runOnce(() -> m_drive.resetGyro())); // Reset Gyro Heading
+        m_driverController.povDown().onTrue(m_intake.bothIn());
 
-        //m_driverController.back().onTrue(m_turret.resetTurretPosition());
+        m_driverController.back().onTrue(m_turret.resetTurretPosition());
 
         // END DRIVER BUTTONS
 
