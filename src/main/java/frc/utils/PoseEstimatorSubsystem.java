@@ -142,7 +142,7 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
         frontPhotonRunnable = new PhotonRunnable(
                 VisionConstants.kForwardCamName, VisionConstants.kForwardCamTransform, () -> getHeading());
         backPhotonRunnable = new PhotonRunnable(
-                VisionConstants.kBackwardCamName, VisionConstants.kForwardCamTransform2, () -> getHeading()); //backward camera
+                VisionConstants.kBackwardCamName, VisionConstants.kBackwardCamTransform, () -> getHeading()); //backward camera
         leftPhotonRunnable = new PhotonRunnable(
                 VisionConstants.kLeftCamName, VisionConstants.kLeftCamTransform, () -> getHeading());
         rightPhotonRunnable = new PhotonRunnable(
@@ -251,7 +251,7 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
             var target = update.targetsUsed.get(0);
             double distMeters = target.getBestCameraToTarget().getTranslation().getNorm();
             double ambiguity = target.getPoseAmbiguity();
-            if (distMeters > 3.0 || ambiguity > VisionConstants.APRILTAG_AMBIGUITY_THRESHOLD) {
+            if (distMeters > 4.0 || ambiguity > VisionConstants.APRILTAG_AMBIGUITY_THRESHOLD) {
                 Logger.recordOutput("Vision/CameraPoses/" + cameraName, new Pose2d[] {});
                 return null;
             }

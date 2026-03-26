@@ -96,31 +96,27 @@ public final class Constants {
                 new Rotation3d(degreesToRadians(180), degreesToRadians(-45), degreesToRadians(-200)));
 
         // Multi-camera AprilTag rig configuration (robot-to-camera transforms).
-        public static final String kForwardCamName = "forward";
+        public static final String kForwardCamName = "backward";
         //public static final Transform3d kForwardCamTransform = new Transform3d(
         //        new Translation3d(inchesToMeters(9.755440), inchesToMeters(6), inchesToMeters(20.420752)),
         //        new Rotation3d(0.0, degreesToRadians(-42.0), 0.0));
         public static final Transform3d kForwardCamTransform = new Transform3d(
-                new Translation3d(inchesToMeters(16), inchesToMeters(7), inchesToMeters(22)),
-                new Rotation3d(0.0, 0, 0.0));
+                new Translation3d(inchesToMeters(11), inchesToMeters(-10.375), inchesToMeters(20.75)),
+                new Rotation3d(degreesToRadians(-90), degreesToRadians(-40), 0.0));
 
-        public static final Transform3d kForwardCamTransform2 = new Transform3d(
-                new Translation3d(inchesToMeters(17.5), inchesToMeters(-5.25), inchesToMeters(20.5)),
-                new Rotation3d(0.0, degreesToRadians(-10), 0.0));
-
-        public static final String kBackwardCamName = "forward2";//"backward";
+        public static final String kBackwardCamName = "forward2";
         public static final Transform3d kBackwardCamTransform = new Transform3d(
-                new Translation3d(inchesToMeters(12.16), inchesToMeters(5.25), inchesToMeters(20.93)),
-                new Rotation3d(0.0, degreesToRadians(-42.0), degreesToRadians(180.0)));
+                new Translation3d(inchesToMeters(-8.25), inchesToMeters(10.375), inchesToMeters(20.75)),
+                new Rotation3d(degreesToRadians(-90), degreesToRadians(-40), degreesToRadians(180.0)));
 
         public static final String kLeftCamName = "left";
         public static final Transform3d kLeftCamTransform = new Transform3d(
-                new Translation3d(inchesToMeters(-10.25), inchesToMeters(-7.25), inchesToMeters(20.5)),
-                new Rotation3d(degreesToRadians(-90), degreesToRadians(-40), 0.0));
+                new Translation3d(inchesToMeters(12), inchesToMeters(11.75), inchesToMeters(20.75)),
+                new Rotation3d(0.0, degreesToRadians(-20.0), degreesToRadians(90.0)));
 
         public static final String kRightCamName = "right";
         public static final Transform3d kRightCamTransform = new Transform3d(
-                new Translation3d(inchesToMeters(-11.5), inchesToMeters(-12), inchesToMeters(20.75)),
+                new Translation3d(inchesToMeters(-12), inchesToMeters(-11.75), inchesToMeters(20.75)),
                 new Rotation3d(0.0, degreesToRadians(-20.0), degreesToRadians(-90.0)));
 
         public static final double FIELD_LENGTH_METERS = 16.541;
