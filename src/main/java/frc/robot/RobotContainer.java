@@ -134,7 +134,7 @@ public class RobotContainer {
         Trigger isLeft = new Trigger(() -> m_stateMachine.getLeftSide());
         Trigger hubActive = new Trigger(() -> m_stateMachine.isHubActive());
         Trigger hubAboutToActive = new Trigger(() -> m_stateMachine.isHubAboutToBecomeActive());
-        Trigger isHoodDown = new Trigger(() -> m_turret.getHoodAngle() < 2);
+        Trigger isHoodDown = new Trigger(() -> m_turret.getHoodAngle() < 5);
 
         //isOnBump.or(isUnderTrench).and(notAuto).whileTrue(m_driveStateMachine.tempChangeState(DriveState.ASSIST));
         // isOnBump.and(notAuto).whileTrue(m_driveStateMachine.tempChangeState(DriveState.BUMP));
