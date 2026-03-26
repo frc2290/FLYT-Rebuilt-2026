@@ -58,7 +58,7 @@ public class RobotContainer {
 
     // The driver's controller
     CommandXboxController m_driverController;
-    //CommandXboxController m_operatorController = new CommandXboxController(1);
+    CommandXboxController m_operatorController = new CommandXboxController(1);
 
     SendableChooser<Command> auto_chooser = new SendableChooser<>();
     LoggedDashboardChooser<AutoStart> auto_start = new LoggedDashboardChooser<>("Auto Start");
@@ -192,7 +192,7 @@ public class RobotContainer {
 
         // Override the auto shooting, this same button overrides in both neutral and alliance zone
         // In alliance zone it will stop shooting and in neutral it will start shuttling fuel
-        //m_operatorController.a().onTrue(m_stateMachine.setShooterOverrideCommand(true)).onFalse(m_stateMachine.setShooterOverrideCommand(false));
+        m_operatorController.a().onTrue(m_stateMachine.setShooterOverrideCommand(true)).onFalse(m_stateMachine.setShooterOverrideCommand(false));
 
         //m_operatorController.b().whileTrue(m_intake.wowowowowoIntake());
 
@@ -206,6 +206,7 @@ public class RobotContainer {
      */
     public Command getAutonomousCommand() {
         FlytSequentialAuto auto = auto_choice.get();
+        m_drive.setPose(auto.getPose());
         auto.clearCommands();
         auto.setRight(auto_right.get());
         auto.setup();
