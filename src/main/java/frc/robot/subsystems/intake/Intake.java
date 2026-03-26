@@ -160,14 +160,25 @@ public class Intake extends SubsystemBase {
         return intakeIn(side.opposite()).andThen(run(() -> {
             // driveRoller(side, rollerSpeed);
             deploy(side, true);
+            outSide = Optional.of(side);
         }).until(() -> {
-            if (isOut(side)) {
-                outSide = Optional.of(side);
-                return true;
-            } else {
-                return false;
-            }
+            return isOut(side);
         }));
+    }
+
+    public Command bothIn() {
+        return run(() -> {
+            outSide = Optional.empty();
+            driveRoller(IntakeSide.LEFT, rollerSpeed);
+            driveRoller(IntakeSide.RIGHT, rollerSpeed);
+            deploy(IntakeSide.LEFT, false);
+            deploy(IntakeSide.RIGHT, false);
+        }).until(() -> {
+            return isIn(IntakeSide.LEFT) && isIn(IntakeSide.RIGHT);
+        }).andThen(() -> {
+            driveRoller(IntakeSide.LEFT, 0);
+            driveRoller(IntakeSide.RIGHT, 0);
+        }, this);
     }
 
     private void runIntake() {
@@ -239,8 +250,8 @@ public class Intake extends SubsystemBase {
 
     public Command syringeIntake(IntakeSide side) {
         return run(() -> {
-            getIo(side).setDeployPosition(outPosition * 0.5);
             driveRoller(side, rollerSpeed/2);
+            getIo(side).setDeployPosition(outPosition * 0.5);
         }).finallyDo(() -> {
             driveRoller(side, 0);
             getIo(side).setDeployPosition(outPosition);
