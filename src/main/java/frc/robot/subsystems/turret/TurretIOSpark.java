@@ -109,7 +109,7 @@ public class TurretIOSpark implements TurretIO {
         turretConfig.closedLoop.maxMotion
                 // Calculated for a 0.5s, 86-degree move
                 .cruiseVelocity(2600*4)
-                .maxAcceleration(12000*6)
+                .maxAcceleration(12000*4)
                 // Keep this loose during tuning to prevent premature profile regeneration
                 .allowedProfileError(5);
         REVLibError turretErr = turretSpark.configure(
