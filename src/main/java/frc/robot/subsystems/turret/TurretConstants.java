@@ -140,6 +140,17 @@ public class TurretConstants {
         HUB_MAP.put(7.0000, new FullShooterParams(9.998022, 39.539018, 1.022808));
     };
 
+    public static final InterpolatingTreeMap<Double, FullShooterParams> RealHubTable = new InterpolatingTreeMap<>(
+            InverseInterpolator.forDouble(), ShootOnTheFly::interpolateParams);
+    static {
+        RealHubTable.put(1.0000, new FullShooterParams(6.400004, 78.992201, 0.961837));
+        RealHubTable.put(2.0000, new FullShooterParams(7.456491, 74.315214, 1.184526));
+        RealHubTable.put(3.0000, new FullShooterParams(7.823117, 68.075232, 1.209609));
+        RealHubTable.put(4.0000, new FullShooterParams(8.236257, 62.219316, 1.225095));
+        RealHubTable.put(5.0000, new FullShooterParams(8.649912, 55.737812, 1.205485));
+        RealHubTable.put(6.0000, new FullShooterParams(9.245883, 51.499250, 1.237826));
+    };
+
     public static final InterpolatingTreeMap<Double, FullShooterParams> SHUTTLE_MAP = new InterpolatingTreeMap<>(
             InverseInterpolator.forDouble(), ShootOnTheFly::interpolateParams);
     static {
