@@ -61,6 +61,7 @@ public class TrenchToNeutralAuto extends FlytSequentialAuto {
                 this.neutralToTrench = neutralToTrench.mirrorPath();
                 this.trenchToNeutral2 = trenchToNeutral2.mirrorPath();
                 this.neutralToTrench2 = neutralToTrench2.mirrorPath();
+                this.startPose = trenchToNeutral.getStartingHolonomicPose().get();
             }
             addCommands(
                 //stateMachine.setShooterOverrideCommand(true),
