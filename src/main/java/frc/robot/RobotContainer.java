@@ -210,10 +210,10 @@ public class RobotContainer {
      */
     public Command getAutonomousCommand() {
         FlytSequentialAuto auto = auto_choice.get();
-        m_drive.setPose(auto.getPose());
         auto.clearCommands();
         auto.setRight(auto_right.get());
         auto.setup();
+        m_drive.setPose(auto.getPose());
         return auto;
     }
 }
