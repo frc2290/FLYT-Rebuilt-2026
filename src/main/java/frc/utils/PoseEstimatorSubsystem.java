@@ -212,10 +212,10 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
         VisionMeasurement left = processCameraUpdate(leftUpdate, "Left");
         VisionMeasurement right = processCameraUpdate(rightUpdate, "Right");
 
-        drive.addVisionMeasurement(front.pose, front.timestampSeconds, front.stdDevs);
-        drive.addVisionMeasurement(back.pose, back.timestampSeconds, back.stdDevs);
-        drive.addVisionMeasurement(left.pose, left.timestampSeconds, left.stdDevs);
-        drive.addVisionMeasurement(right.pose, right.timestampSeconds, right.stdDevs);
+        if (front != null) drive.addVisionMeasurement(front.pose, front.timestampSeconds, front.stdDevs);
+        if (back != null) drive.addVisionMeasurement(back.pose, back.timestampSeconds, back.stdDevs);
+        if (left != null) drive.addVisionMeasurement(left.pose, left.timestampSeconds, left.stdDevs);
+        if (right != null) drive.addVisionMeasurement(right.pose, right.timestampSeconds, right.stdDevs);
 
         //VisionMeasurement bestMeasurement = null;
         //bestMeasurement = chooseBetter(bestMeasurement, processCameraUpdate(frontUpdate, "Front"));
