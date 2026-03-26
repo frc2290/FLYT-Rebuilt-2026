@@ -281,6 +281,10 @@ public class DyeRotor extends SubsystemBase {
         return inputs.feederEncoderRPM;
     }
 
+    public boolean isRunning() {
+        return runDyeRotor;
+    }
+
     /**
      * Returns measured overfeed ratio from current rotor/feeder rev/sec.
      *
