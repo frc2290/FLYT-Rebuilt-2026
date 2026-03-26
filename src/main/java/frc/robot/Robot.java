@@ -97,7 +97,7 @@ public class Robot extends LoggedRobot {
     private final StateMachine m_stateMachine;
     private final DriveStateMachine m_driveStateMachine;
 
-    private final LEDUtility _leds = new LEDUtility(8);
+    private final LEDUtility _leds = new LEDUtility(9);
 
     LoggedDashboardChooser<Command> sys_id_commands = new LoggedDashboardChooser<>("SysID");
 

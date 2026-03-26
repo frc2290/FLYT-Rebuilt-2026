@@ -260,7 +260,6 @@ public class StateMachine extends SubsystemBase {
             case NONE:
                 m_turret.setStopShoot(false);
                 switch (fieldZone) {
-                    case ANTI_ALLIANCE:
                     case ALLIANCE:
                         shootOnTheFly.setCurrentTofTable(TargetTable.HUB);
                         // point at the hub, but only shoot if hub is active
@@ -271,9 +270,10 @@ public class StateMachine extends SubsystemBase {
                             m_dyeRotor.runDyeRotor(false);
                         }
                         break;
+                    case ANTI_ALLIANCE:
                     case NEUTRAL:
                         shootOnTheFly.setCurrentTofTable(TargetTable.SHUTTLE);
-                        if (shootOverride && m_turret.isTurretPointedAtTarget()) {
+                        if (shootOverride && m_turret.turretReadyToShoot()) {
                             m_dyeRotor.runDyeRotor(true);
                         } else {
                             m_dyeRotor.runDyeRotor(false);
