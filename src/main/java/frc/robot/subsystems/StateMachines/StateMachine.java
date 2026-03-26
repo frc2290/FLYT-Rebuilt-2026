@@ -50,7 +50,7 @@ public class StateMachine extends SubsystemBase {
 
     private boolean isOnLeftSide = false; // left = high x, right = low x
     private FieldZone fieldZone = FieldZone.ALLIANCE;
-    private SpecialZone specialZone = SpecialZone.NONE;
+    private SpecialZone specialZone = SpecialZone.TRENCH;
     private boolean isAuto = false;
     private boolean shootOverride = false;
 
