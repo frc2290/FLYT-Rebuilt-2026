@@ -49,7 +49,7 @@ public class HubToOutpost extends FlytSequentialAuto {
         addCommands(
             pose.setCurrentPoseCommand(this.hubToOutpost.getStartingHolonomicPose().get()),
             new SwerveAutoStep(this.hubToOutpost, pose),
-            intake.intakeOut(IntakeSide.RIGHT),
+            intake.intakeOut(IntakeSide.LEFT),
             intake.startIntakeCommand());
     }
 
