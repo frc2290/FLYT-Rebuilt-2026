@@ -100,7 +100,9 @@ public class DyeRotor extends SubsystemBase {
         }
 
         if (backdriving) {
-            setTargetBPS(-defaultTargetBps);
+            //setTargetBPS(-defaultTargetBps);
+            io.setRotorSpeed(-1);
+            io.setFeederSpeed(-1);
             if (backdriveTimer.hasElapsed(BACKDRIVE_SECONDS)) {
                 backdriving = false;
                 backdriveTimer.stop();
