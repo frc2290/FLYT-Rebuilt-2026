@@ -72,7 +72,7 @@ public class TurretConstants {
             Units.radiansPerSecondToRotationsPerMinute(turretGearbox.freeSpeedRadPerSec);
     public static final double turretTheoreticalKv =
             12.0 / (turretFreeSpeedRPM * turretEncoderVelocityFactor);
-    public static final double turretKp = 0.1;
+    public static final double turretKp = 0.5;
     public static final double turretKi = 0.0;
     public static final double turretKd = 0.0;
 
