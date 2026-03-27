@@ -69,6 +69,7 @@ public class RobotContainer {
     //LoggedDashboardChooser<AutoEnd> auto_end = new LoggedDashboardChooser<>("Auto End");
     LoggedDashboardChooser<Boolean> auto_right = new LoggedDashboardChooser<>("Field Side");
     LoggedDashboardChooser<FlytSequentialAuto> auto_choice = new LoggedDashboardChooser<>("Auto Routine");
+    LoggedDashboardChooser<Boolean> auto_forward = new LoggedDashboardChooser<>("Forward?");
 
     /**
      * The container for the robot. Contains subsystems, OI devices, and commands.
@@ -115,6 +116,8 @@ public class RobotContainer {
         // auto_end_pos.addOption("Outpost", "Outpost");
         auto_right.addDefaultOption("Right", true);
         auto_right.addOption("Left", false);
+        auto_forward.addDefaultOption("Backward", false);
+        auto_forward.addOption("Forward", true);
         auto_choice.addDefaultOption("Trench 2x", new TrenchToNeutralAuto(_poseEstimator, _stateMachine, _intake));
         auto_choice.addOption("Hub to Outpost", new HubToOutpost(_poseEstimator, _intake));
         auto_choice.addOption("Trench to Outpost/Depot", new TrenchToNeutralToOutpost(_poseEstimator, _stateMachine, _intake));
@@ -217,6 +220,7 @@ public class RobotContainer {
         FlytSequentialAuto auto = auto_choice.get();
         auto.clearCommands();
         auto.setRight(auto_right.get());
+        auto.setForward(auto_forward.get());
         auto.setup();
         m_drive.setPose(auto.getPose());
         return auto;
