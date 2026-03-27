@@ -201,7 +201,7 @@ public class RobotContainer {
         // Override the auto shooting, this same button overrides in both neutral and alliance zone
         // In alliance zone it will stop shooting and in neutral it will start shuttling fuel
         m_operatorController.a().onTrue(m_stateMachine.setShooterOverrideCommand(true)).onFalse(m_stateMachine.setShooterOverrideCommand(false));
-        m_operatorController.leftStick().onTrue(m_stateMachine.setVeryShootCommand(true)).onFalse(m_stateMachine.setVeryShootCommand(false));
+        m_operatorController.povRight().onTrue(m_stateMachine.setVeryShootCommand(true)).onFalse(m_stateMachine.setVeryShootCommand(false));
 
         //m_operatorController.b().whileTrue(m_intake.wowowowowoIntake());
 

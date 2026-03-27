@@ -42,7 +42,7 @@ public class TurretConstants {
     // --- Encoder & Conversion Factors ---
     public static final boolean hoodEncoderInverted = false;
     public static final double hoodEncoderZeroOffset = 0.8;
-    public static final double hoodAngleOffset = 6.39;
+    public static final double hoodAngleOffset = 248.6;
     public static final double hoodShotAngleToleranceDeg = 2.0;
     public static final double hoodPitchCalibrationGain = -0.8807;
     public static final double hoodPitchCalibrationOffset = 80.4301;
