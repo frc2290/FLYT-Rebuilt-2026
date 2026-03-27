@@ -37,7 +37,7 @@ public class SitAndShoot extends FlytSequentialAuto {
         //            this.stateMachine.setShooterOverrideCommand(true));
         addCommands(driveState.changeState(DriveState.CANCELLED),
                     new WaitCommand(2),
-                    this.stateMachine.setShooterOverrideCommand(true));
+                    //this.stateMachine.setShooterOverrideCommand(true));
     }
 
     @Override
