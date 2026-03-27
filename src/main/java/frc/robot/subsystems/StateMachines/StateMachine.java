@@ -55,6 +55,7 @@ public class StateMachine extends SubsystemBase {
     private SpecialZone specialZone = SpecialZone.TRENCH;
     private boolean isAuto = false;
     private boolean shootOverride = false;
+    private boolean veryShoot = false;
 
     private Supplier<Pose2d> poseSupplier;
     private Supplier<ChassisSpeeds> speedSupplier;
@@ -84,6 +85,7 @@ public class StateMachine extends SubsystemBase {
         Logger.recordOutput("StateMachine/Zone/Field", fieldZone);
         Logger.recordOutput("StateMachine/Zone/Special", specialZone);
         Logger.recordOutput("StateMachine/ShootOverride", shootOverride);
+        Logger.recordOutput("StateMachine/VeryShoot", veryShoot);
     }
 
     public void startHubTimer() {
@@ -271,7 +273,8 @@ public class StateMachine extends SubsystemBase {
                         shootOnTheFly.setCurrentTofTable(TargetTable.HUB);
                         // point at the hub, but only shoot if hub is active
                         m_turret.setTargetTranslation(Hub.topCenterPoint.toTranslation2d());
-                        if (!shootOverride && turretReadyDebounce.calculate(m_turret.turretReadyToShoot()) && (hubActive || isAuto)) {
+                        if ((!shootOverride && turretReadyDebounce.calculate(m_turret.turretReadyToShoot()) && (hubActive || isAuto)) ||
+                            veryShoot) {
                             m_dyeRotor.runDyeRotor(true);
                         } else {
                             m_dyeRotor.runDyeRotor(false);
@@ -280,7 +283,8 @@ public class StateMachine extends SubsystemBase {
                     case ANTI_ALLIANCE:
                     case NEUTRAL:
                         shootOnTheFly.setCurrentTofTable(TargetTable.SHUTTLE);
-                        if (shootOverride && turretReadyDebounce.calculate(m_turret.turretReadyToShoot())) {
+                        if ((shootOverride && turretReadyDebounce.calculate(m_turret.turretReadyToShoot())) ||
+                            veryShoot) {
                             m_dyeRotor.runDyeRotor(true);
                         } else {
                             m_dyeRotor.runDyeRotor(false);
@@ -341,6 +345,14 @@ public class StateMachine extends SubsystemBase {
 
     public Command setShooterOverrideCommand(boolean shootOverride) {
         return runOnce(() -> setShootOverride(shootOverride));
+    }
+
+    public void setVeryShoot(boolean veryShoot) {
+        this.veryShoot = veryShoot;
+    }
+
+    public Command setVeryShootCommand(boolean veryShoot) {
+        return runOnce(() -> setVeryShoot(veryShoot));
     }
 
     public boolean isHubActive() {
