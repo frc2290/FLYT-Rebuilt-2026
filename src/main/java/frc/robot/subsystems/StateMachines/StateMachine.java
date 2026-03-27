@@ -292,9 +292,9 @@ public class StateMachine extends SubsystemBase {
                         // point at one side of the alliance zone, shoot if magic
                         double y = FieldConstants.fieldWidth;
                         if (isOnLeftSide) {
-                            y *= 6.0 / 7.0;
+                            y *= 5.5 / 7.0;
                         } else {
-                            y *= 1.0 / 7.0;
+                            y *= 1.5 / 7.0;
                         }
                         m_turret.setTargetTranslation(new Translation2d(LinesVertical.allianceZone * 1.0 / 4.0, y));
                         break;
