@@ -33,6 +33,12 @@ public class TrenchToNeutralAuto extends FlytSequentialAuto {
     private PathPlannerPath trenchToNeutral2;
     private PathPlannerPath neutralToTrench2;
 
+    private PathPlannerPath trenchToNeutralFRONT;
+    private PathPlannerPath neutralToTrenchFRONT;
+    private PathPlannerPath trenchToNeutral2FRONT;
+    private PathPlannerPath neutralToTrench2FRONT;
+    private boolean forward = true;
+
     /** Creates a new TrenchToNeutralAuto. */
     public TrenchToNeutralAuto(PoseEstimatorSubsystem pose, StateMachine stateMachine, Intake intake) {
         this.pose = pose;
@@ -44,6 +50,10 @@ public class TrenchToNeutralAuto extends FlytSequentialAuto {
             this.neutralToTrench = PathPlannerPath.fromPathFile("NeutralTrenchRight");
             this.trenchToNeutral2 = PathPlannerPath.fromPathFile("TrenchNeutralRight2");
             this.neutralToTrench2 = PathPlannerPath.fromPathFile("NeutralTrenchRight2");
+            this.trenchToNeutralFRONT = PathPlannerPath.fromPathFile("TrenchNeutralRightFront");
+            this.neutralToTrenchFRONT = PathPlannerPath.fromPathFile("NeutralTrenchRightFront");
+            this.trenchToNeutral2FRONT = PathPlannerPath.fromPathFile("TrenchNeutralRight2Front");
+            this.neutralToTrench2FRONT = PathPlannerPath.fromPathFile("NeutralTrenchRight2Front");
             this.startPose = trenchToNeutral.getStartingHolonomicPose().get();
             Logger.recordOutput("StartPose", startPose);
         } catch (Exception ex) {
@@ -55,6 +65,12 @@ public class TrenchToNeutralAuto extends FlytSequentialAuto {
 
     @Override
     public void setup() {
+            if (this.forward) {
+                this.trenchToNeutral = trenchToNeutralFRONT;
+                this.neutralToTrench = neutralToTrenchFRONT;
+                this.trenchToNeutral2 = trenchToNeutral2FRONT;
+                this.neutralToTrench2 = neutralToTrench2FRONT;
+            }
             if (!this.right) {
                 this.trenchToNeutral = trenchToNeutral.mirrorPath();
                 this.neutralToTrench = neutralToTrench.mirrorPath();
@@ -66,13 +82,27 @@ public class TrenchToNeutralAuto extends FlytSequentialAuto {
                 pose.setCurrentPoseCommand(this.trenchToNeutral.getStartingHolonomicPose().get()),
                 new ParallelCommandGroup(
                     new SwerveAutoStep(this.trenchToNeutral, pose),
-                    new WaitCommand(1.5).andThen(intake.intakeOut(right ? IntakeSide.LEFT : IntakeSide.RIGHT)).andThen(intake.startIntakeCommand())),
+                    new WaitCommand(1.5).andThen(intake.intakeOut(whichSide()).andThen(intake.startIntakeCommand()))),
                 new SwerveAutoStep(this.neutralToTrench, pose),
                 new WaitCommand(3.5),
                 new SwerveAutoStep(this.trenchToNeutral2, pose),
                 new SwerveAutoStep(this.neutralToTrench2, pose),
-                intake.agitateIntake(right ? IntakeSide.LEFT : IntakeSide.RIGHT)
+                intake.agitateIntake(whichSide())
             );
+    }
+
+    private IntakeSide whichSide() {
+        if (right && forward) {
+            return IntakeSide.LEFT;
+        } else if (right && !forward) {
+            return IntakeSide.RIGHT;
+        } else if(!right && forward) {
+            return IntakeSide.RIGHT;
+        } else if (!right && !forward) {
+            return IntakeSide.LEFT;
+        } else {
+            return IntakeSide.RIGHT;
+        }
     }
 
     @Override
@@ -83,5 +113,10 @@ public class TrenchToNeutralAuto extends FlytSequentialAuto {
     @Override
     public Pose2d getPose() {
         return startPose;
+    }
+
+    @Override
+    public void setForward(boolean forward) {
+        this.forward = forward;
     }
 }

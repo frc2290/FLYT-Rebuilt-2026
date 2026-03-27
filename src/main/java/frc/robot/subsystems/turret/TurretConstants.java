@@ -203,7 +203,7 @@ public class TurretConstants {
         public static final double tofDerivativeStepMeters = 0.01;
 
         public static final double maxValidDistanceMeters = 10.0;
-        public static final double pointAtTargetToleranceDeg = 5.0;
+        public static final double pointAtTargetToleranceDeg = 7.5;
 
         // Shooter physical offset from turret center, meters.
         public static final double turretShooterOffsetX = 0.0;

@@ -121,4 +121,6 @@ public class FlytSequentialAuto extends Command {
     public Pose2d getPose() {
         return new Pose2d();
     }
+
+    public void setForward(boolean forward) {}
 }
