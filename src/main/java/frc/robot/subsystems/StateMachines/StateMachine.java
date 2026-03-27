@@ -9,6 +9,8 @@ import java.util.function.Supplier;
 
 import org.littletonrobotics.junction.Logger;
 
+import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -61,6 +63,8 @@ public class StateMachine extends SubsystemBase {
     private DyeRotor m_dyeRotor;
 
     private ShootOnTheFly shootOnTheFly = ShootOnTheFly.getInstance();
+
+    private Debouncer turretReadyDebounce = new Debouncer(0.5, DebounceType.kBoth);
 
     public StateMachine(Supplier<Pose2d> poseSupplier, Supplier<ChassisSpeeds> speedSupplier, Intake intake, Turret turret, DyeRotor dyeRotor) {
         this.poseSupplier = poseSupplier;
@@ -267,7 +271,7 @@ public class StateMachine extends SubsystemBase {
                         shootOnTheFly.setCurrentTofTable(TargetTable.HUB);
                         // point at the hub, but only shoot if hub is active
                         m_turret.setTargetTranslation(Hub.topCenterPoint.toTranslation2d());
-                        if (!shootOverride && m_turret.turretReadyToShoot() && (hubActive || isAuto)) {
+                        if (!shootOverride && turretReadyDebounce.calculate(m_turret.turretReadyToShoot()) && (hubActive || isAuto)) {
                             m_dyeRotor.runDyeRotor(true);
                         } else {
                             m_dyeRotor.runDyeRotor(false);
@@ -276,7 +280,7 @@ public class StateMachine extends SubsystemBase {
                     case ANTI_ALLIANCE:
                     case NEUTRAL:
                         shootOnTheFly.setCurrentTofTable(TargetTable.SHUTTLE);
-                        if (shootOverride && m_turret.turretReadyToShoot()) {
+                        if (shootOverride && turretReadyDebounce.calculate(m_turret.turretReadyToShoot())) {
                             m_dyeRotor.runDyeRotor(true);
                         } else {
                             m_dyeRotor.runDyeRotor(false);

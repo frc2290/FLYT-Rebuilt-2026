@@ -32,7 +32,6 @@ public class TrenchToNeutralAuto extends FlytSequentialAuto {
     private PathPlannerPath neutralToTrench;
     private PathPlannerPath trenchToNeutral2;
     private PathPlannerPath neutralToTrench2;
-    
 
     /** Creates a new TrenchToNeutralAuto. */
     public TrenchToNeutralAuto(PoseEstimatorSubsystem pose, StateMachine stateMachine, Intake intake) {
@@ -68,7 +67,7 @@ public class TrenchToNeutralAuto extends FlytSequentialAuto {
                 pose.setCurrentPoseCommand(this.trenchToNeutral.getStartingHolonomicPose().get()),
                 new ParallelCommandGroup(
                     new SwerveAutoStep(this.trenchToNeutral, pose),
-                    new WaitCommand(1.5).andThen(intake.intakeOut(right ? IntakeSide.RIGHT : IntakeSide.LEFT)).andThen(intake.startIntakeCommand())),
+                    new WaitCommand(1.5).andThen(intake.intakeOut(right ? IntakeSide.LEFT : IntakeSide.RIGHT)).andThen(intake.startIntakeCommand())),
                 new SwerveAutoStep(this.neutralToTrench, pose),
                 //stateMachine.setShooterOverrideCommand(true),
                 new WaitCommand(3.5),
