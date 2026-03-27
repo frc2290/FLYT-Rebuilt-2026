@@ -74,7 +74,7 @@ public class TurretConstants {
             12.0 / (turretFreeSpeedRPM * turretEncoderVelocityFactor);
     public static final double turretKp = 0.25;
     public static final double turretKi = 0.0;
-    public static final double turretKd = 1.0;
+    public static final double turretKd = 2.0;
 
     public static final double hoodff = 0;
     public static final DCMotor hoodGearbox = DCMotor.getNEO(1);
