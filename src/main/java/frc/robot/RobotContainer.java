@@ -8,6 +8,7 @@ import frc.robot.subsystems.drive.Drive;
 import frc.utils.PoseEstimatorSubsystem;
 import frc.utils.LEDEffects.LEDEffect;
 import frc.robot.Commands.Autos.FlytSequentialAuto;
+import frc.robot.Commands.Autos.HubToOutpost;
 import frc.robot.Commands.Autos.SitAndShoot;
 import frc.robot.Commands.Autos.TrenchToNeutralAuto;
 import frc.robot.Commands.Autos.TrenchToNeutralToOutpost;
@@ -113,6 +114,7 @@ public class RobotContainer {
         auto_right.addDefaultOption("Right", true);
         auto_right.addOption("Left", false);
         auto_choice.addDefaultOption("Trench 2x", new TrenchToNeutralAuto(_poseEstimator, _stateMachine, _intake));
+        auto_choice.addOption("Hub to Outpost", new HubToOutpost(_poseEstimator, _intake));
         auto_choice.addOption("Trench to Outpost/Depot", new TrenchToNeutralToOutpost(_poseEstimator, _stateMachine, _intake));
         auto_choice.addOption("Sit And Shoot", new SitAndShoot(_stateMachine, _poseEstimator, _driveStateMachine));
 
