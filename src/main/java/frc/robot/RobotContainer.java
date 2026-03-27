@@ -4,39 +4,41 @@
 
 package frc.robot;
 
-import frc.robot.subsystems.drive.Drive;
-import frc.utils.PoseEstimatorSubsystem;
-import frc.utils.LEDEffects.LEDEffect;
+import static edu.wpi.first.math.util.Units.inchesToMeters;
+
+import java.util.function.BiConsumer;
+
+import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
+
+import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.util.Color;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.Commands.Autos.AutoBuilder.AutoActivity;
+import frc.robot.Commands.Autos.AutoBuilder.AutoStart;
 import frc.robot.Commands.Autos.FlytSequentialAuto;
 import frc.robot.Commands.Autos.HubToOutpost;
 import frc.robot.Commands.Autos.SitAndShoot;
 import frc.robot.Commands.Autos.TrenchToNeutralAuto;
 import frc.robot.Commands.Autos.TrenchToNeutralToOutpost;
-import frc.robot.Commands.Autos.AutoBuilder.AutoActivity;
-import frc.robot.Commands.Autos.AutoBuilder.AutoStart;
 import frc.robot.subsystems.StateMachines.DriveStateMachine;
-import frc.robot.subsystems.StateMachines.StateMachine;
 import frc.robot.subsystems.StateMachines.DriveStateMachine.DriveState;
+import frc.robot.subsystems.StateMachines.StateMachine;
 import frc.robot.subsystems.StateMachines.StateMachine.FieldZone;
 import frc.robot.subsystems.StateMachines.StateMachine.SpecialZone;
+import frc.robot.subsystems.drive.Drive;
+import frc.robot.subsystems.dyerotor.DyeRotor;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.IntakeConstants.IntakeSide;
-import frc.robot.subsystems.dyerotor.DyeRotor;
 import frc.robot.subsystems.turret.Turret;
-import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
-import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
-import edu.wpi.first.wpilibj.util.Color;
 import frc.utils.FuelSim;
 import frc.utils.LEDEffects;
+import frc.utils.LEDEffects.LEDEffect;
 import frc.utils.LEDUtility;
-import static edu.wpi.first.math.util.Units.inchesToMeters;
-import java.util.function.BiConsumer;
-import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
+import frc.utils.PoseEstimatorSubsystem;
 
 
 /*
@@ -199,6 +201,7 @@ public class RobotContainer {
         // Override the auto shooting, this same button overrides in both neutral and alliance zone
         // In alliance zone it will stop shooting and in neutral it will start shuttling fuel
         m_operatorController.a().onTrue(m_stateMachine.setShooterOverrideCommand(true)).onFalse(m_stateMachine.setShooterOverrideCommand(false));
+        m_operatorController.leftStick().onTrue(m_stateMachine.setVeryShootCommand(true)).onFalse(m_stateMachine.setVeryShootCommand(false));
 
         //m_operatorController.b().whileTrue(m_intake.wowowowowoIntake());
 

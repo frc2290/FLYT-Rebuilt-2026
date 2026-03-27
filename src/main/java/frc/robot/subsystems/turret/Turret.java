@@ -154,10 +154,10 @@ public class Turret extends SubsystemBase {
 
         // TURN CONTROL
         if (currentControlMode == ControlMode.TURN_VOLTAGE) {
-            //io.setTurnVoltage(sysIdVoltage);
+            io.setTurnVoltage(sysIdVoltage);
         } else if (sotfEnabled && result.isValid) {
             Rotation2d turretTargetRelative = targetYaw.minus(currentPose.getRotation());
-            //io.setTurnPosition(turretTargetRelative);
+            io.setTurnPosition(turretTargetRelative);
         }
 
         // SHOOTER CONTROL
