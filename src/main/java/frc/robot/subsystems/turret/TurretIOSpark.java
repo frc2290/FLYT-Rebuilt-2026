@@ -320,8 +320,8 @@ public class TurretIOSpark implements TurretIO {
 
     @Override
     public void setTurnPosition(Rotation2d rotation) {
-        double corrected = MathUtil.inputModulus(rotation.getDegrees(), -120, 200);
-        turretAngleSetpoint = MathUtil.clamp(corrected, -120, 200); // -30 329
+        double corrected = MathUtil.inputModulus(rotation.getDegrees(), -120, 240);
+        turretAngleSetpoint = MathUtil.clamp(corrected, -120, 240); // -30 329
     }
 
     @Override
