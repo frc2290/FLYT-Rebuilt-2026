@@ -63,20 +63,15 @@ public class TrenchToNeutralAuto extends FlytSequentialAuto {
                 this.startPose = trenchToNeutral.getStartingHolonomicPose().get();
             }
             addCommands(
-                //stateMachine.setShooterOverrideCommand(true),
                 pose.setCurrentPoseCommand(this.trenchToNeutral.getStartingHolonomicPose().get()),
                 new ParallelCommandGroup(
                     new SwerveAutoStep(this.trenchToNeutral, pose),
                     new WaitCommand(1.5).andThen(intake.intakeOut(right ? IntakeSide.LEFT : IntakeSide.RIGHT)).andThen(intake.startIntakeCommand())),
                 new SwerveAutoStep(this.neutralToTrench, pose),
-                //stateMachine.setShooterOverrideCommand(true),
                 new WaitCommand(3.5),
-                //stateMachine.setShooterOverrideCommand(false),
                 new SwerveAutoStep(this.trenchToNeutral2, pose),
                 new SwerveAutoStep(this.neutralToTrench2, pose),
-                //stateMachine.setShooterOverrideCommand(true),
-                new WaitCommand(3.5)//,
-                //stateMachine.setShooterOverrideCommand(false)
+                intake.agitateIntake(right ? IntakeSide.LEFT : IntakeSide.RIGHT)
             );
     }
 

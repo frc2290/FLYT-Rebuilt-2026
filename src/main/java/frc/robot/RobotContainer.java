@@ -162,7 +162,7 @@ public class RobotContainer {
         // If going under the trench and hood is not down, flash LEDs red
         isUnderTrench.and(isHoodDown.negate()).onTrue(_leds.setAllCommand(LEDEffect.FLASH, Color.kRed));
         // If going under the trench and hood is down, flash LEDs green (turned off so it just goes back to what it was)
-        //isUnderTrench.and(isHoodDown).onTrue(_leds.setAllCommand(LEDEffect.FLASH, Color.kGreen));
+        isUnderTrench.and(isHoodDown).onTrue(_leds.setAllCommand(LEDEffect.SOLID, LEDEffects.flytBlue));
 
         // END TRIGGERS
 
