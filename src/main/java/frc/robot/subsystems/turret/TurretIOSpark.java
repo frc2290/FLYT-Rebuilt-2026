@@ -83,8 +83,8 @@ public class TurretIOSpark implements TurretIO {
         // Setup RoboRio Absolute encoders
         // Initializes duty cycle encoders on DIO pins 0 and 1.
         // get() returns position in rotations [0, 1].
-        turnEncoder1 = new DutyCycleEncoder(8, 1, 0.1735929043398226); // Large
-        turnEncoder2 = new DutyCycleEncoder(9, 1, 0.5452482136312053); // Small
+        turnEncoder1 = new DutyCycleEncoder(8, 1, 0.0); // Large
+        turnEncoder2 = new DutyCycleEncoder(9, 1, 0.0); // Small
 
         // Setup Controllers
         turretController = turretSpark.getClosedLoopController();
