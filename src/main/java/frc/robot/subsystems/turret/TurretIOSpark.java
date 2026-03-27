@@ -263,9 +263,9 @@ public class TurretIOSpark implements TurretIO {
 
         // Gate turret motion until absolute homing completes.
         if (isTurretHomed) {
-            //turretController.setSetpoint(turretAngleSetpoint, ControlType.kMAXMotionPositionControl);
+            turretController.setSetpoint(turretAngleSetpoint, ControlType.kMAXMotionPositionControl);
         } else {
-            //turretController.setSetpoint(0.0, ControlType.kVoltage);
+            turretController.setSetpoint(0.0, ControlType.kVoltage);
         }
 
         turretAngle = getTurretPos();
