@@ -106,6 +106,7 @@ public class TurretIOSpark implements TurretIO {
         turretConfig.closedLoop
                 .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
                 .pid(turretKp, turretKi, turretKd);
+        turretConfig.closedLoop.feedForward.kV(turretTheoreticalKv);
         turretConfig.closedLoop.maxMotion
                 // Calculated for a 0.5s, 86-degree move
                 .cruiseVelocity(2600*4)
