@@ -82,7 +82,8 @@ public class TrenchToNeutralAuto extends FlytSequentialAuto {
                 pose.setCurrentPoseCommand(this.trenchToNeutral.getStartingHolonomicPose().get()),
                 new ParallelCommandGroup(
                     new SwerveAutoStep(this.trenchToNeutral, pose),
-                    new WaitCommand(1.5).andThen(intake.intakeOut(whichSide()).andThen(intake.startIntakeCommand()))),
+                    new WaitCommand(1.5).andThen(new ParallelCommandGroup(intake.intakeOut(whichSide()),
+                                                                    intake.startIntakeCommand()))),
                 new SwerveAutoStep(this.neutralToTrench, pose),
                 new WaitCommand(3.5),
                 new SwerveAutoStep(this.trenchToNeutral2, pose),
