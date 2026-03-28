@@ -65,7 +65,7 @@ public class StateMachine extends SubsystemBase {
 
     private ShootOnTheFly shootOnTheFly = ShootOnTheFly.getInstance();
 
-    private Debouncer turretReadyDebounce = new Debouncer(0.5, DebounceType.kBoth);
+    private Debouncer turretReadyDebounce = new Debouncer(0.25, DebounceType.kRising);
 
     public StateMachine(Supplier<Pose2d> poseSupplier, Supplier<ChassisSpeeds> speedSupplier, Intake intake, Turret turret, DyeRotor dyeRotor) {
         this.poseSupplier = poseSupplier;
