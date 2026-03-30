@@ -9,6 +9,8 @@ import java.util.function.Supplier;
 
 import org.littletonrobotics.junction.Logger;
 
+import edu.wpi.first.math.filter.Debouncer;
+import edu.wpi.first.math.filter.Debouncer.DebounceType;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
@@ -50,9 +52,10 @@ public class StateMachine extends SubsystemBase {
 
     private boolean isOnLeftSide = false; // left = high x, right = low x
     private FieldZone fieldZone = FieldZone.ALLIANCE;
-    private SpecialZone specialZone = SpecialZone.NONE;
+    private SpecialZone specialZone = SpecialZone.TRENCH;
     private boolean isAuto = false;
     private boolean shootOverride = false;
+    private boolean veryShoot = false;
 
     private Supplier<Pose2d> poseSupplier;
     private Supplier<ChassisSpeeds> speedSupplier;
@@ -61,6 +64,8 @@ public class StateMachine extends SubsystemBase {
     private DyeRotor m_dyeRotor;
 
     private ShootOnTheFly shootOnTheFly = ShootOnTheFly.getInstance();
+
+    private Debouncer turretReadyDebounce = new Debouncer(0.25, DebounceType.kRising);
 
     public StateMachine(Supplier<Pose2d> poseSupplier, Supplier<ChassisSpeeds> speedSupplier, Intake intake, Turret turret, DyeRotor dyeRotor) {
         this.poseSupplier = poseSupplier;
@@ -80,6 +85,7 @@ public class StateMachine extends SubsystemBase {
         Logger.recordOutput("StateMachine/Zone/Field", fieldZone);
         Logger.recordOutput("StateMachine/Zone/Special", specialZone);
         Logger.recordOutput("StateMachine/ShootOverride", shootOverride);
+        Logger.recordOutput("StateMachine/VeryShoot", veryShoot);
     }
 
     public void startHubTimer() {
@@ -230,6 +236,8 @@ public class StateMachine extends SubsystemBase {
         double coeff = 0.2 * fieldVelocity.getX();
         double bumpBoundNear = LinesVertical.allianceZone - baseBumpBuffer - Math.max(0, coeff);
         double bumpBoundFar = LinesVertical.neutralZoneNear + baseBumpBuffer - Math.min(0, coeff);
+        double oppBumpBoundNear = LinesVertical.neutralZoneFar - baseBumpBuffer - Math.max(0, coeff);
+        double oppBumpBoundFar = LinesVertical.oppAllianceZone + baseBumpBuffer - Math.min(0, coeff);
         //Logger.recordOutput("StateMachine/BoundNear", new Pose2d(bumpBoundNear, 0, new Rotation2d()));
         //Logger.recordOutput("StateMachine/BoundFar", new Pose2d(bumpBoundFar, 0, new Rotation2d()));
 
@@ -246,7 +254,8 @@ public class StateMachine extends SubsystemBase {
         specialZone = SpecialZone.NONE;
         if (translationInBound(currentPose.getTranslation(), Tower.rightBackCorner, Tower.leftUpright)) {
             specialZone = SpecialZone.TOWER;
-        } else if (x >= bumpBoundNear && x <= bumpBoundFar) {
+        } else if ((x >= bumpBoundNear && x <= bumpBoundFar) ||
+                   (x >= oppBumpBoundNear && x <= oppBumpBoundFar)) {
             if (y < LinesHorizontal.rightTrenchOpenStart + inchesToMeters(6.0) || y > LinesHorizontal.leftTrenchOpenEnd - inchesToMeters(6.0)) {
                 specialZone = SpecialZone.TRENCH;
             } else {
@@ -264,7 +273,8 @@ public class StateMachine extends SubsystemBase {
                         shootOnTheFly.setCurrentTofTable(TargetTable.HUB);
                         // point at the hub, but only shoot if hub is active
                         m_turret.setTargetTranslation(Hub.topCenterPoint.toTranslation2d());
-                        if (!shootOverride && m_turret.turretReadyToShoot()) { //&& (hubActive || isAuto)) {
+                        if ((!shootOverride && turretReadyDebounce.calculate(m_turret.turretReadyToShoot()) && (hubActive || isAuto)) ||
+                            veryShoot) {
                             m_dyeRotor.runDyeRotor(true);
                         } else {
                             m_dyeRotor.runDyeRotor(false);
@@ -273,7 +283,8 @@ public class StateMachine extends SubsystemBase {
                     case ANTI_ALLIANCE:
                     case NEUTRAL:
                         shootOnTheFly.setCurrentTofTable(TargetTable.SHUTTLE);
-                        if (shootOverride && m_turret.turretReadyToShoot()) {
+                        if ((shootOverride && turretReadyDebounce.calculate(m_turret.turretReadyToShoot())) ||
+                            veryShoot) {
                             m_dyeRotor.runDyeRotor(true);
                         } else {
                             m_dyeRotor.runDyeRotor(false);
@@ -281,9 +292,9 @@ public class StateMachine extends SubsystemBase {
                         // point at one side of the alliance zone, shoot if magic
                         double y = FieldConstants.fieldWidth;
                         if (isOnLeftSide) {
-                            y *= 6.0 / 7.0;
+                            y *= 5.5 / 7.0;
                         } else {
-                            y *= 1.0 / 7.0;
+                            y *= 1.5 / 7.0;
                         }
                         m_turret.setTargetTranslation(new Translation2d(LinesVertical.allianceZone * 1.0 / 4.0, y));
                         break;
@@ -334,6 +345,14 @@ public class StateMachine extends SubsystemBase {
 
     public Command setShooterOverrideCommand(boolean shootOverride) {
         return runOnce(() -> setShootOverride(shootOverride));
+    }
+
+    public void setVeryShoot(boolean veryShoot) {
+        this.veryShoot = veryShoot;
+    }
+
+    public Command setVeryShootCommand(boolean veryShoot) {
+        return runOnce(() -> setVeryShoot(veryShoot));
     }
 
     public boolean isHubActive() {

@@ -42,6 +42,9 @@ public class LEDUtility extends SubsystemBase {
 
   private boolean started = false;
 
+  private LEDEffect lastEffect = LEDEffect.SOLID;
+  private Color lastColor = LEDEffects.flytBlue;
+
   /** Creates a new LEDUtility. */
   public LEDUtility(int _port) {
     addressableLED = new AddressableLED(_port);

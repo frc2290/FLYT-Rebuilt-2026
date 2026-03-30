@@ -25,7 +25,7 @@ public class DyeRotor extends SubsystemBase {
     private static final double JAM_STARTUP_DELAY_SECONDS = 0.5;
     private static final double JAM_DETECT_SECONDS = 0.25;
     private static final double BACKDRIVE_SECONDS = 0.25;
-    private static final double AT_SPEED_RATIO = 0.50;
+    private static final double AT_SPEED_RATIO = 0.5;
 
     private final DyeRotorIO io;
     private final DyeRotorIOInputsAutoLogged inputs = new DyeRotorIOInputsAutoLogged();
@@ -100,7 +100,9 @@ public class DyeRotor extends SubsystemBase {
         }
 
         if (backdriving) {
-            setTargetBPS(-defaultTargetBps);
+            //setTargetBPS(-defaultTargetBps);
+            io.setRotorVoltage(-12);
+            io.setFeederVoltage(-12);
             if (backdriveTimer.hasElapsed(BACKDRIVE_SECONDS)) {
                 backdriving = false;
                 backdriveTimer.stop();
@@ -279,6 +281,10 @@ public class DyeRotor extends SubsystemBase {
 
     public double getFeederSpeed() {
         return inputs.feederEncoderRPM;
+    }
+
+    public boolean isRunning() {
+        return runDyeRotor;
     }
 
     /**
