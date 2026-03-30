@@ -42,7 +42,7 @@ public class TurretConstants {
     // --- Encoder & Conversion Factors ---
     public static final boolean hoodEncoderInverted = false;
     public static final double hoodEncoderZeroOffset = 0.8;
-    public static final double hoodAngleOffset = 6.39;
+    public static final double hoodAngleOffset = 248.6 + 6;
     public static final double hoodShotAngleToleranceDeg = 2.0;
     public static final double hoodPitchCalibrationGain = -0.8807;
     public static final double hoodPitchCalibrationOffset = 80.4301;
@@ -72,9 +72,9 @@ public class TurretConstants {
             Units.radiansPerSecondToRotationsPerMinute(turretGearbox.freeSpeedRadPerSec);
     public static final double turretTheoreticalKv =
             12.0 / (turretFreeSpeedRPM * turretEncoderVelocityFactor);
-    public static final double turretKp = 0.1;
+    public static final double turretKp = 0.25;
     public static final double turretKi = 0.0;
-    public static final double turretKd = 0.0;
+    public static final double turretKd = 2.0;
 
     public static final double hoodff = 0;
     public static final DCMotor hoodGearbox = DCMotor.getNEO(1);

@@ -83,8 +83,8 @@ public class TurretIOSpark implements TurretIO {
         // Setup RoboRio Absolute encoders
         // Initializes duty cycle encoders on DIO pins 0 and 1.
         // get() returns position in rotations [0, 1].
-        turnEncoder1 = new DutyCycleEncoder(8, 1, 0.1735929043398226); // Large
-        turnEncoder2 = new DutyCycleEncoder(9, 1, 0.5452482136312053); // Small
+        turnEncoder1 = new DutyCycleEncoder(8, 1, 0.6644293666107342); // Large
+        turnEncoder2 = new DutyCycleEncoder(9, 1, 0.3600550840013771); // Small
 
         // Setup Controllers
         turretController = turretSpark.getClosedLoopController();
@@ -106,6 +106,7 @@ public class TurretIOSpark implements TurretIO {
         turretConfig.closedLoop
                 .feedbackSensor(FeedbackSensor.kPrimaryEncoder)
                 .pid(turretKp, turretKi, turretKd);
+        turretConfig.closedLoop.feedForward.kV(turretTheoreticalKv);
         turretConfig.closedLoop.maxMotion
                 // Calculated for a 0.5s, 86-degree move
                 .cruiseVelocity(2600*4)
@@ -320,8 +321,8 @@ public class TurretIOSpark implements TurretIO {
 
     @Override
     public void setTurnPosition(Rotation2d rotation) {
-        double corrected = MathUtil.inputModulus(rotation.getDegrees(), -30, 329);
-        turretAngleSetpoint = MathUtil.clamp(corrected, -30, 329); // -30 340
+        double corrected = MathUtil.inputModulus(rotation.getDegrees(), -120, 240);
+        turretAngleSetpoint = MathUtil.clamp(corrected, -120, 240); // -30 329
     }
 
     @Override

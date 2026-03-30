@@ -4,38 +4,41 @@
 
 package frc.robot;
 
-import frc.robot.subsystems.drive.Drive;
-import frc.utils.PoseEstimatorSubsystem;
-import frc.utils.LEDEffects.LEDEffect;
-import frc.robot.Commands.Autos.FlytSequentialAuto;
-import frc.robot.Commands.Autos.SitAndShoot;
-import frc.robot.Commands.Autos.TrenchToNeutralAuto;
-import frc.robot.Commands.Autos.TrenchToNeutralToOutpost;
-import frc.robot.Commands.Autos.AutoBuilder.AutoActivity;
-import frc.robot.Commands.Autos.AutoBuilder.AutoStart;
-import frc.robot.subsystems.StateMachines.DriveStateMachine;
-import frc.robot.subsystems.StateMachines.StateMachine;
-import frc.robot.subsystems.StateMachines.DriveStateMachine.DriveState;
-import frc.robot.subsystems.StateMachines.StateMachine.FieldZone;
-import frc.robot.subsystems.StateMachines.StateMachine.SpecialZone;
-import frc.robot.subsystems.intake.Intake;
-import frc.robot.subsystems.intake.IntakeConstants.IntakeSide;
-import frc.robot.subsystems.dyerotor.DyeRotor;
-import frc.robot.subsystems.turret.Turret;
-import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
-import edu.wpi.first.wpilibj2.command.button.Trigger;
-import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.Commands;
-import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
+import static edu.wpi.first.math.util.Units.inchesToMeters;
+
+import java.util.function.BiConsumer;
+
+import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
+
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
+import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
+import edu.wpi.first.wpilibj2.command.button.Trigger;
+import frc.robot.Commands.Autos.AutoBuilder.AutoActivity;
+import frc.robot.Commands.Autos.AutoBuilder.AutoStart;
+import frc.robot.Commands.Autos.FlytSequentialAuto;
+import frc.robot.Commands.Autos.HubToOutpost;
+import frc.robot.Commands.Autos.SitAndShoot;
+import frc.robot.Commands.Autos.TrenchToNeutralAuto;
+import frc.robot.Commands.Autos.TrenchToNeutralToOutpost;
+import frc.robot.subsystems.StateMachines.DriveStateMachine;
+import frc.robot.subsystems.StateMachines.DriveStateMachine.DriveState;
+import frc.robot.subsystems.StateMachines.StateMachine;
+import frc.robot.subsystems.StateMachines.StateMachine.FieldZone;
+import frc.robot.subsystems.StateMachines.StateMachine.SpecialZone;
+import frc.robot.subsystems.drive.Drive;
+import frc.robot.subsystems.dyerotor.DyeRotor;
+import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.intake.IntakeConstants.IntakeSide;
+import frc.robot.subsystems.turret.Turret;
 import frc.utils.FuelSim;
 import frc.utils.LEDEffects;
+import frc.utils.LEDEffects.LEDEffect;
 import frc.utils.LEDUtility;
-import static edu.wpi.first.math.util.Units.inchesToMeters;
-import java.util.function.BiConsumer;
-import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
+import frc.utils.PoseEstimatorSubsystem;
 
 
 /*
@@ -58,7 +61,7 @@ public class RobotContainer {
 
     // The driver's controller
     CommandXboxController m_driverController;
-    //CommandXboxController m_operatorController = new CommandXboxController(1);
+    CommandXboxController m_operatorController = new CommandXboxController(1);
 
     SendableChooser<Command> auto_chooser = new SendableChooser<>();
     LoggedDashboardChooser<AutoStart> auto_start = new LoggedDashboardChooser<>("Auto Start");
@@ -66,6 +69,7 @@ public class RobotContainer {
     //LoggedDashboardChooser<AutoEnd> auto_end = new LoggedDashboardChooser<>("Auto End");
     LoggedDashboardChooser<Boolean> auto_right = new LoggedDashboardChooser<>("Field Side");
     LoggedDashboardChooser<FlytSequentialAuto> auto_choice = new LoggedDashboardChooser<>("Auto Routine");
+    LoggedDashboardChooser<Boolean> auto_forward = new LoggedDashboardChooser<>("Forward?");
 
     /**
      * The container for the robot. Contains subsystems, OI devices, and commands.
@@ -112,13 +116,16 @@ public class RobotContainer {
         // auto_end_pos.addOption("Outpost", "Outpost");
         auto_right.addDefaultOption("Right", true);
         auto_right.addOption("Left", false);
+        auto_forward.addDefaultOption("Backward", false);
+        auto_forward.addOption("Forward", true);
         auto_choice.addDefaultOption("Trench 2x", new TrenchToNeutralAuto(_poseEstimator, _stateMachine, _intake));
+        auto_choice.addOption("Hub to Outpost", new HubToOutpost(_poseEstimator, _intake));
         auto_choice.addOption("Trench to Outpost/Depot", new TrenchToNeutralToOutpost(_poseEstimator, _stateMachine, _intake));
         auto_choice.addOption("Sit And Shoot", new SitAndShoot(_stateMachine, _poseEstimator, _driveStateMachine));
 
         if (Robot.isSimulation()) {
             FuelSim instance = FuelSim.getInstance();
-            instance.spawnStartingFuel();
+            // instance.spawnStartingFuel();
             instance.registerRobot(inchesToMeters(30), inchesToMeters(37), inchesToMeters(5.0), _poseEstimator::getCurrentPose, _drive::getChassisSpeeds);
             instance.start();
         }
@@ -134,7 +141,11 @@ public class RobotContainer {
         Trigger isLeft = new Trigger(() -> m_stateMachine.getLeftSide());
         Trigger hubActive = new Trigger(() -> m_stateMachine.isHubActive());
         Trigger hubAboutToActive = new Trigger(() -> m_stateMachine.isHubAboutToBecomeActive());
-        Trigger isHoodDown = new Trigger(() -> m_turret.getHoodAngle() < 2);
+        Trigger isHoodDown = new Trigger(() -> m_turret.getHoodAngle() < 5);
+        Trigger isShooting = new Trigger(m_dyeRotor::isRunning);
+
+        isShooting.onTrue(m_driveStateMachine.setSlowMode(true));
+        isShooting.onFalse(m_driveStateMachine.setSlowMode(false));
 
         //isOnBump.or(isUnderTrench).and(notAuto).whileTrue(m_driveStateMachine.tempChangeState(DriveState.ASSIST));
         // isOnBump.and(notAuto).whileTrue(m_driveStateMachine.tempChangeState(DriveState.BUMP));
@@ -156,25 +167,25 @@ public class RobotContainer {
         // If going under the trench and hood is not down, flash LEDs red
         isUnderTrench.and(isHoodDown.negate()).onTrue(_leds.setAllCommand(LEDEffect.FLASH, Color.kRed));
         // If going under the trench and hood is down, flash LEDs green (turned off so it just goes back to what it was)
-        //isUnderTrench.and(isHoodDown).onTrue(_leds.setAllCommand(LEDEffect.FLASH, Color.kGreen));
+        isUnderTrench.and(isHoodDown).onTrue(_leds.setAllCommand(LEDEffect.SOLID, LEDEffects.flytBlue));
 
         // END TRIGGERS
 
         // DRIVER Control definitions
 
         m_driverController.a().onTrue(m_stateMachine.setShooterOverrideCommand(true)).onFalse(m_stateMachine.setShooterOverrideCommand(false));
-        m_driverController.b().whileTrue(
-                new ParallelCommandGroup(
-                        m_intake.runIntakeCommand(),
-                        m_driveStateMachine.tempChangeState(DriveState.SNAKE)));
+        m_driverController.b().whileTrue(m_intake.runIntakeCommand());
+                // new ParallelCommandGroup(
+                //         m_intake.runIntakeCommand(),
+                //         m_driveStateMachine.tempChangeState(DriveState.SNAKE)));
 
         m_driverController.x().onTrue(m_intake.intakeOut(IntakeSide.LEFT));
         m_driverController.y().onTrue(m_intake.intakeOut(IntakeSide.RIGHT));
 
-        m_driverController.axisGreaterThan(3, 0.5).whileTrue(
-                                new ParallelCommandGroup(
-                                    m_intake.runIntakeCommand(),
-                                    m_driveStateMachine.tempChangeState(DriveState.SNAKE)));
+        m_driverController.axisGreaterThan(3, 0.5).whileTrue(m_intake.runIntakeCommand());
+                                // new ParallelCommandGroup(
+                                //     m_intake.runIntakeCommand(),
+                                //     m_driveStateMachine.tempChangeState(DriveState.SNAKE)));
 
         m_driverController.axisGreaterThan(2, 0.5).and(leftSelected).whileTrue(m_intake.syringeIntake(IntakeSide.LEFT));
         m_driverController.axisGreaterThan(2, 0.5).and(rightSelected).whileTrue(m_intake.syringeIntake(IntakeSide.RIGHT));
@@ -182,8 +193,9 @@ public class RobotContainer {
         m_driverController.povLeft().onTrue(m_driveStateMachine.changeState(DriveState.MANUAL));
         m_driverController.povUp().onTrue(m_driveStateMachine.changeState(DriveState.SHOOT_LOCK));
         m_driverController.povRight().onTrue(Commands.runOnce(() -> m_drive.resetGyro())); // Reset Gyro Heading
+        m_driverController.povDown().onTrue(m_intake.bothIn());
 
-        //m_driverController.back().onTrue(m_turret.resetTurretPosition());
+        m_driverController.back().onTrue(m_turret.resetTurretPosition());
 
         // END DRIVER BUTTONS
 
@@ -191,7 +203,8 @@ public class RobotContainer {
 
         // Override the auto shooting, this same button overrides in both neutral and alliance zone
         // In alliance zone it will stop shooting and in neutral it will start shuttling fuel
-        //m_operatorController.a().onTrue(m_stateMachine.setShooterOverrideCommand(true)).onFalse(m_stateMachine.setShooterOverrideCommand(false));
+        m_operatorController.a().onTrue(m_stateMachine.setShooterOverrideCommand(true)).onFalse(m_stateMachine.setShooterOverrideCommand(false));
+        m_operatorController.povRight().onTrue(m_stateMachine.setVeryShootCommand(true)).onFalse(m_stateMachine.setVeryShootCommand(false));
 
         //m_operatorController.b().whileTrue(m_intake.wowowowowoIntake());
 
@@ -207,7 +220,9 @@ public class RobotContainer {
         FlytSequentialAuto auto = auto_choice.get();
         auto.clearCommands();
         auto.setRight(auto_right.get());
+        auto.setForward(auto_forward.get());
         auto.setup();
+        m_drive.setPose(auto.getPose());
         return auto;
     }
 }
