@@ -182,10 +182,8 @@ public class TurretConstants {
         public static final double latencyCompensationSeconds = 0.30;
         public static final double minDistanceMeters = 1.0e-6;
         public static final double minDerivativeDistanceDeltaMeters = 1.0e-9;
-        public static final double minDragConstantMagnitude = 1.0e-6;
 
         public static final int maxRecursiveIterations = 5;
-        public static final double recursiveDragConstant = 0.5;
 
         public static final int maxNewtonIterations = 15;
         public static final double newtonToleranceSeconds = 0.001;

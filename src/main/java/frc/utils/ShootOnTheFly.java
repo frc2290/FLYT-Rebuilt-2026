@@ -7,11 +7,9 @@ import static frc.robot.subsystems.turret.TurretConstants.SotfConstants.maxRecur
 import static frc.robot.subsystems.turret.TurretConstants.SotfConstants.maxValidDistanceMeters;
 import static frc.robot.subsystems.turret.TurretConstants.SotfConstants.minDerivativeDistanceDeltaMeters;
 import static frc.robot.subsystems.turret.TurretConstants.SotfConstants.minDistanceMeters;
-import static frc.robot.subsystems.turret.TurretConstants.SotfConstants.minDragConstantMagnitude;
 import static frc.robot.subsystems.turret.TurretConstants.SotfConstants.minLoopDtSeconds;
 import static frc.robot.subsystems.turret.TurretConstants.SotfConstants.newtonMinDerivativeMagnitude;
 import static frc.robot.subsystems.turret.TurretConstants.SotfConstants.newtonToleranceSeconds;
-import static frc.robot.subsystems.turret.TurretConstants.SotfConstants.recursiveDragConstant;
 import static frc.robot.subsystems.turret.TurretConstants.SotfConstants.tofDerivativeStepMeters;
 import static frc.robot.subsystems.turret.TurretConstants.SotfConstants.turretShooterOffsetX;
 import static frc.robot.subsystems.turret.TurretConstants.SotfConstants.turretShooterOffsetY;
@@ -305,8 +303,7 @@ public class ShootOnTheFly {
         for (int i = 0; i < maxRecursiveIterations; i++) {
             iterationsUsed = i + 1;
 
-            double alphaTof = getDragAdjustedTof(tof);
-            Translation2d ballGoal = toGoal.minus(totalShooterVelocity.times(alphaTof));
+            Translation2d ballGoal = toGoal.minus(totalShooterVelocity.times(tof));
             double distance = ballGoal.getNorm();
             if (!Double.isFinite(distance) || distance < minDistanceMeters) {
                 break;
@@ -346,8 +343,7 @@ public class ShootOnTheFly {
         for (int i = 0; i < maxNewtonIterations; i++) {
             iterationsUsed = i + 1;
 
-            double alphaTof = getDragAdjustedTof(tof);
-            Translation2d ballGoal = toGoal.minus(totalShooterVelocity.times(alphaTof));
+            Translation2d ballGoal = toGoal.minus(totalShooterVelocity.times(tof));
             double projDist = ballGoal.getNorm();
             if (!Double.isFinite(projDist) || projDist < minDistanceMeters) {
                 break;
@@ -524,13 +520,6 @@ public class ShootOnTheFly {
         }
 
         return (sHigh - sLow) / deltaDist;
-    }
-
-    private double getDragAdjustedTof(double tof) {
-        if (Math.abs(recursiveDragConstant) < minDragConstantMagnitude) {
-            return tof;
-        }
-        return (1.0 - Math.exp(-recursiveDragConstant * tof)) / recursiveDragConstant;
     }
 
     private Translation2d getFieldRelativeVelocity(ChassisSpeeds robotSpeeds, Pose2d robotPose) {
