@@ -82,7 +82,7 @@ public class TurretConstants {
             Units.radiansPerSecondToRotationsPerMinute(hoodGearbox.freeSpeedRadPerSec);
     public static final double hoodKv = 12.0
             / ((hoodFreeSpeedRPM / hoodMotorToEncoderReduction) * hoodEncoderVelocityFactor);
-    public static final double hoodKp = 0.01;
+    public static final double hoodKp = 0.025;
     public static final double hoodKi = 0.0;
     public static final double hoodKd = 0.0;
 

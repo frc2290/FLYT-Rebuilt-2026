@@ -267,26 +267,32 @@ public class StateMachine extends SubsystemBase {
     private void updateSubsystems() {
         switch (specialZone) {
             case NONE:
-                m_turret.setStopShoot(false);
                 switch (fieldZone) {
                     case ALLIANCE:
                         shootOnTheFly.setCurrentTofTable(TargetTable.HUB);
                         // point at the hub, but only shoot if hub is active
                         m_turret.setTargetTranslation(Hub.topCenterPoint.toTranslation2d());
-                        if ((!shootOverride && turretReadyDebounce.calculate(m_turret.turretReadyToShoot()) && (hubActive || isAuto)) ||
-                            veryShoot) {
-                            m_dyeRotor.runDyeRotor(true);
+                        if ((shootOverride) || veryShoot) {//&& (hubActive || isAuto)) ||
+                            //veryShoot) {
+                            m_turret.setStopShoot(false);
+                            if(turretReadyDebounce.calculate(m_turret.turretReadyToShoot()) || veryShoot) {
+                                m_dyeRotor.runDyeRotor(true);
+                            }
                         } else {
+                            m_turret.setStopShoot(true);
                             m_dyeRotor.runDyeRotor(false);
                         }
                         break;
                     case ANTI_ALLIANCE:
                     case NEUTRAL:
                         shootOnTheFly.setCurrentTofTable(TargetTable.SHUTTLE);
-                        if ((shootOverride && turretReadyDebounce.calculate(m_turret.turretReadyToShoot())) ||
-                            veryShoot) {
-                            m_dyeRotor.runDyeRotor(true);
+                        if ((shootOverride) || veryShoot) {
+                            m_turret.setStopShoot(false);
+                            if(turretReadyDebounce.calculate(m_turret.turretReadyToShoot()) || veryShoot) {
+                                m_dyeRotor.runDyeRotor(true);
+                            }
                         } else {
+                            m_turret.setStopShoot(true);
                             m_dyeRotor.runDyeRotor(false);
                         }
                         // point at one side of the alliance zone, shoot if magic

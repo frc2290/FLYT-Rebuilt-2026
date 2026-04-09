@@ -282,6 +282,11 @@ public class Turret extends SubsystemBase {
         return Math.abs(measuredHoodAngleDeg - hoodAngleDeg) <= TurretConstants.hoodShotAngleToleranceDeg;
     }
 
+    public boolean hoodAtShotSetpoint() {
+        double measuredHoodAngleDeg = inputs.hoodPositionDeg;
+        return Math.abs(measuredHoodAngleDeg - activeShotAngleSetpointDeg) <= TurretConstants.hoodShotAngleToleranceDeg;
+    }
+
     /** Backwards-compatible alias for manual-shot checks. */
     public boolean hoodAtManualShotSetpoint(double hoodAngleDeg) {
         return hoodAtShotSetpoint(hoodAngleDeg);
@@ -457,7 +462,7 @@ public class Turret extends SubsystemBase {
     }
 
     public boolean turretReadyToShoot() {
-        return isTurretPointedAtTarget() && flywheelAtSpeed();
+        return isTurretPointedAtTarget() && flywheelAtSpeed() && hoodAtShotSetpoint();
     }
 
     public Command resetTurretPosition() {
