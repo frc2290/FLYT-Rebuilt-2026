@@ -38,6 +38,7 @@ public class DriveStateMachine extends SubsystemBase {
         BUMP,           // turns to the closest 45deg
         CLIMB_RELATIVE, // align with tower
         FOLLOW_PATH,    // auto path following
+        BUMPERS,        // "bumpers" around field boundaries
         SHOOT_LOCK      // lock to sotf heading
     }
 
@@ -90,6 +91,7 @@ public class DriveStateMachine extends SubsystemBase {
             case BUMP           -> driveCommandFactory.createHeadingLockCommand(() -> (Math.round(pose.getDegrees() / 90.0 - 0.5) * 90.0 + 45) % 360);
             case CLIMB_RELATIVE -> driveCommandFactory.createHeadingLockCommand(() -> 0.0);
             case SHOOT_LOCK     -> driveCommandFactory.createHeadingLockCommand(() -> pose.getCurrentPose().rotateBy(Rotation2d.fromDegrees(driveAngleCorrection)).getRotation().getDegrees());
+            case BUMPERS        -> driveCommandFactory.createBumperCommand();
             case FOLLOW_PATH    -> driveCommandFactory.createFollowPathCommand();
         };
         currentCommand.schedule();

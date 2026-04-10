@@ -35,6 +35,8 @@ import frc.utils.AngleSlewRateLimiter;
 import frc.utils.PoseEstimatorSubsystem;
 import frc.utils.StickExpo;
 
+import static edu.wpi.first.math.util.Units.inchesToMeters;
+
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.OptionalDouble;
@@ -513,6 +515,52 @@ public final class DriveCommandFactory {
           double omega = toAngularSpeed(inputs.rotSpeed);
           drive.driveVelocity(vx, vy, omega, true);
         });
+  }
+
+  public Command createBumperCommand() {
+    // todo: move this stuff to constants i think
+    // these dimensions are halved, idk what to actually call them
+    final double robotLength = inchesToMeters(37.0) / 2.0; // x
+    final double robotWidth = inchesToMeters(30.0) / 2.0; // y
+    return runDriveCommand(
+      inputs -> {
+          Pose2d currentPose = poseEstimator.getCurrentPose();
+          Translation2d currentTranslation = currentPose.getTranslation();
+          Rotation2d currentRotation = currentPose.getRotation();
+
+          // i hope there's a better way to do this
+          Translation2d robot_fl = new Translation2d(robotLength, robotWidth);
+          Translation2d robot_fr = new Translation2d(robotLength, -robotWidth);
+          Translation2d robot_bl = new Translation2d(-robotLength, robotWidth);
+          Translation2d robot_br = new Translation2d(-robotLength, -robotWidth);
+          robot_fl = robot_fl.rotateBy(currentRotation).plus(currentTranslation);
+          robot_fr = robot_fr.rotateBy(currentRotation).plus(currentTranslation);
+          robot_bl = robot_bl.rotateBy(currentRotation).plus(currentTranslation);
+          robot_br = robot_br.rotateBy(currentRotation).plus(currentTranslation);
+
+          // surely there's a better way for this too
+          double closeDist = min(robot_fl.getX(), robot_fr.getX(), robot_bl.getX(), robot_br.getX());
+          double rightDist = min(robot_fl.getY(), robot_fr.getY(), robot_bl.getY(), robot_br.getY());
+          double farDist = FieldConstants.fieldLength - max(robot_fl.getX(), robot_fr.getX(), robot_bl.getX(), robot_br.getX());
+          double leftDist = FieldConstants.fieldWidth - max(robot_fl.getY(), robot_fr.getY(), robot_bl.getY(), robot_br.getY());
+
+          double xMagnitude = 1 - (1 / ((inputs.xSpeed < 0 ? closeDist : farDist) * (5 / (Math.abs(inputs.xSpeed) * 4 + 1)) + 1));
+          double yMagnitude = 1 - (1 / ((inputs.ySpeed < 0 ? rightDist : leftDist) * (5 / (Math.abs(inputs.ySpeed) * 4 + 1)) + 1));
+
+          double vx = toLinearSpeed(inputs.xSpeed * xMagnitude);
+          double vy = toLinearSpeed(inputs.ySpeed * yMagnitude);
+          double omega = toAngularSpeed(inputs.rotSpeed);
+          drive.driveVelocity(vx, vy, omega, true);
+      }
+    );
+  }
+
+  private double min(double a, double b, double c, double d) {
+    return Math.min(Math.min(Math.min(a, b), c), d);
+  }
+
+  private double max(double a, double b, double c, double d) {
+    return Math.max(Math.max(Math.max(a, b), c), d);
   }
 
   public void setSlowMode(boolean slowMode) {
