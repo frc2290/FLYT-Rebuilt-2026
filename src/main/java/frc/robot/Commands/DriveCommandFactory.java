@@ -28,6 +28,9 @@ import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.Constants.OIConstants;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveConstants;
+import frc.robot.subsystems.intake.Intake;
+import frc.robot.subsystems.intake.IntakeConstants;
+import frc.robot.subsystems.intake.IntakeConstants.IntakeSide;
 import frc.utils.FieldConstants.LinesHorizontal;
 import frc.utils.FieldConstants.LinesVertical;
 import frc.utils.FieldConstants;
@@ -60,6 +63,7 @@ public final class DriveCommandFactory {
 
   private final Drive drive;
   private final PoseEstimatorSubsystem poseEstimator;
+  private final Intake intake;
   private final CommandXboxController driverController;
   private final PIDController rotPid;
   private final PIDController xPid;
@@ -75,9 +79,10 @@ public final class DriveCommandFactory {
    * estimator, and driver controller references.
    */
   public DriveCommandFactory(
-      Drive drive, PoseEstimatorSubsystem poseEstimator, CommandXboxController driverController) {
+      Drive drive, PoseEstimatorSubsystem poseEstimator, Intake intake, CommandXboxController driverController) {
     this.drive = Objects.requireNonNull(drive);
     this.poseEstimator = Objects.requireNonNull(poseEstimator);
+    this.intake = Objects.requireNonNull(intake);
     this.driverController = Objects.requireNonNull(driverController);
 
     double maxLinearSpeedMetersPerSec = this.drive.getMaxLinearSpeedMetersPerSec();
@@ -519,20 +524,24 @@ public final class DriveCommandFactory {
 
   public Command createBumperCommand() {
     // todo: move this stuff to constants i think
-    // these dimensions are halved, idk what to actually call them
+    // these first two dimensions are halved, idk what to actually call them
     final double robotLength = inchesToMeters(37.0) / 2.0; // x
     final double robotWidth = inchesToMeters(30.0) / 2.0; // y
+    final double bumperThickness = inchesToMeters(3.0);
     return runDriveCommand(
       inputs -> {
           Pose2d currentPose = poseEstimator.getCurrentPose();
           Translation2d currentTranslation = currentPose.getTranslation();
           Rotation2d currentRotation = currentPose.getRotation();
 
+          double leftIntake = zeroClamp(intake.getLinearPosition(IntakeSide.LEFT) - bumperThickness);
+          double rightIntake = zeroClamp(intake.getLinearPosition(IntakeSide.RIGHT) - bumperThickness);
+
           // i hope there's a better way to do this
-          Translation2d robot_fl = new Translation2d(robotLength, robotWidth);
-          Translation2d robot_fr = new Translation2d(robotLength, -robotWidth);
-          Translation2d robot_bl = new Translation2d(-robotLength, robotWidth);
-          Translation2d robot_br = new Translation2d(-robotLength, -robotWidth);
+          Translation2d robot_fl = new Translation2d(robotLength, robotWidth + leftIntake);
+          Translation2d robot_fr = new Translation2d(robotLength, -robotWidth - rightIntake);
+          Translation2d robot_bl = new Translation2d(-robotLength, robotWidth + leftIntake);
+          Translation2d robot_br = new Translation2d(-robotLength, -robotWidth - rightIntake);
           robot_fl = robot_fl.rotateBy(currentRotation).plus(currentTranslation);
           robot_fr = robot_fr.rotateBy(currentRotation).plus(currentTranslation);
           robot_bl = robot_bl.rotateBy(currentRotation).plus(currentTranslation);
@@ -544,8 +553,8 @@ public final class DriveCommandFactory {
           double farDist = FieldConstants.fieldLength - max(robot_fl.getX(), robot_fr.getX(), robot_bl.getX(), robot_br.getX());
           double leftDist = FieldConstants.fieldWidth - max(robot_fl.getY(), robot_fr.getY(), robot_bl.getY(), robot_br.getY());
 
-          double xMagnitude = 1 - (1 / ((inputs.xSpeed < 0 ? closeDist : farDist) * (5 / (Math.abs(inputs.xSpeed) * 4 + 1)) + 1));
-          double yMagnitude = 1 - (1 / ((inputs.ySpeed < 0 ? rightDist : leftDist) * (5 / (Math.abs(inputs.ySpeed) * 4 + 1)) + 1));
+          double xMagnitude = 1 - (1 / ((inputs.xSpeed < 0 ? closeDist : farDist) * (5 / (Math.abs(inputs.xSpeed) / 1.5 + 1)) + 1));
+          double yMagnitude = 1 - (1 / ((inputs.ySpeed < 0 ? rightDist : leftDist) * (5 / (Math.abs(inputs.ySpeed) / 1.5 + 1)) + 1));
 
           double vx = toLinearSpeed(inputs.xSpeed * xMagnitude);
           double vy = toLinearSpeed(inputs.ySpeed * yMagnitude);
@@ -553,6 +562,10 @@ public final class DriveCommandFactory {
           drive.driveVelocity(vx, vy, omega, true);
       }
     );
+  }
+
+  private double zeroClamp(double x) {
+    return x < 0.0 ? 0.0 : x;
   }
 
   private double min(double a, double b, double c, double d) {

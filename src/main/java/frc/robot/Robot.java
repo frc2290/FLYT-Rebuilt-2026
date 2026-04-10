@@ -182,8 +182,7 @@ public class Robot extends LoggedRobot {
         }
 
         m_stateMachine = new StateMachine(m_poseEstimator::getCurrentPose, m_poseEstimator::getChassisSpeeds, m_intake, m_turret, m_dyeRotor);
-        m_driveStateMachine = new DriveStateMachine(m_robotDrive, m_poseEstimator,
-            m_driver);
+        m_driveStateMachine = new DriveStateMachine(m_robotDrive, m_poseEstimator, m_intake, m_driver);
 
         _leds.addStrip("Front", 0, 65); // 66
         _leds.addStrip("Right", 66, 136); //71

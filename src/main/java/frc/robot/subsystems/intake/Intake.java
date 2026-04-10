@@ -90,8 +90,8 @@ public class Intake extends SubsystemBase {
         Logger.recordOutput("Intake/RightControlMode", rightControlMode.toString());
 
         Logger.recordOutput("Intake/Components", new Pose3d[] {
-                new Pose3d(0, getPosition(IntakeSide.LEFT) / outPosition * feetToMeters(1), 0, new Rotation3d()),
-                new Pose3d(0, getPosition(IntakeSide.RIGHT) / outPosition * -feetToMeters(1), 0, new Rotation3d()) });
+                new Pose3d(0, getLinearPosition(IntakeSide.LEFT), 0, new Rotation3d()),
+                new Pose3d(0, -getLinearPosition(IntakeSide.RIGHT), 0, new Rotation3d()) });
 
         if (leftControlMode == ControlMode.VOLTAGE) {
             ioLeft.setIntakeVoltage(leftCommandedVoltage);
@@ -118,6 +118,10 @@ public class Intake extends SubsystemBase {
     public double getPosition(IntakeSide side) {
         // i am addicted to ternary operators pt 2
         return (side == IntakeSide.LEFT ? inputsLeft : inputsRight).deployPosition;
+    }
+
+    public double getLinearPosition(IntakeSide side) {
+        return (getPosition(side) - IntakeConstants.inPosition) / (IntakeConstants.outPosition - IntakeConstants.inPosition) * feetToMeters(1.0);
     }
 
     // when it is FULLY undeployed

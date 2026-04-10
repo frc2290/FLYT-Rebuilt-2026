@@ -24,6 +24,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import frc.robot.subsystems.drive.Drive;
+import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.IntakeConstants.IntakeSide;
 import frc.robot.Commands.DriveCommandFactory;
 import frc.utils.PoseEstimatorSubsystem;
@@ -54,11 +55,11 @@ public class DriveStateMachine extends SubsystemBase {
     private double driveAngleCorrection = 0.0;
 
     public DriveStateMachine(
-            Drive m_drive, PoseEstimatorSubsystem m_pose, CommandXboxController m_driverController) {
+            Drive m_drive, PoseEstimatorSubsystem m_pose, Intake m_intake, CommandXboxController m_driverController) {
         drive = m_drive;
         pose = m_pose;
         driverController = m_driverController;
-        driveCommandFactory = new DriveCommandFactory(drive, pose, driverController);
+        driveCommandFactory = new DriveCommandFactory(drive, pose, m_intake, driverController);
         drive = m_drive;
         pose = m_pose;
         driverController = m_driverController;
