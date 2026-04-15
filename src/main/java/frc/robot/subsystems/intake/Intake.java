@@ -148,6 +148,19 @@ public class Intake extends SubsystemBase {
         getIo(side).setIntakeSpeed(speed);
     }
 
+    /**
+     * DO NOT USE this opens both intakes at once (for filming)
+     * @return the command to supermegaoverride
+     */
+    public Command superMegaOverrideCommand() {
+        return run(() -> {
+            deploy(IntakeSide.LEFT, true);
+            deploy(IntakeSide.RIGHT, true);
+        }).until(() -> {
+            return isOut(IntakeSide.LEFT) && isOut(IntakeSide.RIGHT);
+        });
+    }
+
     public Command intakeIn(IntakeSide side) {
         return run(() -> {
             outSide = Optional.empty();

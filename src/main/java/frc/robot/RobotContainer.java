@@ -205,6 +205,7 @@ public class RobotContainer {
         // In alliance zone it will stop shooting and in neutral it will start shuttling fuel
         m_operatorController.a().onTrue(m_stateMachine.setShooterOverrideCommand(true)).onFalse(m_stateMachine.setShooterOverrideCommand(false));
         m_operatorController.povRight().onTrue(m_stateMachine.setVeryShootCommand(true)).onFalse(m_stateMachine.setVeryShootCommand(false));
+        m_operatorController.leftStick().and(m_operatorController.rightStick()).onTrue(m_intake.superMegaOverrideCommand());
 
         //m_operatorController.b().whileTrue(m_intake.wowowowowoIntake());
 
