@@ -20,12 +20,14 @@ import static edu.wpi.first.apriltag.AprilTagFieldLayout.OriginPosition.kBlueAll
 import static edu.wpi.first.apriltag.AprilTagFieldLayout.OriginPosition.kRedAllianceWallRightSide;
 
 import com.pathplanner.lib.config.RobotConfig;
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFieldLayout.OriginPosition;
 // import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.Matrix;
 import edu.wpi.first.math.VecBuilder;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.numbers.N1;
@@ -33,7 +35,9 @@ import edu.wpi.first.math.numbers.N3;
 // import edu.wpi.first.math.kinematics.SwerveModulePosition;
 // import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.Notifier;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.Timer;
 // import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 // import edu.wpi.first.wpilibj.smartdashboard.FieldObject2d;
@@ -46,8 +50,13 @@ import frc.robot.Constants.VisionConstants;
 import frc.robot.subsystems.drive.Drive;
 // import frc.utils.FLYTLib.FLYTDashboard.FlytLogger;
 import frc.utils.PoseUtils.Heading;
+import java.io.IOException;
 // import java.util.function.Supplier;
 import org.photonvision.EstimatedRobotPose;
+import org.photonvision.PhotonCamera;
+import org.photonvision.simulation.PhotonCameraSim;
+import org.photonvision.simulation.SimCameraProperties;
+import org.photonvision.simulation.VisionSystemSim;
 
 import org.littletonrobotics.junction.AutoLogOutput;
 // import org.littletonrobotics.junction.Logger;
@@ -127,6 +136,7 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
     private RobotConfig config;
 
     private Drive drive;
+    private VisionSystemSim visionSim;
 
     /**
      * Pose that the drivetrain should aim toward (used by auto alignment commands).
@@ -163,6 +173,15 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
         backPhotonNotifier.startPeriodic(0.02);
         leftPhotonNotifier.startPeriodic(0.02);
         rightPhotonNotifier.startPeriodic(0.02);
+
+        if (RobotBase.isSimulation()) {
+            visionSim = new VisionSystemSim("main");
+            visionSim.addAprilTags(loadVisionLayout());
+            configureSimCamera(frontPhotonRunnable.getCamera(), VisionConstants.kForwardCamTransform);
+            configureSimCamera(backPhotonRunnable.getCamera(), VisionConstants.kBackwardCamTransform);
+            configureSimCamera(leftPhotonRunnable.getCamera(), VisionConstants.kLeftCamTransform);
+            configureSimCamera(rightPhotonRunnable.getCamera(), VisionConstants.kRightCamTransform);
+        }
 
         try {
             config = RobotConfig.fromGUISettings();
@@ -237,6 +256,17 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
         //     Logger.recordOutput("Vision/SelectedPose", new Pose2d());
         //     Logger.recordOutput("Vision/SelectedStdDevScore", Double.NaN);
         // }
+    }
+
+    @Override
+    public void simulationPeriodic() {
+        if (visionSim == null) {
+            return;
+        }
+
+        Pose2d trueRobotPose = drive.getTrueSimulatedPose();
+        visionSim.update(trueRobotPose);
+        Logger.recordOutput("VisionSim/Robot", trueRobotPose);
     }
 
     /** Processes a single camera frame and returns a measurement candidate (or null). */
@@ -324,6 +354,35 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
         rotStd = Math.max(rotStd, VisionConstants.kVisionStdDevMin);
 
         return VecBuilder.fill(xyStd, xyStd, rotStd);
+    }
+
+    private static AprilTagFieldLayout loadVisionLayout() {
+        try {
+            AprilTagFieldLayout layout =
+                    new AprilTagFieldLayout(
+                            Filesystem.getDeployDirectory().getAbsolutePath() + "/field_calibration.json");
+            layout.setOrigin(kBlueAllianceWallRightSide);
+            return layout;
+        } catch (IOException e) {
+            e.printStackTrace();
+            AprilTagFieldLayout layout = FieldConstants.AprilTagLayoutType.OFFICIAL.getLayout();
+            layout.setOrigin(kBlueAllianceWallRightSide);
+            return layout;
+        }
+    }
+
+    private void configureSimCamera(PhotonCamera camera, Transform3d robotToCam) {
+        SimCameraProperties cameraProp = new SimCameraProperties();
+        cameraProp.setCalibration(1280, 800, Rotation2d.fromDegrees(75));
+        cameraProp.setCalibError(0.25, 0.08);
+        cameraProp.setFPS(40);
+        cameraProp.setAvgLatencyMs(30);
+        cameraProp.setLatencyStdDevMs(5);
+
+        PhotonCameraSim cameraSim = new PhotonCameraSim(camera, cameraProp);
+        cameraSim.enableRawStream(false);
+        cameraSim.enableProcessedStream(false);
+        visionSim.addCamera(cameraSim, robotToCam);
     }
 
     public double getAlignX(Translation2d target) {

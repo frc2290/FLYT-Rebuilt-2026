@@ -192,4 +192,8 @@ public class PhotonRunnable implements Runnable {
     public String getCameraName() {
         return cameraName;
     }
+
+    public PhotonCamera getCamera() {
+        return photonCamera;
+    }
 }

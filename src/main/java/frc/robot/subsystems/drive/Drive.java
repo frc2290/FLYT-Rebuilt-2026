@@ -26,6 +26,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.numbers.N1;
@@ -67,6 +68,8 @@ public class Drive extends SubsystemBase {
             };
     private SwerveDrivePoseEstimator poseEstimator = new SwerveDrivePoseEstimator(kinematics, rawGyroRotation,
             lastModulePositions, Pose2d.kZero);
+    private SwerveDriveOdometry trueSimOdometry = new SwerveDriveOdometry(
+            kinematics, rawGyroRotation, lastModulePositions, Pose2d.kZero);
 
     public Drive(
             GyroIO gyroIO,
@@ -172,6 +175,9 @@ public class Drive extends SubsystemBase {
 
             // Apply update
             poseEstimator.updateWithTime(sampleTimestamps[i], rawGyroRotation, modulePositions);
+            if (Constants.currentMode == Mode.SIM) {
+                trueSimOdometry.update(rawGyroRotation, modulePositions);
+            }
         }
 
         // Update gyro alert
@@ -330,6 +336,16 @@ public class Drive extends SubsystemBase {
     public void setPose(Pose2d pose) {
         driveHeadingOffset = pose.getRotation().minus(rawGyroRotation);
         poseEstimator.resetPosition(rawGyroRotation, getModulePositions(), pose);
+        if (Constants.currentMode == Mode.SIM) {
+            trueSimOdometry.resetPosition(rawGyroRotation, getModulePositions(), pose);
+        }
+    }
+
+    public Pose2d getTrueSimulatedPose() {
+        if (Constants.currentMode == Mode.SIM) {
+            return trueSimOdometry.getPoseMeters();
+        }
+        return getPose();
     }
 
     /** Adds a new timestamped vision measurement. */
