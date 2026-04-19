@@ -92,6 +92,9 @@ public class PhotonRunnable implements Runnable {
         EstimatedRobotPose newestPose = null;
 
         for (PhotonPipelineResult result : results) {
+            // Keep latest pipeline frame even when it has no targets, so downstream logs can clear correctly.
+            photonResults = result;
+
             if (!result.hasTargets()) {
                 continue;
             }
@@ -119,7 +122,6 @@ public class PhotonRunnable implements Runnable {
             //Logger.recordOutput("VisionCalibration/" + cameraName + "/CameraToTag", cameraToTags);
             //Logger.recordOutput("VisionCalibration/" + cameraName + "/Ambiguity", ambiguities);
 
-            photonResults = result;
             atomicTargetYaw.set(result.getBestTarget().yaw);
 
             var photonPose = photonPoseEstimator

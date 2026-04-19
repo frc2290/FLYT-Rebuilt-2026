@@ -58,6 +58,7 @@ import org.photonvision.PhotonCamera;
 import org.photonvision.simulation.PhotonCameraSim;
 import org.photonvision.simulation.SimCameraProperties;
 import org.photonvision.simulation.VisionSystemSim;
+import org.photonvision.targeting.PhotonPipelineResult;
 
 import org.littletonrobotics.junction.AutoLogOutput;
 // import org.littletonrobotics.junction.Logger;
@@ -226,6 +227,10 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
     public void periodic() {
         // Update pose estimator with drivetrain sensors.
         //poseEstimator.update(rotationSupplier.get(), modulePositionSupplier.get());
+        logCameraTagIds(frontPhotonRunnable.grabLatestTag(), "Front");
+        logCameraTagIds(backPhotonRunnable.grabLatestTag(), "Back");
+        logCameraTagIds(leftPhotonRunnable.grabLatestTag(), "Left");
+        logCameraTagIds(rightPhotonRunnable.grabLatestTag(), "Right");
 
         EstimatedRobotPose frontUpdate = frontPhotonRunnable.grabLatestUpdate();
         EstimatedRobotPose backUpdate = backPhotonRunnable.grabLatestUpdate();
@@ -290,10 +295,9 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
 
     /** Processes a single camera frame and returns a measurement candidate (or null). */
     private VisionMeasurement processCameraUpdate(EstimatedRobotPose update, String cameraName) {
-        // 1. No new frame, or no tags visible at all.
-        // We return null to skip fusion, but we DO NOT log an empty array here.
-        // Let AdvantageScope hold the visual ghost so it doesn't flicker.
+        // 1. No new frame, or no tags visible at all. Clear camera pose/tags.
         if (update == null || update.targetsUsed == null || update.targetsUsed.isEmpty()) {
+            Logger.recordOutput("Vision/CameraPoses/" + cameraName, new Pose2d[] {});
             return null;
         }
 
@@ -398,14 +402,24 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
         }
     }
 
+    private void logCameraTagIds(PhotonPipelineResult result, String cameraName) {
+        if (result == null || !result.hasTargets()) {
+            Logger.recordOutput("Vision/CameraTags/" + cameraName + "/Ids", new int[] {});
+            return;
+        }
+
+        int[] tagIds = result.getTargets().stream().mapToInt(target -> target.getFiducialId()).toArray();
+        Logger.recordOutput("Vision/CameraTags/" + cameraName + "/Ids", tagIds);
+    }
+
     private void configureSimCamera(
             PhotonCamera camera, Transform3d robotToCam, AprilTagFieldLayout layout) {
         SimCameraProperties cameraProp = new SimCameraProperties();
         cameraProp.setCalibration(1280, 800, Rotation2d.fromDegrees(75));
-        cameraProp.setCalibError(0.0, 0.0);
+        cameraProp.setCalibError(0.10, 0.05);
         cameraProp.setFPS(40);
-        cameraProp.setAvgLatencyMs(0);
-        cameraProp.setLatencyStdDevMs(0);
+        cameraProp.setAvgLatencyMs(35);
+        cameraProp.setLatencyStdDevMs(5);
 
         PhotonCameraSim cameraSim = new PhotonCameraSim(camera, cameraProp, layout);
         cameraSim.enableRawStream(false);

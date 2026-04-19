@@ -22,6 +22,7 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
@@ -116,7 +117,10 @@ public final class DriveCommandFactory {
    * forward stick pushes produce positive field-relative X speeds.
    */
   public double sampleForwardInput() {
-    return -MathUtil.applyDeadband(driverController.getLeftY(), OIConstants.kDriveDeadband);
+    // In desktop simulation, keep keyboard mapping aligned to the rotated field view:
+    // W/S = strafe left/right, A/D = forward/back.
+    double rawAxis = RobotBase.isSimulation() ? driverController.getLeftX() : driverController.getLeftY();
+    return -MathUtil.applyDeadband(rawAxis, OIConstants.kDriveDeadband);
   }
 
   /**
@@ -124,7 +128,8 @@ public final class DriveCommandFactory {
    * small stick noise is ignored.
    */
   public double sampleStrafeInput() {
-    return -MathUtil.applyDeadband(driverController.getLeftX(), OIConstants.kDriveDeadband);
+    double rawAxis = RobotBase.isSimulation() ? driverController.getLeftY() : driverController.getLeftX();
+    return -MathUtil.applyDeadband(rawAxis, OIConstants.kDriveDeadband);
   }
 
   /** Samples the driver's right X stick to determine the desired rotational velocity. */
