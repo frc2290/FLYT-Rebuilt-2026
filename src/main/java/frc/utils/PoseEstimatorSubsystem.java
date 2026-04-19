@@ -137,6 +137,7 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
 
     private Drive drive;
     private VisionSystemSim visionSim;
+    private Pose2d lastSimPose = new Pose2d();
 
     /**
      * Pose that the drivetrain should aim toward (used by auto alignment commands).
@@ -264,45 +265,67 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
             return;
         }
 
-        Pose2d trueRobotPose = drive.getTrueSimulatedPose();
-        visionSim.update(trueRobotPose);
-        Logger.recordOutput("VisionSim/Robot", trueRobotPose);
+        Pose2d odometryPose = drive.getTrueSimulatedPose();
+        Pose2d absoluteFieldPose = odometryPose;
+        if (originPosition != OriginPosition.kBlueAllianceWallRightSide) {
+            absoluteFieldPose = flipAlliance(odometryPose);
+        }
+
+        boolean poseJumped =
+                absoluteFieldPose.getTranslation().getDistance(lastSimPose.getTranslation()) > 0.5;
+
+        if (poseJumped) {
+            visionSim.resetRobotPose(absoluteFieldPose);
+        } else {
+            visionSim.update(absoluteFieldPose);
+        }
+
+        lastSimPose = absoluteFieldPose;
+        Logger.recordOutput("VisionSim/Robot", odometryPose);
     }
 
     /** Processes a single camera frame and returns a measurement candidate (or null). */
     private VisionMeasurement processCameraUpdate(EstimatedRobotPose update, String cameraName) {
+        // 1. No new frame, or no tags visible at all.
+        // We return null to skip fusion, but we DO NOT log an empty array here.
+        // Let AdvantageScope hold the visual ghost so it doesn't flicker.
         if (update == null || update.targetsUsed == null || update.targetsUsed.isEmpty()) {
-            Logger.recordOutput("Vision/CameraPoses/" + cameraName, new Pose2d[] {});
             return null;
         }
 
-        // Apply legacy hard cutoffs only for single-tag solves.
+        // 2. We have a frame with tags! Calculate the absolute field pose.
+        Pose2d rawPose = update.estimatedPose.toPose2d();
+        if (originPosition != OriginPosition.kBlueAllianceWallRightSide) {
+            rawPose = flipAlliance(rawPose);
+        }
+
+        // 3. ALWAYS log the raw pose to AdvantageScope, regardless of noise.
+        // This guarantees you can always see what the camera is thinking, even if it gets filtered later.
+        Logger.recordOutput("Vision/CameraPoses/" + cameraName, new Pose2d[] {rawPose});
+
+        // 4. Odometry Fusion Filters: Now we decide if the pose is stable enough to trust.
         if (update.targetsUsed.size() == 1) {
             var target = update.targetsUsed.get(0);
             double distMeters = target.getBestCameraToTarget().getTranslation().getNorm();
             double ambiguity = target.getPoseAmbiguity();
+
+            // If it's too far or too ambiguous, skip fusion (but we already logged it!)
             if (distMeters > 4.0 || ambiguity > VisionConstants.APRILTAG_AMBIGUITY_THRESHOLD) {
-                Logger.recordOutput("Vision/CameraPoses/" + cameraName, new Pose2d[] {});
                 return null;
             }
         }
 
         Matrix<N3, N1> stdDevs = calculateStdDevs(update);
         double varX = Math.pow(stdDevs.get(0, 0), 2);
+
+        // If the variance is too high, skip fusion
         if (varX >= VisionConstants.kVisionRejectVarianceThreshold) {
-            Logger.recordOutput("Vision/CameraPoses/" + cameraName, new Pose2d[] {});
             return null;
         }
 
-        Pose2d finalPose = update.estimatedPose.toPose2d();
-        if (originPosition != kBlueAllianceWallRightSide) {
-            finalPose = flipAlliance(finalPose);
-        }
-
-        Logger.recordOutput("Vision/CameraPoses/" + cameraName, new Pose2d[] {finalPose});
-
+        // 5. The frame survived all filters! Send it to the pose estimator.
         double score = stdDevScore(stdDevs);
-        return new VisionMeasurement(cameraName, finalPose, update.timestampSeconds, stdDevs, score);
+        return new VisionMeasurement(cameraName, rawPose, update.timestampSeconds, stdDevs, score);
     }
 
     private VisionMeasurement chooseBetter(VisionMeasurement currentBest, VisionMeasurement candidate) {
@@ -374,7 +397,7 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
     private void configureSimCamera(PhotonCamera camera, Transform3d robotToCam) {
         SimCameraProperties cameraProp = new SimCameraProperties();
         cameraProp.setCalibration(1280, 800, Rotation2d.fromDegrees(75));
-        cameraProp.setCalibError(0.25, 0.08);
+        cameraProp.setCalibError(0.0, 0.0);
         cameraProp.setFPS(40);
         cameraProp.setAvgLatencyMs(30);
         cameraProp.setLatencyStdDevMs(5);

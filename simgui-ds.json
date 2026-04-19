@@ -13,12 +13,12 @@
     {
       "axisConfig": [
         {
-          "decKey": 83,
-          "incKey": 87
-        },
-        {
           "decKey": 65,
           "incKey": 68
+        },
+        {
+          "decKey": 87,
+          "incKey": 83
         },
         {},
         {},
@@ -81,8 +81,7 @@
   ],
   "robotJoysticks": [
     {
-      "guid": "030000004c050000c405000000010000",
-      "useGamepad": true
+      "guid": "Keyboard0"
     },
     {
       "guid": "Keyboard1"

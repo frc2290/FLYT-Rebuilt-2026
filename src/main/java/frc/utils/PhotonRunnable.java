@@ -126,15 +126,10 @@ public class PhotonRunnable implements Runnable {
                     .estimateCoprocMultiTagPose(result)
                     .or(() -> photonPoseEstimator.estimateLowestAmbiguityPose(result));
 
-            //if (photonPose.isEmpty()) {
-                //int bestId = result.getBestTarget().getFiducialId();
-                //boolean bestIdInLayout = layout.getTagPose(bestId).isPresent();
-                //Logger.recordOutput("VisionCalibration/" + cameraName + "/PoseEstimateEmpty", true);
-                //Logger.recordOutput("VisionCalibration/" + cameraName + "/BestTargetId", bestId);
-                //Logger.recordOutput("VisionCalibration/" + cameraName + "/BestTargetInLayout", bestIdInLayout);
-                //continue;
-            //}
-            //Logger.recordOutput("VisionCalibration/" + cameraName + "/PoseEstimateEmpty", false);
+            // Prevent unhandled NoSuchElementExceptions from silently killing the Notifier thread.
+            if (photonPose.isEmpty()) {
+                continue;
+            }
 
             var est = photonPose.get();
             if (Math.abs(est.estimatedPose.getZ()) > kVisionMaxPoseZMeters) {
