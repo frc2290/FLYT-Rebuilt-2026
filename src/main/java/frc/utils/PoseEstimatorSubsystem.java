@@ -38,7 +38,6 @@ import edu.wpi.first.wpilibj.DriverStation.Alliance;
 import edu.wpi.first.wpilibj.Filesystem;
 import edu.wpi.first.wpilibj.Notifier;
 import edu.wpi.first.wpilibj.RobotBase;
-import edu.wpi.first.wpilibj.Timer;
 // import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 // import edu.wpi.first.wpilibj.smartdashboard.FieldObject2d;
 // import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
@@ -50,7 +49,6 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.subsystems.drive.Drive;
 // import frc.utils.FLYTLib.FLYTDashboard.FlytLogger;
-import frc.utils.PoseUtils.Heading;
 import java.io.IOException;
 // import java.util.function.Supplier;
 import org.photonvision.EstimatedRobotPose;
@@ -68,23 +66,14 @@ import org.littletonrobotics.junction.Logger;
 public class PoseEstimatorSubsystem extends SubsystemBase {
 
     private static final class VisionMeasurement {
-        private final String cameraName;
         private final Pose2d pose;
         private final double timestampSeconds;
         private final Matrix<N3, N1> stdDevs;
-        private final double stdDevScore;
 
-        private VisionMeasurement(
-                String cameraName,
-                Pose2d pose,
-                double timestampSeconds,
-                Matrix<N3, N1> stdDevs,
-                double stdDevScore) {
-            this.cameraName = cameraName;
+        private VisionMeasurement(Pose2d pose, double timestampSeconds, Matrix<N3, N1> stdDevs) {
             this.pose = pose;
             this.timestampSeconds = timestampSeconds;
             this.stdDevs = stdDevs;
-            this.stdDevScore = stdDevScore;
         }
     }
 
@@ -118,8 +107,7 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
 
     // private final FieldObject2d target2d = field2d.getObject("Target");
 
-    /** target yaw for pointing */
-    private double targetYaw = 0;
+    private final AprilTagFieldLayout layout;
 
     /** PhotonVision pipelines for each camera in the four-camera rig. */
     private final PhotonRunnable frontPhotonRunnable;
@@ -136,7 +124,7 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
 
     private RobotConfig config;
 
-    private Drive drive;
+    private final Drive drive;
     private VisionSystemSim visionSim;
     private Pose2d lastSimPose = new Pose2d();
 
@@ -150,15 +138,16 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
 
     public PoseEstimatorSubsystem(Drive m_drive) {
         this.drive = m_drive;
+        this.layout = loadVisionLayout();
 
         frontPhotonRunnable = new PhotonRunnable(
-                VisionConstants.kForwardCamName, VisionConstants.kForwardCamTransform, () -> getHeading());
+                VisionConstants.kForwardCamName, VisionConstants.kForwardCamTransform, layout);
         backPhotonRunnable = new PhotonRunnable(
-                VisionConstants.kBackwardCamName, VisionConstants.kBackwardCamTransform, () -> getHeading()); //backward camera
+                VisionConstants.kBackwardCamName, VisionConstants.kBackwardCamTransform, layout);
         leftPhotonRunnable = new PhotonRunnable(
-                VisionConstants.kLeftCamName, VisionConstants.kLeftCamTransform, () -> getHeading());
+                VisionConstants.kLeftCamName, VisionConstants.kLeftCamTransform, layout);
         rightPhotonRunnable = new PhotonRunnable(
-                VisionConstants.kRightCamName, VisionConstants.kRightCamTransform, () -> getHeading());
+                VisionConstants.kRightCamName, VisionConstants.kRightCamTransform, layout);
 
         frontPhotonNotifier = new Notifier(frontPhotonRunnable);
         backPhotonNotifier = new Notifier(backPhotonRunnable);
@@ -178,16 +167,11 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
 
         if (RobotBase.isSimulation()) {
             visionSim = new VisionSystemSim("main");
-            AprilTagFieldLayout simLayout = loadVisionLayout();
-            visionSim.addAprilTags(simLayout);
-            configureSimCamera(
-                    frontPhotonRunnable.getCamera(), VisionConstants.kForwardCamTransform, simLayout);
-            configureSimCamera(
-                    backPhotonRunnable.getCamera(), VisionConstants.kBackwardCamTransform, simLayout);
-            configureSimCamera(
-                    leftPhotonRunnable.getCamera(), VisionConstants.kLeftCamTransform, simLayout);
-            configureSimCamera(
-                    rightPhotonRunnable.getCamera(), VisionConstants.kRightCamTransform, simLayout);
+            visionSim.addAprilTags(layout);
+            configureSimCamera(frontPhotonRunnable.getCamera(), VisionConstants.kForwardCamTransform);
+            configureSimCamera(backPhotonRunnable.getCamera(), VisionConstants.kBackwardCamTransform);
+            configureSimCamera(leftPhotonRunnable.getCamera(), VisionConstants.kLeftCamTransform);
+            configureSimCamera(rightPhotonRunnable.getCamera(), VisionConstants.kRightCamTransform);
             SmartDashboard.putData("RawPhysicsField", visionSim.getDebugField());
         }
 
@@ -246,26 +230,6 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
         if (back != null) drive.addVisionMeasurement(back.pose, back.timestampSeconds, back.stdDevs);
         if (left != null) drive.addVisionMeasurement(left.pose, left.timestampSeconds, left.stdDevs);
         if (right != null) drive.addVisionMeasurement(right.pose, right.timestampSeconds, right.stdDevs);
-
-        //VisionMeasurement bestMeasurement = null;
-        //bestMeasurement = chooseBetter(bestMeasurement, processCameraUpdate(frontUpdate, "Front"));
-        //bestMeasurement = chooseBetter(bestMeasurement, processCameraUpdate(backUpdate, "Back"));
-        //bestMeasurement = chooseBetter(bestMeasurement, processCameraUpdate(leftUpdate, "Left"));
-        //bestMeasurement = chooseBetter(bestMeasurement, processCameraUpdate(rightUpdate, "Right"));
-
-        // if (bestMeasurement != null) {
-        //     drive.addVisionMeasurement(
-        //             bestMeasurement.pose,
-        //             bestMeasurement.timestampSeconds,
-        //             bestMeasurement.stdDevs);
-        //     Logger.recordOutput("Vision/SelectedCamera", bestMeasurement.cameraName);
-        //     Logger.recordOutput("Vision/SelectedPose", bestMeasurement.pose);
-        //     Logger.recordOutput("Vision/SelectedStdDevScore", bestMeasurement.stdDevScore);
-        // } else {
-        //     Logger.recordOutput("Vision/SelectedCamera", "");
-        //     Logger.recordOutput("Vision/SelectedPose", new Pose2d());
-        //     Logger.recordOutput("Vision/SelectedStdDevScore", Double.NaN);
-        // }
     }
 
     @Override
@@ -274,6 +238,7 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
             return;
         }
 
+        // Drivetrain odometry is alliance-relative. Vision sim must run in absolute blue-origin.
         Pose2d odometryPose = drive.getTrueSimulatedPose();
         Pose2d absoluteFieldPose = odometryPose;
         if (originPosition != OriginPosition.kBlueAllianceWallRightSide) {
@@ -295,30 +260,26 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
 
     /** Processes a single camera frame and returns a measurement candidate (or null). */
     private VisionMeasurement processCameraUpdate(EstimatedRobotPose update, String cameraName) {
-        // 1. No new frame, or no tags visible at all. Clear camera pose/tags.
+        // Match pre-simulation robot behavior: clear pose output when no valid frame is available.
         if (update == null || update.targetsUsed == null || update.targetsUsed.isEmpty()) {
             Logger.recordOutput("Vision/CameraPoses/" + cameraName, new Pose2d[] {});
             return null;
         }
 
-        // 2. We have a frame with tags! Calculate the absolute field pose.
-        Pose2d rawPose = update.estimatedPose.toPose2d();
-        if (originPosition != OriginPosition.kBlueAllianceWallRightSide) {
-            rawPose = flipAlliance(rawPose);
+        Pose2d finalPose = update.estimatedPose.toPose2d();
+        if (originPosition != kBlueAllianceWallRightSide) {
+            finalPose = flipAlliance(finalPose);
         }
 
-        // 3. ALWAYS log the raw pose to AdvantageScope, regardless of noise.
-        // This guarantees you can always see what the camera is thinking, even if it gets filtered later.
-        Logger.recordOutput("Vision/CameraPoses/" + cameraName, new Pose2d[] {rawPose});
-
-        // 4. Odometry Fusion Filters: Now we decide if the pose is stable enough to trust.
+        // Odometry fusion filters.
         if (update.targetsUsed.size() == 1) {
             var target = update.targetsUsed.get(0);
             double distMeters = target.getBestCameraToTarget().getTranslation().getNorm();
             double ambiguity = target.getPoseAmbiguity();
 
-            // If it's too far or too ambiguous, skip fusion (but we already logged it!)
+            // If it's too far or too ambiguous, clear pose output and skip fusion.
             if (distMeters > 4.0 || ambiguity > VisionConstants.APRILTAG_AMBIGUITY_THRESHOLD) {
+                Logger.recordOutput("Vision/CameraPoses/" + cameraName, new Pose2d[] {});
                 return null;
             }
         }
@@ -326,31 +287,15 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
         Matrix<N3, N1> stdDevs = calculateStdDevs(update);
         double varX = Math.pow(stdDevs.get(0, 0), 2);
 
-        // If the variance is too high, skip fusion
+        // If the variance is too high, clear pose output and skip fusion.
         if (varX >= VisionConstants.kVisionRejectVarianceThreshold) {
+            Logger.recordOutput("Vision/CameraPoses/" + cameraName, new Pose2d[] {});
             return null;
         }
 
-        // 5. The frame survived all filters! Send it to the pose estimator.
-        double score = stdDevScore(stdDevs);
-        return new VisionMeasurement(cameraName, rawPose, update.timestampSeconds, stdDevs, score);
-    }
+        Logger.recordOutput("Vision/CameraPoses/" + cameraName, new Pose2d[] {finalPose});
 
-    private VisionMeasurement chooseBetter(VisionMeasurement currentBest, VisionMeasurement candidate) {
-        if (candidate == null) {
-            return currentBest;
-        }
-        if (currentBest == null) {
-            return candidate;
-        }
-        return candidate.stdDevScore < currentBest.stdDevScore ? candidate : currentBest;
-    }
-
-    private static double stdDevScore(Matrix<N3, N1> stdDevs) {
-        double x = stdDevs.get(0, 0);
-        double y = stdDevs.get(1, 0);
-        double theta = stdDevs.get(2, 0);
-        return (x * x) + (y * y) + (theta * theta);
+        return new VisionMeasurement(finalPose, update.timestampSeconds, stdDevs);
     }
 
     /** Calculates dynamic standard deviations using multiplicative scaling. */
@@ -412,8 +357,7 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
         Logger.recordOutput("Vision/CameraTags/" + cameraName + "/Ids", tagIds);
     }
 
-    private void configureSimCamera(
-            PhotonCamera camera, Transform3d robotToCam, AprilTagFieldLayout layout) {
+    private void configureSimCamera(PhotonCamera camera, Transform3d robotToCam) {
         SimCameraProperties cameraProp = new SimCameraProperties();
         cameraProp.setCalibration(1280, 800, Rotation2d.fromDegrees(75));
         cameraProp.setCalibError(0.10, 0.05);
@@ -421,7 +365,7 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
         cameraProp.setAvgLatencyMs(35);
         cameraProp.setLatencyStdDevMs(5);
 
-        PhotonCameraSim cameraSim = new PhotonCameraSim(camera, cameraProp, layout);
+        PhotonCameraSim cameraSim = new PhotonCameraSim(camera, cameraProp, this.layout);
         cameraSim.enableRawStream(false);
         cameraSim.enableProcessedStream(false);
         visionSim.addCamera(cameraSim, robotToCam);
@@ -465,10 +409,6 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
 
     public Pose2d getTargetPose() {
         return targetPose;
-    }
-
-    public double getTargetYaw() {
-        return targetYaw;
     }
 
     public void setTargetPose(Pose2d newTarget) {
@@ -579,10 +519,6 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
      */
     private Pose2d flipAlliance(Pose2d poseToFlip) {
         return poseToFlip.relativeTo(VisionConstants.FLIPPING_POSE);
-    }
-
-    private Heading getHeading() {
-        return new Heading(Timer.getFPGATimestamp(), getCurrentRotation());
     }
 }
 

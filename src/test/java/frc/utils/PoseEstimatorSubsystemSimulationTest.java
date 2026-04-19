@@ -30,7 +30,7 @@ class PoseEstimatorSubsystemSimulationTest {
     }
 
     @Test
-    void redAllianceOriginKeepsDriveAndSimFramesSynchronized() throws Exception {
+    void simulationUsesAbsoluteFieldFrameAfterAllianceChange() throws Exception {
         Drive drive =
                 new Drive(
                         new GyroIO() {},

@@ -19,16 +19,8 @@ package frc.utils;
 import static frc.robot.Constants.VisionConstants.kVisionMaxPoseZMeters;
 
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
-import edu.wpi.first.apriltag.AprilTagFieldLayout.OriginPosition;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Transform3d;
-import edu.wpi.first.wpilibj.Filesystem;
-import frc.utils.PoseUtils.Heading;
-
-import java.io.IOException;
 import java.util.concurrent.atomic.AtomicReference;
-import java.util.function.Supplier;
 import org.littletonrobotics.junction.Logger;
 import org.photonvision.EstimatedRobotPose;
 import org.photonvision.PhotonCamera;
@@ -40,35 +32,24 @@ public class PhotonRunnable implements Runnable {
 
     private final PhotonPoseEstimator photonPoseEstimator;
     private final PhotonCamera photonCamera;
-    private AprilTagFieldLayout layout;
+    private final AprilTagFieldLayout layout;
     private final String cameraName;
 
     /** Latest pose estimate published from the PhotonVision thread. */
     private final AtomicReference<EstimatedRobotPose> atomicEstimatedRobotPose =
             new AtomicReference<EstimatedRobotPose>();
 
-    /** java is evil */
+    /** Latest target yaw published from the PhotonVision thread. */
     private final AtomicReference<Double> atomicTargetYaw = new AtomicReference<Double>();
 
-    /** Cached pipeline result from the last successful update. */
+    /** Cached pipeline result from the most recent update. */
     private volatile PhotonPipelineResult photonResults;
 
-    public PhotonRunnable(
-            String cam_name, Transform3d cameraToRobot, Supplier<Heading> headingSupplier) {
+    public PhotonRunnable(String cam_name, Transform3d cameraToRobot, AprilTagFieldLayout sharedLayout) {
         cameraName = cam_name;
         this.photonCamera = new PhotonCamera(cameraName);
-        //layout = FieldConstants.AprilTagLayoutType.OFFICIAL.getLayout();
-        //Keep layout origin fixed to blue; alliance flipping is handled in PoseEstimatorSubsystem.
-        try {
-            layout = new AprilTagFieldLayout(Filesystem.getDeployDirectory().getAbsolutePath() + "/field_calibration.json");
-            System.out.println("COULD READ APRIL TAG FIELD FILE WOOOOOOOOOOOOO");
-        } catch (IOException e) {
-            e.printStackTrace();
-            System.out.println("COULD NOT READ APRIL TAG FIELD FILE!!!!!!!!!!!!!!!!!!!!!!!!!");
-            layout = FieldConstants.AprilTagLayoutType.OFFICIAL.getLayout();
-        }
-        layout.setOrigin(OriginPosition.kBlueAllianceWallRightSide);
-
+        this.layout = sharedLayout;
+        // The pose estimator outputs absolute (blue-origin) field poses.
         this.photonPoseEstimator = new PhotonPoseEstimator(layout, cameraToRobot);
     }
 
@@ -79,7 +60,7 @@ public class PhotonRunnable implements Runnable {
         }
 
         boolean connected = photonCamera.isConnected();
-        Logger.recordOutput("VisionCalibration/" + cameraName + "/Connected", connected);
+        Logger.recordOutput("Vision/" + cameraName + "/Connected", connected);
         if (!connected) {
             photonResults = null;
             atomicTargetYaw.set(null);
@@ -88,7 +69,6 @@ public class PhotonRunnable implements Runnable {
         }
 
         var results = photonCamera.getAllUnreadResults();
-        //Logger.recordOutput("VisionCalibration/" + cameraName + "/UnreadResultCount", results.size());
         EstimatedRobotPose newestPose = null;
 
         for (PhotonPipelineResult result : results) {
@@ -98,29 +78,6 @@ public class PhotonRunnable implements Runnable {
             if (!result.hasTargets()) {
                 continue;
             }
-
-            var targets = result.getTargets();
-            long[] tagIds = new long[targets.size()];
-            Pose3d[] cameraToTags = new Pose3d[targets.size()];
-            double[] ambiguities = new double[targets.size()];
-            boolean[] tagInLayout = new boolean[targets.size()];
-
-            for (int i = 0; i < targets.size(); i++) {
-                var target = targets.get(i);
-                tagIds[i] = target.getFiducialId();
-                var transform = target.getBestCameraToTarget();
-                cameraToTags[i] = new Pose3d(transform.getTranslation(), transform.getRotation());
-                ambiguities[i] = target.getPoseAmbiguity();
-                tagInLayout[i] = layout.getTagPose((int) tagIds[i]).isPresent();
-            }
-
-            //Logger.recordOutput(
-            //        "VisionCalibration/" + cameraName + "/TimestampSec",
-            //        result.getTimestampSeconds());
-            //Logger.recordOutput("VisionCalibration/" + cameraName + "/TagIds", tagIds);
-            //Logger.recordOutput("VisionCalibration/" + cameraName + "/TagInLayout", tagInLayout);
-            //Logger.recordOutput("VisionCalibration/" + cameraName + "/CameraToTag", cameraToTags);
-            //Logger.recordOutput("VisionCalibration/" + cameraName + "/Ambiguity", ambiguities);
 
             atomicTargetYaw.set(result.getBestTarget().yaw);
 
@@ -134,6 +91,9 @@ public class PhotonRunnable implements Runnable {
             }
 
             var est = photonPose.get();
+            // Log the raw 3D output before filtering so geometry issues are visible.
+            Logger.recordOutput("Vision/RawThreadPoses/" + cameraName, est.estimatedPose);
+
             if (Math.abs(est.estimatedPose.getZ()) > kVisionMaxPoseZMeters) {
                 continue;
             }
@@ -172,22 +132,8 @@ public class PhotonRunnable implements Runnable {
         return atomicTargetYaw.getAndSet(null);
     }
 
-    public Pose2d grabLatestResult() {
-        if (photonResults == null || !photonResults.hasTargets()) {
-            return null;
-        }
-
-        return layout.getTagPose(photonResults.getBestTarget().getFiducialId())
-                .map(pose3d -> pose3d.toPose2d())
-                .orElse(null);
-    }
-
     public PhotonPipelineResult grabLatestTag() {
         return photonResults;
-    }
-
-    public String getCameraName() {
-        return cameraName;
     }
 
     public PhotonCamera getCamera() {
