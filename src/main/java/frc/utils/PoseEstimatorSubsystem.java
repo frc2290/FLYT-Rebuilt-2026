@@ -42,6 +42,7 @@ import edu.wpi.first.wpilibj.Timer;
 // import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 // import edu.wpi.first.wpilibj.smartdashboard.FieldObject2d;
 // import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -176,11 +177,17 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
 
         if (RobotBase.isSimulation()) {
             visionSim = new VisionSystemSim("main");
-            visionSim.addAprilTags(loadVisionLayout());
-            configureSimCamera(frontPhotonRunnable.getCamera(), VisionConstants.kForwardCamTransform);
-            configureSimCamera(backPhotonRunnable.getCamera(), VisionConstants.kBackwardCamTransform);
-            configureSimCamera(leftPhotonRunnable.getCamera(), VisionConstants.kLeftCamTransform);
-            configureSimCamera(rightPhotonRunnable.getCamera(), VisionConstants.kRightCamTransform);
+            AprilTagFieldLayout simLayout = loadVisionLayout();
+            visionSim.addAprilTags(simLayout);
+            configureSimCamera(
+                    frontPhotonRunnable.getCamera(), VisionConstants.kForwardCamTransform, simLayout);
+            configureSimCamera(
+                    backPhotonRunnable.getCamera(), VisionConstants.kBackwardCamTransform, simLayout);
+            configureSimCamera(
+                    leftPhotonRunnable.getCamera(), VisionConstants.kLeftCamTransform, simLayout);
+            configureSimCamera(
+                    rightPhotonRunnable.getCamera(), VisionConstants.kRightCamTransform, simLayout);
+            SmartDashboard.putData("RawPhysicsField", visionSim.getDebugField());
         }
 
         try {
@@ -391,15 +398,16 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
         }
     }
 
-    private void configureSimCamera(PhotonCamera camera, Transform3d robotToCam) {
+    private void configureSimCamera(
+            PhotonCamera camera, Transform3d robotToCam, AprilTagFieldLayout layout) {
         SimCameraProperties cameraProp = new SimCameraProperties();
         cameraProp.setCalibration(1280, 800, Rotation2d.fromDegrees(75));
         cameraProp.setCalibError(0.0, 0.0);
         cameraProp.setFPS(40);
-        cameraProp.setAvgLatencyMs(30);
-        cameraProp.setLatencyStdDevMs(5);
+        cameraProp.setAvgLatencyMs(0);
+        cameraProp.setLatencyStdDevMs(0);
 
-        PhotonCameraSim cameraSim = new PhotonCameraSim(camera, cameraProp);
+        PhotonCameraSim cameraSim = new PhotonCameraSim(camera, cameraProp, layout);
         cameraSim.enableRawStream(false);
         cameraSim.enableProcessedStream(false);
         visionSim.addCamera(cameraSim, robotToCam);

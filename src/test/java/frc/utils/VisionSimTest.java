@@ -1,6 +1,7 @@
 package frc.utils;
 
 import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 import edu.wpi.first.apriltag.AprilTag;
@@ -19,9 +20,11 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.photonvision.PhotonCamera;
+import org.photonvision.PhotonPoseEstimator;
 import org.photonvision.simulation.PhotonCameraSim;
 import org.photonvision.simulation.SimCameraProperties;
 import org.photonvision.simulation.VisionSystemSim;
+import org.photonvision.targeting.PhotonPipelineResult;
 
 class VisionSimTest {
     private static final double FIELD_LENGTH_METERS = 16.541;
@@ -130,6 +133,86 @@ class VisionSimTest {
 
         stepAndUpdate(visionSim, visiblePose, 8);
         assertTrue(hasAnyTarget(camera), "After latency elapses, target frames should arrive.");
+    }
+
+    @Test
+    void multitagPoseIsWrongWhenCameraSimUsesDefaultLayoutInsteadOfSimLayout() {
+        AprilTagFieldLayout layout = new AprilTagFieldLayout(
+                List.of(
+                        new AprilTag(
+                                1,
+                                new Pose3d(
+                                        5.0,
+                                        4.7,
+                                        VisionConstants.TARGET_HEIGHT_METERS,
+                                        new Rotation3d(0.0, 0.0, Math.PI))),
+                        new AprilTag(
+                                2,
+                                new Pose3d(
+                                        5.0,
+                                        5.3,
+                                        VisionConstants.TARGET_HEIGHT_METERS,
+                                        new Rotation3d(0.0, 0.0, Math.PI)))),
+                FIELD_LENGTH_METERS,
+                FIELD_WIDTH_METERS);
+
+        Pose2d robotPose = new Pose2d(3.0, 5.0, Rotation2d.fromDegrees(0.0));
+
+        PhotonCamera wrongLayoutCam = new PhotonCamera("multitag-wrong-layout-" + simInstanceCounter++);
+        VisionSystemSim wrongLayoutSim = new VisionSystemSim("WrongLayoutWorld-" + simInstanceCounter++);
+        wrongLayoutSim.addAprilTags(layout);
+        wrongLayoutSim.addCamera(createZeroLatencySimCam(wrongLayoutCam), VisionConstants.kForwardCamTransform);
+
+        stepAndUpdate(wrongLayoutSim, robotPose, 10);
+        PhotonPipelineResult wrongLayoutResult = getLatestMultiTagResult(wrongLayoutCam);
+        assertNotNull(
+                wrongLayoutResult,
+                "Expected a multi-tag pipeline result when two tags are visible.");
+
+        PhotonPoseEstimator estimator = new PhotonPoseEstimator(layout, VisionConstants.kForwardCamTransform);
+        var wrongLayoutEstimate = estimator.estimateCoprocMultiTagPose(wrongLayoutResult);
+        assertTrue(wrongLayoutEstimate.isPresent(), "Expected coprocessor multi-tag estimate to be present.");
+
+        double wrongLayoutErrorMeters = wrongLayoutEstimate
+                .get()
+                .estimatedPose
+                .toPose2d()
+                .getTranslation()
+                .getDistance(robotPose.getTranslation());
+
+        PhotonCamera matchedLayoutCam =
+                new PhotonCamera("multitag-matched-layout-" + simInstanceCounter++);
+        VisionSystemSim matchedLayoutSim = new VisionSystemSim("MatchedLayoutWorld-" + simInstanceCounter++);
+        matchedLayoutSim.addAprilTags(layout);
+        matchedLayoutSim.addCamera(
+                createZeroLatencySimCam(matchedLayoutCam, layout), VisionConstants.kForwardCamTransform);
+
+        stepAndUpdate(matchedLayoutSim, robotPose, 10);
+        PhotonPipelineResult matchedLayoutResult = getLatestMultiTagResult(matchedLayoutCam);
+        assertNotNull(
+                matchedLayoutResult,
+                "Expected a multi-tag pipeline result with matching layout.");
+
+        var matchedLayoutEstimate = estimator.estimateCoprocMultiTagPose(matchedLayoutResult);
+        assertTrue(matchedLayoutEstimate.isPresent(), "Expected coprocessor multi-tag estimate to be present.");
+
+        double matchedLayoutErrorMeters = matchedLayoutEstimate
+                .get()
+                .estimatedPose
+                .toPose2d()
+                .getTranslation()
+                .getDistance(robotPose.getTranslation());
+
+        assertTrue(
+                wrongLayoutErrorMeters > 1.0,
+                "Expected large pose error when camera sim uses default layout, got "
+                        + wrongLayoutErrorMeters
+                        + "m.");
+        assertTrue(
+                matchedLayoutErrorMeters < 0.05,
+                "Expected near-zero pose error when layout is shared, got "
+                        + matchedLayoutErrorMeters
+                        + "m.");
     }
 
     @Test
@@ -402,8 +485,22 @@ class VisionSimTest {
         return createSimCam(camera, 0.0, 0.0, 0.0);
     }
 
+    private static PhotonCameraSim createZeroLatencySimCam(
+            PhotonCamera camera, AprilTagFieldLayout layout) {
+        return createSimCam(camera, 0.0, 0.0, 0.0, layout);
+    }
+
     private static PhotonCameraSim createSimCam(
             PhotonCamera camera, double calibErrPx, double calibErrDeg, double avgLatencyMs) {
+        return createSimCam(camera, calibErrPx, calibErrDeg, avgLatencyMs, null);
+    }
+
+    private static PhotonCameraSim createSimCam(
+            PhotonCamera camera,
+            double calibErrPx,
+            double calibErrDeg,
+            double avgLatencyMs,
+            AprilTagFieldLayout layout) {
         SimCameraProperties props = new SimCameraProperties();
         props.setCalibration(1280, 800, Rotation2d.fromDegrees(75));
         props.setCalibError(calibErrPx, calibErrDeg);
@@ -411,7 +508,8 @@ class VisionSimTest {
         props.setAvgLatencyMs(avgLatencyMs);
         props.setLatencyStdDevMs(0.0);
 
-        PhotonCameraSim cameraSim = new PhotonCameraSim(camera, props);
+        PhotonCameraSim cameraSim =
+                (layout == null) ? new PhotonCameraSim(camera, props) : new PhotonCameraSim(camera, props, layout);
         cameraSim.enableRawStream(false);
         cameraSim.enableProcessedStream(false);
         return cameraSim;
@@ -426,5 +524,18 @@ class VisionSimTest {
 
     private static boolean hasAnyTarget(PhotonCamera camera) {
         return camera.getAllUnreadResults().stream().anyMatch(result -> result.hasTargets());
+    }
+
+    private static PhotonPipelineResult getLatestMultiTagResult(PhotonCamera camera) {
+        PhotonPipelineResult newest = null;
+        for (var result : camera.getAllUnreadResults()) {
+            if (!result.hasTargets() || result.getMultiTagResult().isEmpty()) {
+                continue;
+            }
+            if (newest == null || result.getTimestampSeconds() > newest.getTimestampSeconds()) {
+                newest = result;
+            }
+        }
+        return newest;
     }
 }
