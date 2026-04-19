@@ -131,7 +131,6 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
     private final Notifier rightPhotonNotifier;
 
     private OriginPosition originPosition = kBlueAllianceWallRightSide;
-    private boolean sawTag = false;
 
     private RobotConfig config;
 
@@ -208,10 +207,9 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
                 // No valid alliance data. Nothing we can do about it.
         }
 
-        if (allianceChanged && sawTag) {
+        if (allianceChanged) {
             // The alliance changed, which changes the coordinate system.
-            // Since a tag was seen, and the tags are all relative to the coordinate system,
-            // the estimated pose needs to be transformed to the new coordinate system.
+            // Keep drivetrain pose synchronized with the currently selected alliance frame.
             var newPose = flipAlliance(getCurrentPose());
             drive.setPose(newPose);
         }
@@ -248,7 +246,6 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
         //             bestMeasurement.pose,
         //             bestMeasurement.timestampSeconds,
         //             bestMeasurement.stdDevs);
-        //     sawTag = true;
         //     Logger.recordOutput("Vision/SelectedCamera", bestMeasurement.cameraName);
         //     Logger.recordOutput("Vision/SelectedPose", bestMeasurement.pose);
         //     Logger.recordOutput("Vision/SelectedStdDevScore", bestMeasurement.stdDevScore);

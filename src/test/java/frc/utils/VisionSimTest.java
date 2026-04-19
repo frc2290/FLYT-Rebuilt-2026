@@ -307,6 +307,37 @@ class VisionSimTest {
                 "Expected multi-tag detection (>1 target) to bypass single-tag-only filter path.");
     }
 
+    @Test
+    void extraAllianceFlipCanMoveRobotOutOfTagView() {
+        VisionSystemSim sim = new VisionSystemSim("FlipMismatchWorld-" + simInstanceCounter++);
+        AprilTag fakeTag = new AprilTag(
+                1,
+                new Pose3d(
+                        5.0,
+                        5.0,
+                        VisionConstants.TARGET_HEIGHT_METERS,
+                        new Rotation3d(0.0, 0.0, Math.PI)));
+        sim.addAprilTags(new AprilTagFieldLayout(List.of(fakeTag), FIELD_LENGTH_METERS, FIELD_WIDTH_METERS));
+
+        PhotonCamera cam = new PhotonCamera("flip-mismatch-front-" + simInstanceCounter++);
+        sim.addCamera(createZeroLatencySimCam(cam), VisionConstants.kForwardCamTransform);
+
+        Pose2d odometryPoseBlue = new Pose2d(3.0, 5.0, Rotation2d.fromDegrees(0.0));
+        Pose2d incorrectlyFlippedPose = odometryPoseBlue.relativeTo(VisionConstants.FLIPPING_POSE);
+
+        stepAndUpdate(sim, odometryPoseBlue, 10);
+        boolean seesTagAtOdometryPose = hasAnyTarget(cam);
+
+        cam.getAllUnreadResults();
+        stepAndUpdate(sim, incorrectlyFlippedPose, 10);
+        boolean seesTagAtIncorrectlyFlippedPose = hasAnyTarget(cam);
+
+        assertTrue(seesTagAtOdometryPose, "Expected visible tag at the true odometry pose.");
+        assertFalse(
+                seesTagAtIncorrectlyFlippedPose,
+                "Applying an extra alliance flip moved the robot to a pose with no visible target.");
+    }
+
     private VisionSystemSim createVisionSim(
             String simName, PhotonCamera camera, Pose2d robotPose, Transform3d cameraToTag) {
         return createVisionSim(simName, camera, robotPose, cameraToTag, 0.0);
