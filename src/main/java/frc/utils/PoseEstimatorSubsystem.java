@@ -366,8 +366,8 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
         cameraProp.setLatencyStdDevMs(5);
 
         PhotonCameraSim cameraSim = new PhotonCameraSim(camera, cameraProp, this.layout);
-        cameraSim.enableRawStream(false);
-        cameraSim.enableProcessedStream(false);
+        cameraSim.enableRawStream(true);
+        cameraSim.enableProcessedStream(true);
         visionSim.addCamera(cameraSim, robotToCam);
     }
 
