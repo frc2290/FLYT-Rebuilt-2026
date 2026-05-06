@@ -25,6 +25,7 @@ import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.CommandScheduler;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine.Direction;
+import frc.robot.Commands.CharacterizeDyeRotor;
 import frc.robot.subsystems.StateMachines.DriveStateMachine;
 import frc.robot.subsystems.StateMachines.StateMachine;
 import frc.robot.subsystems.StateMachines.DriveStateMachine.DriveState;
@@ -366,14 +367,15 @@ public class Robot extends LoggedRobot {
         sys_id_commands.addOption("Intake Right Dynamic Forward", m_intake.sysIdDynamicRightIntake(Direction.kForward));
         sys_id_commands.addOption("Intake Right Dynamic Reverse", m_intake.sysIdDynamicRightIntake(Direction.kReverse));
         sys_id_commands.addOption("Intake Right Deploy Characterize", m_intake.agitateIntakeRight());
-        sys_id_commands.addOption("Dye Rotor Rotor Quasi Forward", m_dyeRotor.sysIdQuasistaticRotor(Direction.kForward));
-        sys_id_commands.addOption("Dye Rotor Rotor Quasi Reverse", m_dyeRotor.sysIdQuasistaticRotor(Direction.kReverse));
-        sys_id_commands.addOption("Dye Rotor Rotor Dynamic Forward", m_dyeRotor.sysIdDynamicRotor(Direction.kForward));
-        sys_id_commands.addOption("Dye Rotor Rotor Dynamic Reverse", m_dyeRotor.sysIdDynamicRotor(Direction.kReverse));
-        sys_id_commands.addOption("Dye Rotor Feeder Quasi Forward", m_dyeRotor.sysIdQuasistaticFeeder(Direction.kForward));
-        sys_id_commands.addOption("Dye Rotor Feeder Quasi Reverse", m_dyeRotor.sysIdQuasistaticFeeder(Direction.kReverse));
-        sys_id_commands.addOption("Dye Rotor Feeder Dynamic Forward", m_dyeRotor.sysIdDynamicFeeder(Direction.kForward));
-        sys_id_commands.addOption("Dye Rotor Feeder Dynamic Reverse", m_dyeRotor.sysIdDynamicFeeder(Direction.kReverse));
+        sys_id_commands.addOption("Dye Rotor Common Quasi Forward", m_dyeRotor.sysIdQuasistaticDyeRotorCommon(Direction.kForward));
+        sys_id_commands.addOption("Dye Rotor Common Quasi Reverse", m_dyeRotor.sysIdQuasistaticDyeRotorCommon(Direction.kReverse));
+        sys_id_commands.addOption("Dye Rotor Common Dynamic Forward", m_dyeRotor.sysIdDynamicDyeRotorCommon(Direction.kForward));
+        sys_id_commands.addOption("Dye Rotor Common Dynamic Reverse", m_dyeRotor.sysIdDynamicDyeRotorCommon(Direction.kReverse));
+        sys_id_commands.addOption("Dye Rotor Counter Quasi Forward", m_dyeRotor.sysIdQuasistaticDyeRotorCounter(Direction.kForward));
+        sys_id_commands.addOption("Dye Rotor Counter Quasi Reverse", m_dyeRotor.sysIdQuasistaticDyeRotorCounter(Direction.kReverse));
+        sys_id_commands.addOption("Dye Rotor Counter Dynamic Forward", m_dyeRotor.sysIdDynamicDyeRotorCounter(Direction.kForward));
+        sys_id_commands.addOption("Dye Rotor Counter Dynamic Reverse", m_dyeRotor.sysIdDynamicDyeRotorCounter(Direction.kReverse));
+        sys_id_commands.addOption("Dye Rotor Full SysId (8-Step)", new CharacterizeDyeRotor(m_dyeRotor));
     }
 
     /** This function is called periodically during test mode. */

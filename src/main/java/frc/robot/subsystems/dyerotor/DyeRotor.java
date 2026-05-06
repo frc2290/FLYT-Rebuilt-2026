@@ -29,8 +29,8 @@ public class DyeRotor extends SubsystemBase {
 
     private final DyeRotorIO io;
     private final DyeRotorIOInputsAutoLogged inputs = new DyeRotorIOInputsAutoLogged();
-    private final SysIdRoutine rotorSysId;
-    private final SysIdRoutine feederSysId;
+    private final SysIdRoutine dyeRotorCommonSysId;
+    private final SysIdRoutine dyeRotorCounterSysId;
 
     private final Timer jamStartupTimer = new Timer();
     private final Timer jamTimer = new Timer();
@@ -46,25 +46,31 @@ public class DyeRotor extends SubsystemBase {
     public DyeRotor(DyeRotorIO io) {
         this.io = io;
 
-        rotorSysId = new SysIdRoutine(
+        dyeRotorCommonSysId = new SysIdRoutine(
                 new SysIdRoutine.Config(
                         Volts.of(0.75).per(Second),
                         Volts.of(11.5),
                         Seconds.of(16),
-                        (state) -> Logger.recordOutput("DyeRotor/SysIdRotorState", state.toString())),
+                        (state) -> Logger.recordOutput("DyeRotor/SysIdCommonDyeRotorState", state.toString())),
                 new SysIdRoutine.Mechanism(
-                        (voltage) -> rotorCommandedVoltage = voltage.in(Volts),
+                        (voltage) -> {
+                            rotorCommandedVoltage = voltage.in(Volts);
+                            feederCommandedVoltage = voltage.in(Volts);
+                        },
                         null,
                         this));
 
-        feederSysId = new SysIdRoutine(
+        dyeRotorCounterSysId = new SysIdRoutine(
                 new SysIdRoutine.Config(
-                        Volts.of(0.5).per(Second),
-                        Volts.of(8.5),
-                        Seconds.of(24),
-                        (state) -> Logger.recordOutput("DyeRotor/SysIdFeederState", state.toString())),
+                        Volts.of(0.75).per(Second),
+                        Volts.of(11.5),
+                        Seconds.of(16),
+                        (state) -> Logger.recordOutput("DyeRotor/SysIdCounterDyeRotorState", state.toString())),
                 new SysIdRoutine.Mechanism(
-                        (voltage) -> feederCommandedVoltage = voltage.in(Volts),
+                        (voltage) -> {
+                            rotorCommandedVoltage = voltage.in(Volts);
+                            feederCommandedVoltage = -voltage.in(Volts);
+                        },
                         null,
                         this));
     }
@@ -336,50 +342,66 @@ public class DyeRotor extends SubsystemBase {
         }
     }
 
-    /** Runs a quasistatic SysId test on the DyeRotor rotor. */
-    public Command sysIdQuasistaticRotor(SysIdRoutine.Direction direction) {
+    /** Runs a quasistatic SysId test with common-mode motor excitation. */
+    public Command sysIdQuasistaticDyeRotorCommon(SysIdRoutine.Direction direction) {
         return runOnce(() -> {
             runDyeRotor(false);
             setRotorControlMode(ControlMode.VOLTAGE);
+            setFeederControlMode(ControlMode.VOLTAGE);
             rotorCommandedVoltage = 0.0;
-        }).andThen(rotorSysId.quasistatic(direction)).finallyDo(() -> {
+            feederCommandedVoltage = 0.0;
+        }).andThen(dyeRotorCommonSysId.quasistatic(direction)).finallyDo(() -> {
             setRotorControlMode(ControlMode.VELOCITY);
+            setFeederControlMode(ControlMode.VELOCITY);
             rotorCommandedVoltage = 0.0;
+            feederCommandedVoltage = 0.0;
         });
     }
 
-    /** Runs a dynamic SysId test on the DyeRotor rotor. */
-    public Command sysIdDynamicRotor(SysIdRoutine.Direction direction) {
+    /** Runs a dynamic SysId test with common-mode motor excitation. */
+    public Command sysIdDynamicDyeRotorCommon(SysIdRoutine.Direction direction) {
         return runOnce(() -> {
             runDyeRotor(false);
             setRotorControlMode(ControlMode.VOLTAGE);
+            setFeederControlMode(ControlMode.VOLTAGE);
             rotorCommandedVoltage = 0.0;
-        }).andThen(rotorSysId.dynamic(direction)).finallyDo(() -> {
+            feederCommandedVoltage = 0.0;
+        }).andThen(dyeRotorCommonSysId.dynamic(direction)).finallyDo(() -> {
             setRotorControlMode(ControlMode.VELOCITY);
+            setFeederControlMode(ControlMode.VELOCITY);
             rotorCommandedVoltage = 0.0;
-        });
-    }
-
-    /** Runs a quasistatic SysId test on the DyeRotor feeder. */
-    public Command sysIdQuasistaticFeeder(SysIdRoutine.Direction direction) {
-        return runOnce(() -> {
-            runDyeRotor(false);
-            setFeederControlMode(ControlMode.VOLTAGE);
-            feederCommandedVoltage = 0.0;
-        }).andThen(feederSysId.quasistatic(direction)).finallyDo(() -> {
-            setFeederControlMode(ControlMode.VELOCITY);
             feederCommandedVoltage = 0.0;
         });
     }
 
-    /** Runs a dynamic SysId test on the DyeRotor feeder. */
-    public Command sysIdDynamicFeeder(SysIdRoutine.Direction direction) {
+    /** Runs a quasistatic SysId test with counter-mode motor excitation. */
+    public Command sysIdQuasistaticDyeRotorCounter(SysIdRoutine.Direction direction) {
         return runOnce(() -> {
             runDyeRotor(false);
+            setRotorControlMode(ControlMode.VOLTAGE);
             setFeederControlMode(ControlMode.VOLTAGE);
+            rotorCommandedVoltage = 0.0;
             feederCommandedVoltage = 0.0;
-        }).andThen(feederSysId.dynamic(direction)).finallyDo(() -> {
+        }).andThen(dyeRotorCounterSysId.quasistatic(direction)).finallyDo(() -> {
+            setRotorControlMode(ControlMode.VELOCITY);
             setFeederControlMode(ControlMode.VELOCITY);
+            rotorCommandedVoltage = 0.0;
+            feederCommandedVoltage = 0.0;
+        });
+    }
+
+    /** Runs a dynamic SysId test with counter-mode motor excitation. */
+    public Command sysIdDynamicDyeRotorCounter(SysIdRoutine.Direction direction) {
+        return runOnce(() -> {
+            runDyeRotor(false);
+            setRotorControlMode(ControlMode.VOLTAGE);
+            setFeederControlMode(ControlMode.VOLTAGE);
+            rotorCommandedVoltage = 0.0;
+            feederCommandedVoltage = 0.0;
+        }).andThen(dyeRotorCounterSysId.dynamic(direction)).finallyDo(() -> {
+            setRotorControlMode(ControlMode.VELOCITY);
+            setFeederControlMode(ControlMode.VELOCITY);
+            rotorCommandedVoltage = 0.0;
             feederCommandedVoltage = 0.0;
         });
     }
