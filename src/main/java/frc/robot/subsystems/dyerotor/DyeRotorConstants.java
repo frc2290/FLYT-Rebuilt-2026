@@ -19,7 +19,7 @@ public class DyeRotorConstants {
     public static final double fuelDiameterInches = 150/25.4; // 150mm in inches
     public static final double feedWheelRadiusInches = 1.625/2.0; // 1.625in diameter
     // Motor RPM = Mechanism RPM * Gear Ratio
-    public static final double rotorGearRatio = (9.0)*(72.0/16.0);
+    public static final double rotorGearRatio = (5)*(72.0/16.0);
     public static final double feedGearRatio = 60.0 / 37.0;
 
     // --- Encoder & Conversion Factors ---
@@ -53,7 +53,7 @@ public class DyeRotorConstants {
 
     // --- Subsystem Behaviors & Targets ---
     // Throughput target used by runDyeRotor(true)
-    public static final double defaultTargetBps = 17;
+    public static final double defaultTargetBps = 10;
     public static final double overfeedRatio = 1.2; //Rate balls are fed realitive to the rotor speed. Based on Wildstang Calcs
     public static final double minRotorRpsForOverfeed = 10.0 / 60.0;
 }
