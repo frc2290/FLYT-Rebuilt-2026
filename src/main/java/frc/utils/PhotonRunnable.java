@@ -111,34 +111,31 @@ public class PhotonRunnable implements Runnable {
                 tagInLayout[i] = layout.getTagPose((int) tagIds[i]).isPresent();
             }
 
-            Logger.recordOutput(
-                   "VisionCalibration/" + cameraName + "/TimestampSec",
-                   result.getTimestampSeconds());
-            Logger.recordOutput("VisionCalibration/" + cameraName + "/TagIds", tagIds);
-            Logger.recordOutput("VisionCalibration/" + cameraName + "/TagInLayout", tagInLayout);
-            Logger.recordOutput("VisionCalibration/" + cameraName + "/CameraToTag", cameraToTags);
-            Logger.recordOutput("VisionCalibration/" + cameraName + "/Ambiguity", ambiguities);
+            // Logger.recordOutput(
+            //        "VisionCalibration/" + cameraName + "/TimestampSec",
+            //        result.getTimestampSeconds());
+            // Logger.recordOutput("VisionCalibration/" + cameraName + "/TagIds", tagIds);
+            // Logger.recordOutput("VisionCalibration/" + cameraName + "/TagInLayout", tagInLayout);
+            // Logger.recordOutput("VisionCalibration/" + cameraName + "/CameraToTag", cameraToTags);
+            // Logger.recordOutput("VisionCalibration/" + cameraName + "/Ambiguity", ambiguities);
 
             photonResults = result;
             atomicTargetYaw.set(result.getBestTarget().yaw);
 
-            var photonPose = photonPoseEstimator.estimateLowestAmbiguityPose(result);
-            // var photonPose = photonPoseEstimator
-            //         .estimateCoprocMultiTagPose(result)
-            //         .or(() -> photonPoseEstimator.estimateLowestAmbiguityPose(result));
+            var photonPose = photonPoseEstimator
+                    .estimateCoprocMultiTagPose(result)
+                    .or(() -> photonPoseEstimator.estimateLowestAmbiguityPose(result));
+            // var photonPose = photonPoseEstimator.estimateLowestAmbiguityPose(result);
             
-            System.out.println(result);
-            System.out.println(photonPose);
-
-            if (photonPose.isEmpty()) {
-                int bestId = result.getBestTarget().getFiducialId();
-                boolean bestIdInLayout = layout.getTagPose(bestId).isPresent();
-                Logger.recordOutput("VisionCalibration/" + cameraName + "/PoseEstimateEmpty", true);
-                Logger.recordOutput("VisionCalibration/" + cameraName + "/BestTargetId", bestId);
-                Logger.recordOutput("VisionCalibration/" + cameraName + "/BestTargetInLayout", bestIdInLayout);
-                continue;
-            }
-            Logger.recordOutput("VisionCalibration/" + cameraName + "/PoseEstimateEmpty", false);
+            // if (photonPose.isEmpty()) {
+            //     int bestId = result.getBestTarget().getFiducialId();
+            //     boolean bestIdInLayout = layout.getTagPose(bestId).isPresent();
+            //     Logger.recordOutput("VisionCalibration/" + cameraName + "/PoseEstimateEmpty", true);
+            //     Logger.recordOutput("VisionCalibration/" + cameraName + "/BestTargetId", bestId);
+            //     Logger.recordOutput("VisionCalibration/" + cameraName + "/BestTargetInLayout", bestIdInLayout);
+            //     continue;
+            // }
+            // Logger.recordOutput("VisionCalibration/" + cameraName + "/PoseEstimateEmpty", false);
 
             var est = photonPose.get();
             if (Math.abs(est.estimatedPose.getZ()) > kVisionMaxPoseZMeters) {
