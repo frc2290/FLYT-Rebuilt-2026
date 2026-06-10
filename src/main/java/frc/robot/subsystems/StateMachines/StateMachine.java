@@ -16,6 +16,7 @@ import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.DriverStation.Alliance;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -45,6 +46,9 @@ public class StateMachine extends SubsystemBase {
         BUMP,   // we want to be at a 45 deg angle here
     }
 
+    private static final String autoShootingKey = "StateMachine/AutoShooting";
+
+    private boolean autoShooting = false;
     private boolean hubActive = true;
     private Timer hubTimer = new Timer();
     private static final double kHubActiveWarningSeconds = 5.0;
@@ -74,10 +78,15 @@ public class StateMachine extends SubsystemBase {
         m_intake = intake;
         m_turret = turret;
         m_dyeRotor = dyeRotor;
+
+        SmartDashboard.putBoolean(autoShootingKey, autoShooting);
     }
 
     @Override
     public void periodic() {
+        // default to no auto shooting i guess !
+        autoShooting = SmartDashboard.getBoolean(autoShootingKey, false);
+
         updateTime();
         updateZones();
         updateSubsystems();
@@ -275,12 +284,17 @@ public class StateMachine extends SubsystemBase {
                         shootOnTheFly.setCurrentTofTable(TargetTable.HUB);
                         // point at the hub, but only shoot if hub is active
                         m_turret.setTargetTranslation(Hub.topCenterPoint.toTranslation2d());
-                        if ((shootOverride) || veryShoot) {//&& (hubActive || isAuto)) ||
-                            //veryShoot) {
+                        boolean shouldShoot;
+                        if (autoShooting) {
+                            shouldShoot = ((hubActive || isAuto) && !shootOverride) || veryShoot;
+                        } else {
+                            shouldShoot = shootOverride || veryShoot;
+                        }
+                        if (shouldShoot) {
                             m_turret.setStopShoot(false);
-                            if(turretReadyDebounce.calculate(m_turret.turretReadyToShoot()) || veryShoot) {
+                            // if(turretReadyDebounce.calculate(m_turret.turretReadyToShoot()) || veryShoot) {
                                 m_dyeRotor.runDyeRotor(true);
-                            }
+                            // }
                         } else {
                             m_turret.setStopShoot(true);
                             m_dyeRotor.runDyeRotor(false);
@@ -309,7 +323,7 @@ public class StateMachine extends SubsystemBase {
                         break;
                 }
                 break;
-            // this case is for both tower & trench
+            // this case is for both tower & trench/bump
             case TOWER:
             case TRENCH:
             case BUMP:
