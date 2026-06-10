@@ -28,6 +28,7 @@ import frc.utils.FieldConstants.Hub;
 import frc.utils.FieldConstants.LinesHorizontal;
 import frc.utils.FieldConstants.LinesVertical;
 import frc.utils.FieldConstants.Tower;
+import frc.utils.LoggedTracer;
 import frc.utils.ShootOnTheFly.TargetTable;
 
 public class StateMachine extends SubsystemBase {
@@ -86,6 +87,8 @@ public class StateMachine extends SubsystemBase {
         Logger.recordOutput("StateMachine/Zone/Special", specialZone);
         Logger.recordOutput("StateMachine/ShootOverride", shootOverride);
         Logger.recordOutput("StateMachine/VeryShoot", veryShoot);
+
+        LoggedTracer.record("StateMachine/Periodic");
     }
 
     public void startHubTimer() {

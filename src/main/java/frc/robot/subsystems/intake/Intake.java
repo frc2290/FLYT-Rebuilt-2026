@@ -15,6 +15,7 @@ import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Robot;
 import frc.robot.subsystems.intake.IntakeConstants.IntakeSide;
+import frc.utils.LoggedTracer;
 
 import static edu.wpi.first.math.util.Units.feetToMeters;
 import static frc.robot.subsystems.intake.IntakeConstants.*;
@@ -108,6 +109,8 @@ public class Intake extends SubsystemBase {
         Robot.batteryLogger.reportCurrentUsage("Intake/Deploy/Right", inputsRight.deployCurrentAmps, inputsRight.deployAppliedVolts);
         Robot.batteryLogger.reportCurrentUsage("Intake/Drive/Left", inputsLeft.driveCurrentAmps, inputsLeft.driveAppliedVolts);
         Robot.batteryLogger.reportCurrentUsage("Intake/Drive/Right", inputsRight.driveCurrentAmps, inputsRight.driveAppliedVolts);
+
+        LoggedTracer.record("Intake/Periodic");
     }
 
     private IntakeIO getIo(IntakeSide side) {

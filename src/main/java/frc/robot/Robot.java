@@ -54,6 +54,7 @@ import frc.robot.subsystems.turret.TurretIOSpark;
 import frc.utils.FuelSim;
 import frc.utils.LEDEffects;
 import frc.utils.LEDUtility;
+import frc.utils.LoggedTracer;
 import frc.utils.PoseEstimatorSubsystem;
 import frc.utils.LEDEffects.LEDEffect;
 
@@ -242,15 +243,19 @@ public class Robot extends LoggedRobot {
      */
     @Override
     public void robotPeriodic() {
+        // ty mechanical advantage :D
+        LoggedTracer.reset();
+
         ConduitApi conduit = ConduitApi.getInstance();
         batteryInputs.batteryVoltage = conduit.getVoltageVin();
         batteryInputs.rioCurrent = conduit.getPDPChannelCurrent(20);
         batteryInputs.radioCurrent = conduit.getPDPChannelCurrent(21);
         batteryInputs.cameraCurrent = conduit.getPDPChannelCurrent(22);
-
         batteryInputs.cameraCurrent = RobotController.getInputCurrent();
+        LoggedTracer.record("Robot/BatteryLoggerInputs");
 
         DriverStation.getAlliance().ifPresent(m_poseEstimator::setAlliance);
+        LoggedTracer.record("Robot/PoseEstimatorSetAlliance");
 
         // Runs the Scheduler. This is responsible for polling buttons, adding
         // newly-scheduled
@@ -260,8 +265,10 @@ public class Robot extends LoggedRobot {
         // robot's periodic
         // block in order for anything in the Command-based framework to work.
         CommandScheduler.getInstance().run();
+        LoggedTracer.record("Robot/Commands");
         
         batteryLogger.periodicAfterScheduler();
+        LoggedTracer.record("Robot/BatteryLoggerAfterScheduler");
     }
 
     @Override

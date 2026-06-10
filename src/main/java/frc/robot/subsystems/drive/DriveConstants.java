@@ -48,7 +48,7 @@ public final class DriveConstants {
   public static final double gyroYawOffsetDeg = 180.0;
 
   public static final double maxAngularSpeed = 4 * Math.PI;
-  public static final double odometryFrequency = 100.0; // Hz
+  public static final double odometryFrequency = 50.0; // Hz
   public static final double trackWidth = Units.inchesToMeters(20.5); // Y-axis (width between wheels)
   public static final double wheelBase = Units.inchesToMeters(27.0); // X-axis (length between wheels)
   public static final double driveBaseRadius = Math.hypot(trackWidth / 2.0, wheelBase / 2.0);

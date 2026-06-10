@@ -27,6 +27,7 @@ import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.IntakeConstants.IntakeSide;
 import frc.robot.Commands.DriveCommandFactory;
+import frc.utils.LoggedTracer;
 import frc.utils.PoseEstimatorSubsystem;
 
 public class DriveStateMachine extends SubsystemBase {
@@ -71,6 +72,8 @@ public class DriveStateMachine extends SubsystemBase {
         Logger.recordOutput("DriveStateMachine/CurrentState", driveState);
         Logger.recordOutput("DriveStateMachine/PrevState", prevDriveState);
         Logger.recordOutput("DriveStateMachine/SnakeDirection", snakeDirection);
+        
+        LoggedTracer.record("DriveStateMachine/Periodic");
     }
 
     /**

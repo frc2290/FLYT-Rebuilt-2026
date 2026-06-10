@@ -15,6 +15,7 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import edu.wpi.first.wpilibj2.command.sysid.SysIdRoutine;
 import frc.robot.Robot;
+import frc.utils.LoggedTracer;
 
 public class DyeRotor extends SubsystemBase {
     public enum ControlMode {
@@ -165,6 +166,8 @@ public class DyeRotor extends SubsystemBase {
 
         Robot.batteryLogger.reportCurrentUsage("DyeRotor/Feeder", inputs.feederCurrentAmps, inputs.feederAppliedVolts);
         Robot.batteryLogger.reportCurrentUsage("DyeRotor/Rotor", inputs.rotorCurrentAmps, inputs.rotorAppliedVolts);
+        
+        LoggedTracer.record("DyeRotor/Periodic");
     }
 
     public void runDyeRotor(boolean run) {

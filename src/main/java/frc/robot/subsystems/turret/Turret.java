@@ -27,6 +27,7 @@ import frc.utils.ShootOnTheFly;
 import frc.utils.ShootOnTheFly.FullShooterParams;
 import frc.robot.Robot;
 import frc.utils.FieldConstants.Hub;
+import frc.utils.LoggedTracer;
 import frc.utils.ShootOnTheFly.SOTFResult;
 import frc.utils.ShootOnTheFly.TargetTable;
 
@@ -198,6 +199,8 @@ public class Turret extends SubsystemBase {
         Robot.batteryLogger.reportCurrentUsage("Turret/Turn", inputs.turretConnected ? inputs.turretCurrentAmps : 0.0, inputs.turretAppliedVolts);
         Robot.batteryLogger.reportCurrentUsage("Turret/Hood", inputs.hoodConnected ? inputs.hoodCurrentAmps : 0.0, inputs.hoodAppliedVolts);
         Robot.batteryLogger.reportCurrentUsage("Turret/Flywheel", inputs.flywheelConnected ? inputs.flywheelCurrentAmps : 0.0, inputs.flywheelAppliedVolts);
+
+        LoggedTracer.record("Turret/Periodic");
     }
 
     /**
