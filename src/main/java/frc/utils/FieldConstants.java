@@ -7,16 +7,18 @@
 
 package frc.utils;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
 import edu.wpi.first.apriltag.AprilTagFieldLayout;
 import edu.wpi.first.apriltag.AprilTagFields;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.Filesystem;
+
 import java.io.IOException;
 // import lombok.Getter;
 // import lombok.RequiredArgsConstructor;
+import java.nio.file.Path;
 
 /**
  * Contains information for location of field element and other useful reference
@@ -28,17 +30,17 @@ import java.io.IOException;
  * perspective of the blue alliance station
  */
 public class FieldConstants {
-    public static final AprilTagFields field = AprilTagFields.k2026RebuiltWelded;
+    public static final AprilTagLayout layout = AprilTagLayout.OFFICIAL_ANDYMARK;
+    //public static final AprilTagFields field = AprilTagFields.k2026RebuiltAndymark;
     // public static final FieldType fieldType = FieldType.WELDED;
 
     // AprilTag related constants
-    public static final int aprilTagCount = AprilTagLayoutType.OFFICIAL.getLayout().getTags().size();
+    public static final int aprilTagCount = layout.getConstLayout().getTags().size();
     public static final double aprilTagWidth = Units.inchesToMeters(6.5);
-    public static final AprilTagLayoutType defaultAprilTagType = AprilTagLayoutType.OFFICIAL;
 
     // Field dimensions
-    public static final double fieldLength = AprilTagLayoutType.OFFICIAL.getLayout().getFieldLength();
-    public static final double fieldWidth = AprilTagLayoutType.OFFICIAL.getLayout().getFieldWidth();
+    public static final double fieldLength = layout.getConstLayout().getFieldLength();
+    public static final double fieldWidth = layout.getConstLayout().getFieldWidth();
 
     /**
      * Officially defined and relevant vertical lines found on the field (defined by
@@ -46,15 +48,15 @@ public class FieldConstants {
      */
     public static class LinesVertical {
         public static final double center = fieldLength / 2.0;
-        public static final double starting = AprilTagLayoutType.OFFICIAL.getLayout().getTagPose(26).get().getX();
+        public static final double starting = layout.getConstLayout().getTagPose(26).get().getX();
         public static final double allianceZone = starting;
-        public static final double hubCenter = AprilTagLayoutType.OFFICIAL.getLayout().getTagPose(26).get().getX()
+        public static final double hubCenter = layout.getConstLayout().getTagPose(26).get().getX()
                 + Hub.width / 2.0;
         public static final double neutralZoneNear = center - Units.inchesToMeters(120);
         public static final double neutralZoneFar = center + Units.inchesToMeters(120);
-        public static final double oppHubCenter = AprilTagLayoutType.OFFICIAL.getLayout().getTagPose(4).get().getX()
+        public static final double oppHubCenter = layout.getConstLayout().getTagPose(4).get().getX()
                 + Hub.width / 2.0;
-        public static final double oppAllianceZone = AprilTagLayoutType.OFFICIAL.getLayout().getTagPose(10).get()
+        public static final double oppAllianceZone = layout.getConstLayout().getTagPose(10).get()
                 .getX();
 
         public static final double trenchCenter = (allianceZone + neutralZoneNear) / 2.0;
@@ -103,11 +105,11 @@ public class FieldConstants {
 
         // Relevant reference points on alliance side
         public static final Translation3d topCenterPoint = new Translation3d(
-                AprilTagLayoutType.OFFICIAL.getLayout().getTagPose(26).get().getX() + width / 2.0,
+                layout.getConstLayout().getTagPose(26).get().getX() + width / 2.0,
                 fieldWidth / 2.0,
                 height);
         public static final Translation3d innerCenterPoint = new Translation3d(
-                AprilTagLayoutType.OFFICIAL.getLayout().getTagPose(26).get().getX() + width / 2.0,
+                layout.getConstLayout().getTagPose(26).get().getX() + width / 2.0,
                 fieldWidth / 2.0,
                 innerHeight);
 
@@ -122,7 +124,7 @@ public class FieldConstants {
 
         // Relevant reference points on the opposite side
         public static final Translation3d oppTopCenterPoint = new Translation3d(
-                AprilTagLayoutType.OFFICIAL.getLayout().getTagPose(4).get().getX() + width / 2.0,
+                layout.getConstLayout().getTagPose(4).get().getX() + width / 2.0,
                 fieldWidth / 2.0,
                 height);
         public static final Translation2d oppNearLeftCorner = new Translation2d(oppTopCenterPoint.getX() - width / 2.0,
@@ -135,10 +137,10 @@ public class FieldConstants {
                 fieldWidth / 2.0 - width / 2.0);
 
         // Hub faces
-        public static final Pose2d nearFace = AprilTagLayoutType.OFFICIAL.getLayout().getTagPose(26).get().toPose2d();
-        public static final Pose2d farFace = AprilTagLayoutType.OFFICIAL.getLayout().getTagPose(20).get().toPose2d();
-        public static final Pose2d rightFace = AprilTagLayoutType.OFFICIAL.getLayout().getTagPose(18).get().toPose2d();
-        public static final Pose2d leftFace = AprilTagLayoutType.OFFICIAL.getLayout().getTagPose(21).get().toPose2d();
+        public static final Pose2d nearFace = layout.getConstLayout().getTagPose(26).get().toPose2d();
+        public static final Pose2d farFace = layout.getConstLayout().getTagPose(20).get().toPose2d();
+        public static final Pose2d rightFace = layout.getConstLayout().getTagPose(18).get().toPose2d();
+        public static final Pose2d leftFace = layout.getConstLayout().getTagPose(21).get().toPose2d();
     }
 
     /** Left Bump related constants */
@@ -252,15 +254,15 @@ public class FieldConstants {
 
         // Relevant reference points on alliance side
         public static final Translation2d centerPoint = new Translation2d(
-                frontFaceX, AprilTagLayoutType.OFFICIAL.getLayout().getTagPose(31).get().getY());
+                frontFaceX, layout.getConstLayout().getTagPose(31).get().getY());
         public static final Translation2d leftUpright = new Translation2d(
                 frontFaceX,
-                (AprilTagLayoutType.OFFICIAL.getLayout().getTagPose(31).get().getY())
+                (layout.getConstLayout().getTagPose(31).get().getY())
                         + innerOpeningWidth / 2
                         + Units.inchesToMeters(0.75));
         public static final Translation2d rightUpright = new Translation2d(
                 frontFaceX,
-                (AprilTagLayoutType.OFFICIAL.getLayout().getTagPose(31).get().getY())
+                (layout.getConstLayout().getTagPose(31).get().getY())
                         - innerOpeningWidth / 2
                         - Units.inchesToMeters(0.75));
 
@@ -271,15 +273,15 @@ public class FieldConstants {
         // Relevant reference points on opposing side
         public static final Translation2d oppCenterPoint = new Translation2d(
                 fieldLength - frontFaceX,
-                AprilTagLayoutType.OFFICIAL.getLayout().getTagPose(15).get().getY());
+                layout.getConstLayout().getTagPose(15).get().getY());
         public static final Translation2d oppLeftUpright = new Translation2d(
                 fieldLength - frontFaceX,
-                (AprilTagLayoutType.OFFICIAL.getLayout().getTagPose(15).get().getY())
+                (layout.getConstLayout().getTagPose(15).get().getY())
                         + innerOpeningWidth / 2
                         + Units.inchesToMeters(0.75));
         public static final Translation2d oppRightUpright = new Translation2d(
                 fieldLength - frontFaceX,
-                (AprilTagLayoutType.OFFICIAL.getLayout().getTagPose(15).get().getY())
+                (layout.getConstLayout().getTagPose(15).get().getY())
                         - innerOpeningWidth / 2
                         - Units.inchesToMeters(0.75));
     }
@@ -308,66 +310,64 @@ public class FieldConstants {
 
         // Relevant reference points on alliance side
         public static final Translation2d centerPoint = new Translation2d(0,
-                AprilTagLayoutType.OFFICIAL.getLayout().getTagPose(29).get().getY());
+                layout.getConstLayout().getTagPose(29).get().getY());
     }
 
-    // @RequiredArgsConstructor
-    // public enum FieldType {
-    //     ANDYMARK("andymark"),
-    //     WELDED("welded");
+    // layoutName is the layout used for vision without the json extension
+    public enum AprilTagLayout {
+        OFFICIAL_WELDED("2026-rebuilt-welded", false),
+        OFFICIAL_ANDYMARK("2026-rebuilt-andymark", true),
+        SHOP("field_calibration_shop", false); // i think it's based on welded
 
-    //     @Getter
-    //     private final String jsonFolder;
-    // }
+        private final String layoutName;
+        private final boolean isAndymark;
+        private volatile AprilTagFieldLayout constLayout;
+        private volatile AprilTagFieldLayout visionLayout;
 
-    public enum AprilTagLayoutType {
-        OFFICIAL;
-        // OFFICIAL("2026-official"),
-        // NONE("2026-none");
+        AprilTagLayout(String layoutName, boolean isAndymark) {
+            this.layoutName = layoutName;
+            this.isAndymark = isAndymark;
+        }
 
-        // private final String name;
-        private volatile AprilTagFieldLayout layout;
-        private volatile String layoutString;
-
-        // AprilTagLayoutType(String name) {
-        //     this.name = name;
-        // }
-
-        public AprilTagFieldLayout getLayout() {
-            if (layout == null) {
+        /*
+         * get the field layout for FieldConstants
+         */
+        public AprilTagFieldLayout getConstLayout() {
+            if (constLayout == null) {
                 synchronized (this) {
-                    if (layout == null) {
+                    if (constLayout == null) {
+                        constLayout = AprilTagFieldLayout.loadField(
+                            isAndymark ?
+                            AprilTagFields.k2026RebuiltAndymark :
+                            AprilTagFields.k2026RebuiltWelded);
+                    }
+                }
+            }
+            return constLayout;
+        }
+
+        /*
+         * get the field layout for vision processing
+         */
+        public AprilTagFieldLayout getVisionLayout() {
+            if (visionLayout == null) {
+                synchronized (this) {
+                    if (visionLayout == null) {
                         try {
-                            // Path p = Constants.disableHAL
-                            //         ? Path.of(
-                            //                 "src",
-                            //                 "main",
-                            //                 "deploy",
-                            //                 "apriltags",
-                            //                 fieldType.getJsonFolder(),
-                            //                 name + ".json")
-                            //         : Path.of(
-                            //                 Filesystem.getDeployDirectory().getPath(),
-                            //                 "apriltags",
-                            //                 fieldType.getJsonFolder(),
-                            //                 name + ".json");
-                            // layout = new AprilTagFieldLayout(p);
-                            layout = AprilTagFieldLayout.loadField(field);
-                            layoutString = new ObjectMapper().writeValueAsString(layout);
+                            visionLayout = new AprilTagFieldLayout(
+                                Path.of(
+                                    Filesystem.getDeployDirectory().getPath(),
+                                    layoutName + ".json"));
+                            System.out.println("read apriltag file :D");
                         } catch (IOException e) {
-                            throw new RuntimeException(e);
+                            e.printStackTrace();
+                            System.out.println("COULD NOT READ APRILTAG FIELD FILE!!!!!!!!!!!!!!!!!!!!!!!!!");
+                            visionLayout = getConstLayout();
                         }
                     }
                 }
             }
-            return layout;
-        }
-
-        public String getLayoutString() {
-            if (layoutString == null) {
-                getLayout();
-            }
-            return layoutString;
+            return visionLayout;
         }
     }
 }
