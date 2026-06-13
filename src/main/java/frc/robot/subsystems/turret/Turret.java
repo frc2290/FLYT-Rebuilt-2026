@@ -151,7 +151,6 @@ public class Turret extends SubsystemBase {
                     / TurretConstants.hoodPitchCalibrationGain;
         }
 
-        /*
         // TURN CONTROL
         if (currentControlMode == ControlMode.TURN_VOLTAGE) {
             io.setTurnVoltage(sysIdVoltage);
@@ -172,8 +171,7 @@ public class Turret extends SubsystemBase {
                 io.setHoodAngle(0);
             }
         }
-        */
-        
+
         Logger.recordOutput("Turret/SOTFYaw", result.yaw);
         Logger.recordOutput("Turret/SOTFVel", result.vel);
         Logger.recordOutput("Turret/SOTFPitch", result.pitch);
