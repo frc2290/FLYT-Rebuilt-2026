@@ -23,7 +23,7 @@ import frc.utils.PoseEstimatorSubsystem;
 // NOTE:  Consider using this command inline, rather than writing a subclass.  For more
 // information, see:
 // https://docs.wpilib.org/en/stable/docs/software/commandbased/convenience-features.html
-public class TrenchToNeutralAuto extends FlytSequentialAuto {
+public class TrenchToNeutralCrow extends FlytSequentialAuto {
     private boolean right = true;
     private PoseEstimatorSubsystem pose;
     private StateMachine stateMachine;
@@ -41,7 +41,7 @@ public class TrenchToNeutralAuto extends FlytSequentialAuto {
     private boolean forward = true;
 
     /** Creates a new TrenchToNeutralAuto. */
-    public TrenchToNeutralAuto(PoseEstimatorSubsystem pose, StateMachine stateMachine, Intake intake) {
+    public TrenchToNeutralCrow(PoseEstimatorSubsystem pose, StateMachine stateMachine, Intake intake) {
         this.pose = pose;
         this.stateMachine = stateMachine;
         this.intake = intake;
@@ -81,15 +81,13 @@ public class TrenchToNeutralAuto extends FlytSequentialAuto {
             }
             addCommands(
                 pose.setCurrentPoseCommand(this.trenchToNeutral.getStartingHolonomicPose().get()),
+                new WaitCommand(10.0), // crow
                 new ParallelCommandGroup(
                     new SwerveAutoStep(this.trenchToNeutral, pose),
                     new WaitCommand(1.25).andThen(new SequentialCommandGroup(
                         intake.intakeOut(whichSide()),
                         intake.startIntakeCommand()))),
                 new SwerveAutoStep(this.neutralToTrench, pose),
-                new WaitCommand(3.5),
-                new SwerveAutoStep(this.trenchToNeutral2, pose),
-                new SwerveAutoStep(this.neutralToTrench2, pose),
                 intake.agitateIntake(whichSide())
             );
     }

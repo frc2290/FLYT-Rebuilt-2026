@@ -202,12 +202,13 @@ public class Intake extends SubsystemBase {
     }
 
     private void runIntake() {
-        if (isOut(IntakeSide.LEFT)) {
+        if (!isIn(IntakeSide.LEFT)) {
             driveRoller(IntakeSide.LEFT, rollerSpeed);
         }
-        if (isOut(IntakeSide.RIGHT)) {
+        if (!isIn(IntakeSide.RIGHT)) {
             driveRoller(IntakeSide.RIGHT, rollerSpeed);
         }
+        // outSide.ifPresent(side -> driveRoller(side, rollerSpeed));
     }
 
     private void stopIntake() {

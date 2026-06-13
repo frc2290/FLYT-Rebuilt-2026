@@ -34,7 +34,7 @@ import edu.wpi.first.wpilibj.RobotBase;
  */
 public final class Constants {
     // BEGIN advantagekit stuff
-    public static final Mode simMode = Mode.REPLAY;
+    public static final Mode simMode = Mode.SIM;
     public static final Mode currentMode = RobotBase.isReal() ? Mode.REAL : simMode;
 
     public static final double boundBuffer = inchesToMeters(15.0);

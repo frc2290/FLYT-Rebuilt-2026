@@ -23,6 +23,7 @@ import frc.robot.Commands.Autos.FlytSequentialAuto;
 import frc.robot.Commands.Autos.HubToOutpost;
 import frc.robot.Commands.Autos.SitAndShoot;
 import frc.robot.Commands.Autos.TrenchToNeutralAuto;
+import frc.robot.Commands.Autos.TrenchToNeutralCrow;
 import frc.robot.Commands.Autos.TrenchToNeutralToOutpost;
 import frc.robot.subsystems.StateMachines.DriveStateMachine;
 import frc.robot.subsystems.StateMachines.DriveStateMachine.DriveState;
@@ -119,6 +120,7 @@ public class RobotContainer {
         auto_forward.addDefaultOption("Backward", false);
         auto_forward.addOption("Forward", true);
         auto_choice.addDefaultOption("Trench 2x", new TrenchToNeutralAuto(_poseEstimator, _stateMachine, _intake));
+        auto_choice.addOption("Trench Crow", new TrenchToNeutralCrow(_poseEstimator, _stateMachine, _intake));
         auto_choice.addOption("Hub to Outpost", new HubToOutpost(_poseEstimator, _intake));
         auto_choice.addOption("Trench to Outpost/Depot", new TrenchToNeutralToOutpost(_poseEstimator, _stateMachine, _intake));
         auto_choice.addOption("Sit And Shoot", new SitAndShoot(_stateMachine, _poseEstimator, _driveStateMachine));
