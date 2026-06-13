@@ -285,7 +285,7 @@ public class StateMachine extends SubsystemBase {
                         // point at the hub, but only shoot if hub is active
                         m_turret.setTargetTranslation(Hub.topCenterPoint.toTranslation2d());
                         boolean shouldShoot;
-                        if (autoShooting) {
+                        if (autoShooting || isAuto) {
                             shouldShoot = ((hubActive || isAuto) && !shootOverride) || veryShoot;
                         } else {
                             shouldShoot = shootOverride || veryShoot;
