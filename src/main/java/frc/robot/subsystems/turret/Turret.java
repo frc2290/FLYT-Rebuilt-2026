@@ -35,7 +35,7 @@ public class Turret extends SubsystemBase {
     private static final String shooterVelocityScaleKey = "Turret_Cal/Speed_Scale";
     private static final String shotAngleOffsetDegKey = "Turret_Cal/Angle_Offset_Deg";
     private static final double defaultShooterVelocityScale = 1.05;
-    private static final double defaultShotAngleOffsetDeg = 0.0;
+    private static final double defaultShotAngleOffsetDeg = 5.0;
 
     public enum ControlMode {
         NORMAL, // Velocity for shooter, position for turn
