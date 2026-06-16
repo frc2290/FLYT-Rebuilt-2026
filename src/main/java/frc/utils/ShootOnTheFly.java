@@ -1,37 +1,33 @@
 package frc.utils;
 
-import static frc.robot.subsystems.turret.TurretConstants.SotfConstants.defaultLoopDtSeconds;
 import static frc.robot.subsystems.turret.TurretConstants.SotfConstants.latencyCompensationSeconds;
 import static frc.robot.subsystems.turret.TurretConstants.SotfConstants.maxNewtonIterations;
-import static frc.robot.subsystems.turret.TurretConstants.SotfConstants.maxRecursiveIterations;
 import static frc.robot.subsystems.turret.TurretConstants.SotfConstants.maxValidDistanceMeters;
-import static frc.robot.subsystems.turret.TurretConstants.SotfConstants.minDerivativeDistanceDeltaMeters;
 import static frc.robot.subsystems.turret.TurretConstants.SotfConstants.minDistanceMeters;
-import static frc.robot.subsystems.turret.TurretConstants.SotfConstants.minLoopDtSeconds;
 import static frc.robot.subsystems.turret.TurretConstants.SotfConstants.newtonMinDerivativeMagnitude;
 import static frc.robot.subsystems.turret.TurretConstants.SotfConstants.newtonToleranceSeconds;
-import static frc.robot.subsystems.turret.TurretConstants.SotfConstants.tofDerivativeStepMeters;
-import static frc.robot.subsystems.turret.TurretConstants.SotfConstants.turretShooterOffsetX;
-import static frc.robot.subsystems.turret.TurretConstants.SotfConstants.turretShooterOffsetY;
+
+import java.util.Map;
+import java.util.Optional;
+import java.util.TreeMap;
 
 import edu.wpi.first.math.MathUtil;
+import edu.wpi.first.math.Pair;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.geometry.Twist2d;
-import edu.wpi.first.math.interpolation.InterpolatingTreeMap;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 
 public class ShootOnTheFly {
     public static ShootOnTheFly instance = null;
 
-    private InterpolatingTreeMap<Double, FullShooterParams> hubMap;
-    private InterpolatingTreeMap<Double, FullShooterParams> shuttleMap;
-    private double prevVx = 0.0;
-    private double prevVy = 0.0;
-    private double prevOmega = 0.0;
-    private boolean hasPreviousVelocityState = false;
-    private double previousTofRecursive = -1.0;
+    private ShooterParamMap hubMap;
+    private ShooterParamMap shuttleMap;
+    // private double prevVx = 0.0;
+    // private double prevVy = 0.0;
+    // private double prevOmega = 0.0;
+    // private boolean hasPreviousVelocityState = false;
     private double previousTofNewton = -1.0;
     private TargetTable currentTargetTable = TargetTable.HUB;
 
@@ -40,186 +36,100 @@ public class ShootOnTheFly {
         SHUTTLE
     }
 
-    public record FullShooterParams(double speedMetersPerSecond, double hoodAngle, double timeOfFlight) {}
-
-    private static class TargetKinematics {
-        private final Translation2d toGoal;
-        private final Translation2d totalShooterVelocity;
-        private final Translation2d totalShooterAcceleration;
-
-        private TargetKinematics(Translation2d toGoal, Translation2d totalShooterVelocity,
-                Translation2d totalShooterAcceleration) {
-            this.toGoal = toGoal;
-            this.totalShooterVelocity = totalShooterVelocity;
-            this.totalShooterAcceleration = totalShooterAcceleration;
-        }
-    }
-
-    private static class ConvergenceResult {
-        private final boolean converged;
-        private final int iterationsUsed;
-        private final double tof;
-        private final double projectedDistance;
-        private final Translation2d finalBallGoal;
-
-        private ConvergenceResult(boolean converged, int iterationsUsed, double tof, double projectedDistance,
-                Translation2d finalBallGoal) {
-            this.converged = converged;
-            this.iterationsUsed = iterationsUsed;
-            this.tof = tof;
-            this.projectedDistance = projectedDistance;
-            this.finalBallGoal = finalBallGoal;
-        }
-    }
-
-    public static FullShooterParams interpolateParams(FullShooterParams startValue, FullShooterParams endValue,
+    public record FullShooterParams(double speedMetersPerSecond, double hoodAngle, double timeOfFlight) {
+        public static FullShooterParams interpolate(FullShooterParams startValue, FullShooterParams endValue,
             double t) {
-        return new FullShooterParams(
+            return new FullShooterParams(
                 MathUtil.interpolate(startValue.speedMetersPerSecond(), endValue.speedMetersPerSecond(), t),
                 MathUtil.interpolate(startValue.hoodAngle(), endValue.hoodAngle(), t),
                 MathUtil.interpolate(startValue.timeOfFlight(), endValue.timeOfFlight(), t));
-    }
-
-    public static class SOTFResult {
-        public double yaw; // turretAngle
-        public double pitch; // hoodAngle
-        public double vel; // exitVelocity
-        public double dist; // distance
-        public boolean isValid;
-        public double yawVelocityRadPerSec;
-        public double yawAccelerationRadPerSec2;
-        public double pitchVelocityDegPerSec;
-        public double flywheelAccelerationMetersPerSec2;
-        public double tof;
-
-        public SOTFResult(double yaw, double pitch, double vel, double dist) {
-            this(yaw, pitch, vel, dist, true, 0.0, 0.0, 0.0, 0.0, 0.0);
         }
 
-        public SOTFResult(double yaw, double pitch, double vel, double dist, boolean isValid) {
-            this(yaw, pitch, vel, dist, isValid, 0.0, 0.0, 0.0, 0.0, 0.0);
-        }
-
-        public SOTFResult(double yaw, double pitch, double vel, double dist, boolean isValid,
-                double yawVelocityRadPerSec, double yawAccelerationRadPerSec2, double pitchVelocityDegPerSec,
-                double flywheelAccelerationMetersPerSec2, double tof) {
-            this.yaw = yaw;
-            this.pitch = pitch;
-            this.vel = vel;
-            this.dist = dist;
-            this.isValid = isValid;
-            this.yawVelocityRadPerSec = yawVelocityRadPerSec;
-            this.yawAccelerationRadPerSec2 = yawAccelerationRadPerSec2;
-            this.pitchVelocityDegPerSec = pitchVelocityDegPerSec;
-            this.flywheelAccelerationMetersPerSec2 = flywheelAccelerationMetersPerSec2;
-            this.tof = tof;
-        }
-
-        public static SOTFResult invalid() {
-            return new SOTFResult(0.0, 0.0, 0.0, 0.0, false, 0.0, 0.0, 0.0, 0.0, 0.0);
+        public static FullShooterParams derive(FullShooterParams upper, FullShooterParams lower, double delta) {
+            return new FullShooterParams(
+                (upper.speedMetersPerSecond() - lower.speedMetersPerSecond()) / delta,
+                (upper.hoodAngle() - lower.hoodAngle()) / delta,
+                (upper.timeOfFlight() - lower.timeOfFlight()) / delta
+            );
         }
     }
 
-    public void addShootInterpData(InterpolatingTreeMap<Double, FullShooterParams> shotMap, TargetTable targetTable) {
-        switch (targetTable) {
-            case HUB:
-                this.hubMap = shotMap;
-                break;
-            case SHUTTLE:
-                this.shuttleMap = shotMap;
-                break;
-            default:
-                this.hubMap = shotMap;
-                break;
+    public static class ShooterParamMap {
+        private final TreeMap<Double, FullShooterParams> m_map;
+        // this is safe because we are only iterating over `params`
+        @SafeVarargs
+        public ShooterParamMap(Pair<Double, FullShooterParams>... params) {
+            m_map = new TreeMap<>();
+            for (Pair<Double, FullShooterParams> param : params) {
+                m_map.put(param.getFirst(), param.getSecond());
+            }
+        }
+
+        // basically copy-pasted from InterpolatingTreeMap
+        public FullShooterParams get(Double key) {
+            FullShooterParams val = m_map.get(key);
+            if (val != null) return val;
+            Double ceilingKey = m_map.ceilingKey(key);
+            Double floorKey = m_map.floorKey(key);
+
+            if (ceilingKey == null && floorKey == null) return null;
+            if (ceilingKey == null) return m_map.get(floorKey);
+            if (floorKey == null) return m_map.get(ceilingKey);
+
+            FullShooterParams floor = m_map.get(floorKey);
+            FullShooterParams ceiling = m_map.get(ceilingKey);
+
+            return FullShooterParams.interpolate(
+                floor, ceiling, MathUtil.inverseInterpolate(floorKey, ceilingKey, key));
+        }
+
+        public FullShooterParams derivative(double distance) {
+            Map.Entry<Double,ShootOnTheFly.FullShooterParams> upper = m_map.higherEntry(distance);
+            Map.Entry<Double,ShootOnTheFly.FullShooterParams> lower = m_map.floorEntry(distance);
+            double delta = upper.getKey() - lower.getKey();
+            return FullShooterParams.derive(upper.getValue(), lower.getValue(), delta);
+        }
+
+        public double speedMetersPerSecond(double distance) {
+            return get(distance).speedMetersPerSecond();
+        }
+
+        public double hoodAngle(double distance) {
+            return get(distance).hoodAngle();
+        }
+
+        public double timeOfFlight(double distance) {
+            return get(distance).timeOfFlight();
         }
     }
 
-    public SOTFResult calculateRecursiveTOF(Translation2d goalLocation, Pose2d robotPose, ChassisSpeeds robotSpeeds) {
-        return calculateRecursiveTOF(
-                goalLocation,
-                robotPose,
-                robotSpeeds,
-                new Rotation2d(),
-                0.0,
-                defaultLoopDtSeconds);
-    }
+    private static record TargetKinematics (
+        Translation2d toGoal,
+        Translation2d totalShooterVelocity,
+        Translation2d totalShooterAcceleration
+    ) {}
 
-    public SOTFResult calculateRecursiveTOF(Translation2d goalLocation, Pose2d robotPose, ChassisSpeeds robotSpeeds,
-            Rotation2d currentTurretAngle, double turretOmegaRadPerSecond, double dt) {
-        if (!isShooterMapReady()) {
-            previousTofRecursive = -1.0;
-            return SOTFResult.invalid();
-        }
+    private static record ConvergenceResult(
+        boolean converged,
+        double tof,
+        double projectedDistance,
+        Translation2d finalBallGoal
+    ) {}
 
-        TargetKinematics targetKinematics =
-                buildTargetKinematics(goalLocation, robotPose, robotSpeeds, currentTurretAngle, turretOmegaRadPerSecond, dt);
-        if (targetKinematics == null) {
-            previousTofRecursive = -1.0;
-            return SOTFResult.invalid();
-        }
+    public static record SOTFResult (
+        double yaw, // turretAngle
+        double pitch, // hoodAngle
+        double vel, // exitVelocity
+        double dist, // distance
+        double yawVelocityRadPerSec,
+        double yawAccelerationRadPerSec2,
+        double pitchVelocityDegPerSec,
+        double flywheelAccelerationMetersPerSec2,
+        double tof
+    ) {}
 
-        ConvergenceResult convergence =
-                solveRecursiveTOF(targetKinematics.toGoal, targetKinematics.totalShooterVelocity, previousTofRecursive);
-        if (!isConvergenceValid(convergence)) {
-            previousTofRecursive = -1.0;
-            return SOTFResult.invalid();
-        }
-
-        previousTofRecursive = convergence.tof;
-        return buildFinalResult(convergence, targetKinematics);
-    }
-
-    public SOTFResult calculateNewtonTOF(Translation2d goalLocation, Pose2d robotPose, ChassisSpeeds robotSpeeds) {
-        return calculateNewtonTOF(
-                goalLocation,
-                robotPose,
-                robotSpeeds,
-                new Rotation2d(),
-                0.0,
-                defaultLoopDtSeconds);
-    }
-
-    public SOTFResult calculateNewtonTOF(Translation2d goalLocation, Pose2d robotPose, ChassisSpeeds robotSpeeds,
-            Rotation2d currentTurretAngle, double turretOmegaRadPerSecond, double dt) {
-        if (!isShooterMapReady()) {
-            previousTofNewton = -1.0;
-            return SOTFResult.invalid();
-        }
-
-        TargetKinematics targetKinematics =
-                buildTargetKinematics(goalLocation, robotPose, robotSpeeds, currentTurretAngle, turretOmegaRadPerSecond, dt);
-        if (targetKinematics == null) {
-            previousTofNewton = -1.0;
-            return SOTFResult.invalid();
-        }
-
-        ConvergenceResult convergence =
-                solveNewtonTOF(targetKinematics.toGoal, targetKinematics.totalShooterVelocity, previousTofNewton);
-        if (!isConvergenceValid(convergence)) {
-            previousTofNewton = -1.0;
-            return SOTFResult.invalid();
-        }
-
-        previousTofNewton = convergence.tof;
-        return buildFinalResult(convergence, targetKinematics);
-    }
-
-    public SOTFResult calculateTOF(Translation2d goalLocation, Pose2d robotPose, ChassisSpeeds robotSpeeds) {
-        return calculateTOF(goalLocation, robotPose, robotSpeeds, defaultLoopDtSeconds);
-    }
-
-    public SOTFResult calculateTOF(Translation2d goalLocation, Pose2d robotPose, ChassisSpeeds robotSpeeds,
-            double dt) {
-        return calculateNewtonTOF(goalLocation, robotPose, robotSpeeds, new Rotation2d(), 0.0, dt);
-    }
-
-    public SOTFResult calculate(Translation2d goalLocation, Pose2d robotPose, ChassisSpeeds robotSpeed) {
-        return calculate(goalLocation, robotPose, robotSpeed, defaultLoopDtSeconds);
-    }
-
-    public SOTFResult calculate(Translation2d goalLocation, Pose2d robotPose, ChassisSpeeds robotSpeed, double dt) {
-        return calculateNewtonTOF(goalLocation, robotPose, robotSpeed, new Rotation2d(), 0.0, dt);
-    }
+    // constructor stuff
+    private ShootOnTheFly() {}
 
     public static ShootOnTheFly getInstance() {
         if (instance == null) {
@@ -228,128 +138,108 @@ public class ShootOnTheFly {
         return instance;
     }
 
-    private ShootOnTheFly() {
+    public void addShootInterpData(ShooterParamMap shotMap, TargetTable targetTable) {
+        switch (targetTable) {
+            case HUB:
+                this.hubMap = shotMap;
+                break;
+            case SHUTTLE:
+                this.shuttleMap = shotMap;
+                break;
+        }
+    }
+
+    public Optional<SOTFResult> calculateNewtonTOF(Translation2d goalLocation, Pose2d robotPose, ChassisSpeeds robotSpeeds,
+            Rotation2d currentTurretAngle, double turretOmegaRadPerSecond, double dt) {
+        if (!isShooterMapReady()) {
+            previousTofNewton = -1.0;
+            return Optional.empty();
+        }
+
+        TargetKinematics targetKinematics =
+                buildTargetKinematics(goalLocation, robotPose, robotSpeeds, currentTurretAngle, turretOmegaRadPerSecond, dt);
+        if (targetKinematics == null) {
+            previousTofNewton = -1.0;
+            return Optional.empty();
+        }
+
+        ConvergenceResult convergence =
+                solveNewtonTOF(targetKinematics.toGoal, targetKinematics.totalShooterVelocity, previousTofNewton);
+        if (!isConvergenceValid(convergence)) {
+            previousTofNewton = -1.0;
+            return Optional.empty();
+        }
+
+        previousTofNewton = convergence.tof;
+        return buildFinalResult(convergence, targetKinematics);
     }
 
     private TargetKinematics buildTargetKinematics(Translation2d goalLocation, Pose2d robotPose, ChassisSpeeds robotSpeeds,
             Rotation2d currentTurretAngle, double turretOmegaRadPerSecond, double dt) {
-        double loopDt = dt > minLoopDtSeconds ? dt : defaultLoopDtSeconds;
+        // double loopDt = dt > minLoopDtSeconds ? dt : defaultLoopDtSeconds;
+        double vx = robotSpeeds.vxMetersPerSecond;
+        double vy = robotSpeeds.vyMetersPerSecond;
+        double vOmega = robotSpeeds.omegaRadiansPerSecond;
 
         double ax = 0.0;
         double ay = 0.0;
         double aOmega = 0.0;
-        if (hasPreviousVelocityState) {
-            ax = (robotSpeeds.vxMetersPerSecond - prevVx) / loopDt;
-            ay = (robotSpeeds.vyMetersPerSecond - prevVy) / loopDt;
-            aOmega = (robotSpeeds.omegaRadiansPerSecond - prevOmega) / loopDt;
-        }
+        // not using accel compensation for now, it hurts more than it helps
+        // if (hasPreviousVelocityState) {
+        //     ax = (vx - prevVx) / loopDt;
+        //     ay = (vy - prevVy) / loopDt;
+        //     aOmega = (vOmega - prevOmega) / loopDt;
+        // }
 
-        prevVx = robotSpeeds.vxMetersPerSecond;
-        prevVy = robotSpeeds.vyMetersPerSecond;
-        prevOmega = robotSpeeds.omegaRadiansPerSecond;
-        hasPreviousVelocityState = true;
+        // prevVx = vx;
+        // prevVy = vy;
+        // prevOmega = vOmega;
+        // hasPreviousVelocityState = true;
 
         double latencySeconds = latencyCompensationSeconds;
-        double dx = robotSpeeds.vxMetersPerSecond * latencySeconds + 0.5 * ax * latencySeconds * latencySeconds;
-        double dy = robotSpeeds.vyMetersPerSecond * latencySeconds + 0.5 * ay * latencySeconds * latencySeconds;
-        double dTheta = robotSpeeds.omegaRadiansPerSecond * latencySeconds
+        double dx = vx * latencySeconds + 0.5 * ax * latencySeconds * latencySeconds;
+        double dy = vy * latencySeconds + 0.5 * ay * latencySeconds * latencySeconds;
+        double dTheta = vOmega * latencySeconds
                 + 0.5 * aOmega * latencySeconds * latencySeconds;
 
         Pose2d futureRobotPose = robotPose.exp(new Twist2d(dx, dy, dTheta));
         Translation2d futureRobotCenter = futureRobotPose.getTranslation();
-        Translation2d fieldVelocity = getFieldRelativeVelocity(robotSpeeds, robotPose);
-
-        Rotation2d absoluteTurretAngle = futureRobotPose.getRotation().plus(currentTurretAngle);
-        Translation2d shooterOffsetField = new Translation2d(turretShooterOffsetX, turretShooterOffsetY)
-                .rotateBy(absoluteTurretAngle);
-        Translation2d futureShooterPos = futureRobotCenter.plus(shooterOffsetField);
-
-        double totalOmega = robotSpeeds.omegaRadiansPerSecond + turretOmegaRadPerSecond;
-        Translation2d tangentialVelocity = new Translation2d(
-                -shooterOffsetField.getY() * totalOmega,
-                shooterOffsetField.getX() * totalOmega);
-        Translation2d totalShooterVelocity = fieldVelocity.plus(tangentialVelocity);
+        Translation2d fieldVelocity = new Translation2d(vx, vy)
+                .rotateBy(robotPose.getRotation());
 
         // Field-frame shooter acceleration includes chassis linear acceleration and
         // rigid-body rotational terms from the turret/shooter offset.
         Translation2d fieldAcceleration = new Translation2d(ax, ay).rotateBy(robotPose.getRotation());
-        Translation2d rotationalAcceleration = new Translation2d(
-                -shooterOffsetField.getX() * totalOmega * totalOmega - shooterOffsetField.getY() * aOmega,
-                -shooterOffsetField.getY() * totalOmega * totalOmega + shooterOffsetField.getX() * aOmega);
-        Translation2d totalShooterAcceleration = fieldAcceleration.plus(rotationalAcceleration);
 
-        Translation2d toGoal = goalLocation.minus(futureShooterPos);
+        Translation2d toGoal = goalLocation.minus(futureRobotCenter);
         double initialDistance = toGoal.getNorm();
         if (!Double.isFinite(initialDistance) || initialDistance < minDistanceMeters) {
             return null;
         }
 
-        return new TargetKinematics(toGoal, totalShooterVelocity, totalShooterAcceleration);
-    }
-
-    private ConvergenceResult solveRecursiveTOF(Translation2d toGoal, Translation2d totalShooterVelocity,
-            double warmStartTof) {
-        double initialDistance = toGoal.getNorm();
-        double tof = warmStartTof > 0.0 ? warmStartTof : getInterpolatedTof(initialDistance);
-        if (!Double.isFinite(tof) || tof <= 0.0) {
-            return new ConvergenceResult(false, 0, tof, initialDistance, toGoal);
-        }
-
-        int iterationsUsed = 0;
-        boolean converged = false;
-        double projectedDistance = initialDistance;
-        Translation2d finalBallGoal = toGoal;
-
-        for (int i = 0; i < maxRecursiveIterations; i++) {
-            iterationsUsed = i + 1;
-
-            Translation2d ballGoal = toGoal.minus(totalShooterVelocity.times(tof));
-            double distance = ballGoal.getNorm();
-            if (!Double.isFinite(distance) || distance < minDistanceMeters) {
-                break;
-            }
-
-            double lookupTof = getInterpolatedTof(distance);
-            if (!Double.isFinite(lookupTof) || lookupTof <= 0.0) {
-                break;
-            }
-
-            double f = lookupTof - tof;
-            tof = lookupTof;
-            finalBallGoal = ballGoal;
-            projectedDistance = distance;
-
-            if (Math.abs(f) < newtonToleranceSeconds) {
-                converged = true;
-                break;
-            }
-        }
-
-        return new ConvergenceResult(converged, iterationsUsed, tof, projectedDistance, finalBallGoal);
+        return new TargetKinematics(toGoal, fieldVelocity, fieldAcceleration);
     }
 
     private ConvergenceResult solveNewtonTOF(Translation2d toGoal, Translation2d totalShooterVelocity, double warmStartTof) {
+        ShooterParamMap paramMap = getParamMap();
         double initialDistance = toGoal.getNorm();
-        double tof = warmStartTof > 0.0 ? warmStartTof : getInterpolatedTof(initialDistance);
+        double tof = warmStartTof > 0.0 ? warmStartTof : paramMap.timeOfFlight(initialDistance);
         if (!Double.isFinite(tof) || tof <= 0.0) {
-            return new ConvergenceResult(false, 0, tof, initialDistance, toGoal);
+            return new ConvergenceResult(false, tof, initialDistance, toGoal);
         }
 
-        int iterationsUsed = 0;
         boolean converged = false;
         double projectedDistance = initialDistance;
         Translation2d finalBallGoal = toGoal;
 
         for (int i = 0; i < maxNewtonIterations; i++) {
-            iterationsUsed = i + 1;
-
             Translation2d ballGoal = toGoal.minus(totalShooterVelocity.times(tof));
             double projDist = ballGoal.getNorm();
             if (!Double.isFinite(projDist) || projDist < minDistanceMeters) {
                 break;
             }
 
-            double lookupTof = getInterpolatedTof(projDist);
+            double lookupTof = paramMap.timeOfFlight(projDist);
             if (!Double.isFinite(lookupTof) || lookupTof <= 0.0) {
                 break;
             }
@@ -364,7 +254,7 @@ public class ShootOnTheFly {
 
             double dPrime = -(ballGoal.getX() * totalShooterVelocity.getX()
                     + ballGoal.getY() * totalShooterVelocity.getY()) / projDist;
-            double gPrime = getTofDerivative(projDist);
+            double gPrime = paramMap.derivative(projDist).timeOfFlight();
             if (!Double.isFinite(gPrime)) {
                 break;
             }
@@ -382,23 +272,17 @@ public class ShootOnTheFly {
             tof = updatedTOF;
         }
 
-        return new ConvergenceResult(converged, iterationsUsed, tof, projectedDistance, finalBallGoal);
+        return new ConvergenceResult(converged, tof, projectedDistance, finalBallGoal);
     }
 
-    private SOTFResult buildFinalResult(ConvergenceResult convergence, TargetKinematics kinematics) {
-        if (!isConvergenceValid(convergence) || kinematics == null) {
-            return SOTFResult.invalid();
-        }
+    private Optional<SOTFResult> buildFinalResult(ConvergenceResult convergence, TargetKinematics kinematics) {
+        ShooterParamMap paramMap = getParamMap();
+        FullShooterParams params = paramMap.get(convergence.projectedDistance);
+        if (params == null) return Optional.empty();
 
-        FullShooterParams params = (currentTargetTable == TargetTable.HUB ? hubMap.get(convergence.projectedDistance) : shuttleMap.get(convergence.projectedDistance));
-        if (params == null) {
-            return SOTFResult.invalid();
-        }
         Translation2d r = convergence.finalBallGoal;
         double dist = convergence.projectedDistance;
-        if (!Double.isFinite(dist) || dist < minDistanceMeters) {
-            return SOTFResult.invalid();
-        }
+        if (!Double.isFinite(dist) || dist < minDistanceMeters) return Optional.empty();
 
         Translation2d shooterVelocity = kinematics.totalShooterVelocity;
         Translation2d shooterAcceleration = kinematics.totalShooterAcceleration;
@@ -413,25 +297,25 @@ public class ShootOnTheFly {
                 -((r.getX() * shooterAcceleration.getY()) - (r.getY() * shooterAcceleration.getX())) / dist;
         double yawAcceleration = (tangentialAcceleration - (2.0 * radialVelocity * yawVelocity)) / dist;
 
-        double pitchSlope = getPitchDerivative(dist);
+        FullShooterParams derivative = paramMap.derivative(dist);
+        double pitchSlope = derivative.hoodAngle();
         double pitchVelocity = Double.isFinite(pitchSlope) ? pitchSlope * radialVelocity : 0.0;
 
-        double speedSlope = getSpeedDerivative(dist);
+        double speedSlope = derivative.speedMetersPerSecond();
         double flywheelAcceleration = Double.isFinite(speedSlope) ? speedSlope * radialVelocity : 0.0;
 
         Rotation2d solvedYaw = r.getAngle();
 
-        return new SOTFResult(
+        return Optional.of(new SOTFResult(
                 solvedYaw.getDegrees(),
                 params.hoodAngle(),
                 params.speedMetersPerSecond(),
                 dist,
-                true,
                 yawVelocity,
                 yawAcceleration,
                 pitchVelocity,
                 flywheelAcceleration,
-                convergence.tof);
+                convergence.tof));
     }
 
     private boolean isConvergenceValid(ConvergenceResult convergence) {
@@ -455,83 +339,15 @@ public class ShootOnTheFly {
         }
     }
 
-    private double getInterpolatedTof(double distanceMeters) {
-        FullShooterParams params = (currentTargetTable == TargetTable.HUB ? hubMap.get(distanceMeters) : shuttleMap.get(distanceMeters));
-        return params != null ? params.timeOfFlight() : Double.NaN;
-    }
-
-    private double getInterpolatedSpeed(double distanceMeters) {
-        FullShooterParams params = (currentTargetTable == TargetTable.HUB ? hubMap.get(distanceMeters) : shuttleMap.get(distanceMeters));
-        return params != null ? params.speedMetersPerSecond() : Double.NaN;
-    }
-
-    private double getInterpolatedHoodAngle(double distanceMeters) {
-        FullShooterParams params = (currentTargetTable == TargetTable.HUB ? hubMap.get(distanceMeters) : shuttleMap.get(distanceMeters));
-        return params != null ? params.hoodAngle() : Double.NaN;
-    }
-
-    private double getTofDerivative(double distanceMeters) {
-        double h = tofDerivativeStepMeters;
-        double upperDist = distanceMeters + h;
-        double lowerDist = Math.max(0.0, distanceMeters - h);
-        double tHigh = getInterpolatedTof(upperDist);
-        double tLow = getInterpolatedTof(lowerDist);
-        if (!Double.isFinite(tHigh) || !Double.isFinite(tLow)) {
-            return Double.NaN;
-        }
-        double deltaDist = upperDist - lowerDist;
-        if (deltaDist <= minDerivativeDistanceDeltaMeters) {
-            return Double.NaN;
-        }
-        return (tHigh - tLow) / deltaDist;
-    }
-
-    private double getPitchDerivative(double distanceMeters) {
-        double h = tofDerivativeStepMeters;
-        double upperDist = distanceMeters + h;
-        double lowerDist = Math.max(0.0, distanceMeters - h);
-        double deltaDist = upperDist - lowerDist;
-        if (deltaDist <= minDerivativeDistanceDeltaMeters) {
-            return Double.NaN;
-        }
-
-        double pHigh = getInterpolatedHoodAngle(upperDist);
-        double pLow = getInterpolatedHoodAngle(lowerDist);
-        if (!Double.isFinite(pHigh) || !Double.isFinite(pLow)) {
-            return Double.NaN;
-        }
-
-        return (pHigh - pLow) / deltaDist;
-    }
-
-    private double getSpeedDerivative(double distanceMeters) {
-        double h = tofDerivativeStepMeters;
-        double upperDist = distanceMeters + h;
-        double lowerDist = Math.max(0.0, distanceMeters - h);
-        double deltaDist = upperDist - lowerDist;
-        if (deltaDist <= minDerivativeDistanceDeltaMeters) {
-            return Double.NaN;
-        }
-
-        double sHigh = getInterpolatedSpeed(upperDist);
-        double sLow = getInterpolatedSpeed(lowerDist);
-        if (!Double.isFinite(sHigh) || !Double.isFinite(sLow)) {
-            return Double.NaN;
-        }
-
-        return (sHigh - sLow) / deltaDist;
-    }
-
-    private Translation2d getFieldRelativeVelocity(ChassisSpeeds robotSpeeds, Pose2d robotPose) {
-        return new Translation2d(robotSpeeds.vxMetersPerSecond, robotSpeeds.vyMetersPerSecond)
-                .rotateBy(robotPose.getRotation());
-    }
-
     public void setCurrentTofTable(TargetTable targetTable) {
         this.currentTargetTable = targetTable;
     }
 
     public TargetTable getCurrentTofTable() {
         return this.currentTargetTable;
+    }
+
+    public ShooterParamMap getParamMap() {
+        return currentTargetTable == TargetTable.HUB ? hubMap : shuttleMap;
     }
 }

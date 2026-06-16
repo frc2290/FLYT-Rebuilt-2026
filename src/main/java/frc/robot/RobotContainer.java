@@ -6,12 +6,9 @@ package frc.robot;
 
 import static edu.wpi.first.math.util.Units.inchesToMeters;
 
-import java.util.function.BiConsumer;
-
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
@@ -100,17 +97,18 @@ public class RobotContainer {
         configureButtonBindings();
 
         // Auto poses place here
-        SmartDashboard.putData(auto_chooser);
+        // SmartDashboard.putData(auto_chooser);
         // this function is TERRIBLE but it's funny and it works so i am keeping it
-        BiConsumer<Object, Object[]> enum_chooser = (perhaps_chooser, values) -> {
-            LoggedDashboardChooser<Object> chooser = (LoggedDashboardChooser<Object>)perhaps_chooser;
-            chooser.addDefaultOption(values[0].toString(), values[0]);
-            for (Object value : values) {
-                chooser.addOption(value.toString(), value);
-            }
-        };
-        enum_chooser.accept(auto_start, AutoStart.values());
-        enum_chooser.accept(auto_activity, AutoActivity.values());
+        // BiConsumer<Object, Object[]> enum_chooser = (perhaps_chooser, values) -> {
+        //     LoggedDashboardChooser<Object> chooser = (LoggedDashboardChooser<Object>)perhaps_chooser;
+        //     chooser.addDefaultOption(values[0].toString(), values[0]);
+        //     for (Object value : values) {
+        //         chooser.addOption(value.toString(), value);
+        //     }
+        // };
+        // enum_chooser.accept(auto_start, AutoStart.values());
+        // enum_chooser.accept(auto_activity, AutoActivity.values());
+
         // auto_start_pos.addDefaultOption("Trench", "Trench");
         // auto_start_pos.addOption("Bump", "Bump");
         // auto_end_pos.addDefaultOption("Depot", "Depot");

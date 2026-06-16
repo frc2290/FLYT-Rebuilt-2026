@@ -8,6 +8,7 @@ import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Volts;
 
+import java.util.Optional;
 import java.util.function.Supplier;
 
 import org.littletonrobotics.junction.Logger;
@@ -115,8 +116,11 @@ public class Turret extends SubsystemBase {
             dt = TurretConstants.SotfConstants.defaultLoopDtSeconds;
         }
 
+        currentShooterVelocityScale = SmartDashboard.getNumber(shooterVelocityScaleKey, defaultShooterVelocityScale);
+        currentShotAngleOffsetDeg = SmartDashboard.getNumber(shotAngleOffsetDegKey, defaultShotAngleOffsetDeg);
+
         double turretOmegaRadPerSecond = Math.toRadians(inputs.turretVelocity);
-        SOTFResult result = sotf.calculateNewtonTOF(
+        Optional<SOTFResult> maybeResult = sotf.calculateNewtonTOF(
                 targetTranslation,
                 currentPose,
                 currentSpeeds,
@@ -124,24 +128,18 @@ public class Turret extends SubsystemBase {
                 turretOmegaRadPerSecond,
                 dt);
 
-        Rotation2d turretPointedAt = currentTurretAngle.rotateBy(currentPose.getRotation());
-        Rotation2d targetYaw = Rotation2d.fromDegrees(result.yaw);
-        Rotation2d error = turretPointedAt.minus(targetYaw);
-        turretPointedAtTarget = result.isValid
-                && Math.abs(error.getDegrees()) < TurretConstants.SotfConstants.pointAtTargetToleranceDeg;
-        if (result.isValid) {
+        // this can probably be structured much better
+        maybeResult.ifPresentOrElse(result -> {
+            Rotation2d turretPointedAt = currentTurretAngle.rotateBy(currentPose.getRotation());
+            Rotation2d targetYaw = Rotation2d.fromDegrees(result.yaw());
+            Rotation2d error = turretPointedAt.minus(targetYaw);
+            turretPointedAtTarget = Math.abs(error.getDegrees()) < TurretConstants.SotfConstants.pointAtTargetToleranceDeg;
+            
             driveAngleCorrection = targetYaw.minus(turretPointedAt).getDegrees();
-            currentTof = result.tof;
-        } else {
-            currentTof = 0.0;
-        }
+            currentTof = result.tof();
 
-        currentShooterVelocityScale = SmartDashboard.getNumber(shooterVelocityScaleKey, defaultShooterVelocityScale);
-        currentShotAngleOffsetDeg = SmartDashboard.getNumber(shotAngleOffsetDegKey, defaultShotAngleOffsetDeg);
-
-        if (result.isValid) {
-            double tunedShotVelocityMps = result.vel * currentShooterVelocityScale;
-            double tunedShotAngleDeg = result.pitch + currentShotAngleOffsetDeg;
+            double tunedShotVelocityMps = result.vel() * currentShooterVelocityScale;
+            double tunedShotAngleDeg = result.pitch() + currentShotAngleOffsetDeg;
 
             // Convert desired SOTF projectile behavior into mechanism commands using
             // inverse linear-fit calibration.
@@ -149,21 +147,38 @@ public class Turret extends SubsystemBase {
                     / TurretConstants.flywheelSpeedCalibrationGain;
             activeShotAngleSetpointDeg = (tunedShotAngleDeg - TurretConstants.hoodPitchCalibrationOffset)
                     / TurretConstants.hoodPitchCalibrationGain;
-        }
+            
+            // TURN CONTROL
+            if (currentControlMode != ControlMode.TURN_VOLTAGE && sotfEnabled) {
+                Rotation2d turretTargetRelative = targetYaw.minus(currentPose.getRotation());
+                io.setTurnPosition(turretTargetRelative);
+            }
+
+            Logger.recordOutput("Turret/SOTFYaw", result.yaw());
+            Logger.recordOutput("Turret/SOTFVel", result.vel());
+            Logger.recordOutput("Turret/SOTFPitch", result.pitch());
+            Logger.recordOutput("Turret/SOTFTarget", targetTranslation);
+            Logger.recordOutput("Turret/SOTFDist", result.dist());
+            Logger.recordOutput("Turret/TOFSeconds", currentTof);
+            //Logger.recordOutput("Turret/SOTFYawVelocityRadPerSec", result.yawVelocityRadPerSec());
+            //Logger.recordOutput("Turret/SOTFYawAccelerationRadPerSec2", result.yawAccelerationRadPerSec2());
+            //Logger.recordOutput("Turret/SOTFPitchVelocityDegPerSec", result.pitchVelocityDegPerSec());
+            //Logger.recordOutput("Turret/SOTFFlywheelAccelerationMps2", result.flywheelAccelerationMetersPerSec2());
+        }, () -> {
+            turretPointedAtTarget = false;
+            currentTof = 0.0;
+        });
 
         // TURN CONTROL
         if (currentControlMode == ControlMode.TURN_VOLTAGE) {
             io.setTurnVoltage(sysIdVoltage);
-        } else if (sotfEnabled && result.isValid) {
-            Rotation2d turretTargetRelative = targetYaw.minus(currentPose.getRotation());
-            io.setTurnPosition(turretTargetRelative);
         }
 
         // SHOOTER CONTROL
         if (currentControlMode == ControlMode.SHOOTER_VOLTAGE) {
             io.setShooterVoltage(sysIdVoltage);
         } else if (sotfEnabled) {
-            boolean canShoot = !stopShoot && result.isValid;
+            boolean canShoot = !stopShoot && maybeResult.isPresent();
             io.setShooterSpeed(activeShooterVelocitySetpointMps);
             if (canShoot) {
                 io.setShotAngle(activeShotAngleSetpointDeg);
@@ -172,17 +187,7 @@ public class Turret extends SubsystemBase {
             }
         }
 
-        Logger.recordOutput("Turret/SOTFYaw", result.yaw);
-        Logger.recordOutput("Turret/SOTFVel", result.vel);
-        Logger.recordOutput("Turret/SOTFPitch", result.pitch);
-        Logger.recordOutput("Turret/SOTFTarget", targetTranslation);
-        Logger.recordOutput("Turret/SOTFDist", result.dist);
-        Logger.recordOutput("Turret/TOFSeconds", currentTof);
-        //Logger.recordOutput("Turret/SOTFYawVelocityRadPerSec", result.yawVelocityRadPerSec);
-        //Logger.recordOutput("Turret/SOTFYawAccelerationRadPerSec2", result.yawAccelerationRadPerSec2);
-        //Logger.recordOutput("Turret/SOTFPitchVelocityDegPerSec", result.pitchVelocityDegPerSec);
-        //Logger.recordOutput("Turret/SOTFFlywheelAccelerationMps2", result.flywheelAccelerationMetersPerSec2);
-        Logger.recordOutput("Turret/SOTFValid", result.isValid);
+        Logger.recordOutput("Turret/SOTFValid", maybeResult.isPresent());
         Logger.recordOutput("Turret/SOTFLoopDtSec", dt);
         Logger.recordOutput("Turret/SOTFEnabled", sotfEnabled);
         Logger.recordOutput("Turret/PointedAtHub", turretPointedAtTarget);

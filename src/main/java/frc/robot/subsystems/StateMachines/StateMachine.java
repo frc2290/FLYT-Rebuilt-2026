@@ -68,7 +68,7 @@ public class StateMachine extends SubsystemBase {
     private Turret m_turret;
     private DyeRotor m_dyeRotor;
 
-    private ShootOnTheFly shootOnTheFly = ShootOnTheFly.getInstance();
+    private ShootOnTheFly sotf = ShootOnTheFly.getInstance();
 
     private Debouncer turretReadyDebounce = new Debouncer(0.25, DebounceType.kRising);
 
@@ -281,7 +281,7 @@ public class StateMachine extends SubsystemBase {
             case NONE:
                 switch (fieldZone) {
                     case ALLIANCE:
-                        shootOnTheFly.setCurrentTofTable(TargetTable.HUB);
+                        sotf.setCurrentTofTable(TargetTable.HUB);
                         // point at the hub, but only shoot if hub is active
                         m_turret.setTargetTranslation(Hub.topCenterPoint.toTranslation2d());
                         boolean shouldShoot;
@@ -302,7 +302,7 @@ public class StateMachine extends SubsystemBase {
                         break;
                     case ANTI_ALLIANCE:
                     case NEUTRAL:
-                        shootOnTheFly.setCurrentTofTable(TargetTable.SHUTTLE);
+                        sotf.setCurrentTofTable(TargetTable.SHUTTLE);
                         if ((shootOverride) || veryShoot) {
                             m_turret.setStopShoot(false);
                             if(turretReadyDebounce.calculate(m_turret.turretReadyToShoot()) || veryShoot) {
