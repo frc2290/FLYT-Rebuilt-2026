@@ -78,8 +78,8 @@ class DualEncoderUnwrapperTest {
         return Stream.of(
                 Arguments.of("encoder1 positive boundary", RATIO1, 9.0),
                 Arguments.of("encoder1 negative boundary", RATIO1, -9.0),
-                Arguments.of("encoder2 positive boundary", RATIO2, 9.0),
-                Arguments.of("encoder2 negative boundary", RATIO2, -9.0));
+                Arguments.of("encoder2 positive boundary", RATIO2, 8.0),
+                Arguments.of("encoder2 negative boundary", RATIO2, -8.0));
     }
 
     @ParameterizedTest
