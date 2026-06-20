@@ -84,8 +84,9 @@ public class ShootOnTheFly {
         }
 
         public FullShooterParams derivative(double distance) {
-            Map.Entry<Double,ShootOnTheFly.FullShooterParams> upper = m_map.higherEntry(distance);
-            Map.Entry<Double,ShootOnTheFly.FullShooterParams> lower = m_map.floorEntry(distance);
+            Map.Entry<Double,FullShooterParams> upper = m_map.higherEntry(distance);
+            Map.Entry<Double,FullShooterParams> lower = m_map.floorEntry(distance);
+            if (lower == null || upper == null) return new FullShooterParams(0.0, 0.0, 0.0);
             double delta = upper.getKey() - lower.getKey();
             return FullShooterParams.derive(upper.getValue(), lower.getValue(), delta);
         }
