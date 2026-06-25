@@ -10,6 +10,7 @@ import java.util.OptionalDouble;
 import org.littletonrobotics.junction.Logger;
 
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -18,6 +19,9 @@ import frc.robot.Robot;
 import frc.utils.LoggedTracer;
 
 public class DyeRotor extends SubsystemBase {
+    private static final String targetBpsKey = "DyeRotor/TargetBps";
+    private static final String overfeedRatioKey = "DyeRotor/OverfeedRatio";
+
     public enum ControlMode {
         VELOCITY,
         VOLTAGE
@@ -37,6 +41,8 @@ public class DyeRotor extends SubsystemBase {
     private final Timer jamTimer = new Timer();
     private final Timer backdriveTimer = new Timer();
 
+    private double targetBps = defaultTargetBps;
+    private double overfeedRatio = defaultOverfeedRatio;
     private boolean runDyeRotor = false;
     private boolean backdriving = false;
     private ControlMode rotorControlMode = ControlMode.VELOCITY;
@@ -68,12 +74,19 @@ public class DyeRotor extends SubsystemBase {
                         (voltage) -> feederCommandedVoltage = voltage.in(Volts),
                         null,
                         this));
+
+        SmartDashboard.putNumber(targetBpsKey, targetBps);
+        SmartDashboard.putNumber(overfeedRatioKey, overfeedRatio);
     }
 
     @Override
     public void periodic() {
         io.updateInputs(inputs);
         Logger.processInputs("DyeRotor", inputs);
+
+        targetBps = SmartDashboard.getNumber(targetBpsKey, defaultTargetBps);
+        overfeedRatio = SmartDashboard.getNumber(overfeedRatioKey, defaultOverfeedRatio);
+
         OptionalDouble measuredOverfeedRatio = getMeasuredOverfeedRatio();
         Logger.recordOutput("DyeRotor/RotorControlMode", rotorControlMode.toString());
         Logger.recordOutput("DyeRotor/FeederControlMode", feederControlMode.toString());
@@ -101,7 +114,7 @@ public class DyeRotor extends SubsystemBase {
         }
 
         if (backdriving) {
-            //setTargetBPS(-defaultTargetBps);
+            //setTargetBPS(-targetBps);
             io.setRotorVoltage(-12);
             io.setFeederVoltage(-12);
             if (backdriveTimer.hasElapsed(BACKDRIVE_SECONDS)) {
@@ -125,11 +138,11 @@ public class DyeRotor extends SubsystemBase {
         if (!jamDetectionEnabled) {
             jamTimer.stop();
             jamTimer.reset();
-            setTargetBPS(defaultTargetBps);
+            setTargetBPS(targetBps);
             return;
         }
 
-        double targetRotorRps = defaultTargetBps / ballsPerRotation;
+        double targetRotorRps = targetBps / ballsPerRotation;
         double feedMultiplier =
                 (ballsPerRotation * fuelDiameterInches * overfeedRatio) / (Math.PI * feedWheelRadiusInches);
         double targetFeederRps = (targetRotorRps * feedMultiplier) - targetRotorRps;
@@ -156,12 +169,12 @@ public class DyeRotor extends SubsystemBase {
                 io.resetIntegrator();
                 backdriving = true;
             } else {
-                setTargetBPS(defaultTargetBps);
+                setTargetBPS(targetBps);
             }
         } else {
             jamTimer.stop();
             jamTimer.reset();
-            setTargetBPS(defaultTargetBps);
+            setTargetBPS(targetBps);
         }
 
         Robot.batteryLogger.reportCurrentUsage("DyeRotor/Feeder", inputs.feederCurrentAmps, inputs.feederAppliedVolts);

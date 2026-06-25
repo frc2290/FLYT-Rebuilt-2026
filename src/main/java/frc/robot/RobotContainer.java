@@ -12,6 +12,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
+import edu.wpi.first.wpilibj2.command.WaitCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
 import frc.robot.Commands.Autos.AutoBuilder.AutoActivity;
@@ -206,6 +207,11 @@ public class RobotContainer {
         m_operatorController.a().onTrue(m_stateMachine.setShooterOverrideCommand(true)).onFalse(m_stateMachine.setShooterOverrideCommand(false));
         m_operatorController.povRight().onTrue(m_stateMachine.setVeryShootCommand(true)).onFalse(m_stateMachine.setVeryShootCommand(false));
         m_operatorController.leftStick().and(m_operatorController.rightStick()).onTrue(m_intake.superMegaOverrideCommand());
+
+        m_operatorController.x().onTrue(
+            m_stateMachine.setShooterOverrideCommand(true)
+            .andThen(new WaitCommand(5.0))
+            .andThen(m_stateMachine.setShooterOverrideCommand(false)));
 
         //m_operatorController.b().whileTrue(m_intake.wowowowowoIntake());
 
