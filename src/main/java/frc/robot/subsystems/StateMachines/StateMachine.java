@@ -285,16 +285,18 @@ public class StateMachine extends SubsystemBase {
                         // point at the hub, but only shoot if hub is active
                         m_turret.setTargetTranslation(Hub.topCenterPoint.toTranslation2d());
                         boolean shouldShoot;
-                        if (autoShooting || isAuto) {
-                            shouldShoot = ((hubActive || isAuto) && !shootOverride) || veryShoot;
+                        if (isAuto) {
+                            shouldShoot = true;
+                        } else if (autoShooting) {
+                            shouldShoot = hubActive && !shootOverride;
                         } else {
-                            shouldShoot = shootOverride || veryShoot;
+                            shouldShoot = shootOverride;
                         }
                         if (shouldShoot) {
                             m_turret.setStopShoot(false);
-                            // if(turretReadyDebounce.calculate(m_turret.turretReadyToShoot()) || veryShoot) {
+                            if (/*turretReadyDebounce.calculate(*/m_turret.turretReadyToShoot()/*)*/ || veryShoot) {
                                 m_dyeRotor.runDyeRotor(true);
-                            // }
+                            }
                         } else {
                             m_turret.setStopShoot(true);
                             m_dyeRotor.runDyeRotor(false);

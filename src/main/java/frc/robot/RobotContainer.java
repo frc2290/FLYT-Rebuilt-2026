@@ -183,7 +183,7 @@ public class RobotContainer {
         m_driverController.x().onTrue(m_intake.intakeOut(IntakeSide.LEFT));
         m_driverController.y().onTrue(m_intake.intakeOut(IntakeSide.RIGHT));
 
-        m_driverController.axisGreaterThan(3, 0.5).whileTrue(m_intake.runIntakeCommand());
+        m_driverController.axisGreaterThan(3, 0.5).whileTrue(m_intake.stopStartintakeCommand());
                                 // new ParallelCommandGroup(
                                 //     m_intake.runIntakeCommand(),
                                 //     m_driveStateMachine.tempChangeState(DriveState.SNAKE)));

@@ -68,8 +68,8 @@ public final class DriveCommandFactory {
   private final PIDController rotPid;
   private final PIDController xPid;
   private final PIDController yPid;
-  private final StickExpo translationExpo = new StickExpo(3.0);
-  private final StickExpo rotationExpo = new StickExpo(3.0);
+  private final StickExpo translationExpo = new StickExpo(2.0);
+  private final StickExpo rotationExpo = new StickExpo(1.5);
   private final AngleSlewRateLimiter snakeLimiter =
       new AngleSlewRateLimiter(DriveConstants.snakeHeadingSlewRateRadPerSec);
   private boolean slowMode = false;
@@ -92,10 +92,10 @@ public final class DriveCommandFactory {
     // this.xPid = drive.getXPidController();
     // this.yPid = drive.getYPidController();
     // Retuned for physical outputs (rad/s and m/s) instead of percent outputs.
-    this.rotPid = new PIDController(0.015 * maxAngularSpeedRadPerSec, 0.0, 0.0);
+    this.rotPid = new PIDController(0.02 * maxAngularSpeedRadPerSec, 0.0, 0.0);
     this.rotPid.enableContinuousInput(0, 360);
-    this.xPid = new PIDController(1.0 * maxLinearSpeedMetersPerSec, 0.0, 0.085 * maxLinearSpeedMetersPerSec);
-    this.yPid = new PIDController(1.0 * maxLinearSpeedMetersPerSec, 0.0, 0.085 * maxLinearSpeedMetersPerSec);
+    this.xPid = new PIDController(1.25 * maxLinearSpeedMetersPerSec, 0.0, 0.085 * maxLinearSpeedMetersPerSec);
+    this.yPid = new PIDController(1.25 * maxLinearSpeedMetersPerSec, 0.0, 0.085 * maxLinearSpeedMetersPerSec);
   }
 
   /** Small helper that bundles the driver stick inputs for a single loop of command execution. */

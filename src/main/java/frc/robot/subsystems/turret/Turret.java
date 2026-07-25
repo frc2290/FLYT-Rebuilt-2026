@@ -179,6 +179,9 @@ public class Turret extends SubsystemBase {
             io.setShooterVoltage(sysIdVoltage);
         } else if (sotfEnabled) {
             boolean canShoot = !stopShoot && maybeResult.isPresent();
+            // if (sotf.getCurrentTofTable() == TargetTable.SHUTTLE) {
+            //     activeShooterVelocitySetpointMps *= 0.8;
+            // }
             io.setShooterSpeed(activeShooterVelocitySetpointMps);
             if (canShoot) {
                 io.setShotAngle(activeShotAngleSetpointDeg);
@@ -210,7 +213,7 @@ public class Turret extends SubsystemBase {
     /**
      * set the translation to point at for the turret
      * 
-     * @param targetPose the translation to point at
+     * @param targetTranslation the translation to point at
      */
     public void setTargetTranslation(Translation2d targetTranslation) {
         this.targetTranslation = targetTranslation;

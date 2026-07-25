@@ -4,7 +4,6 @@ import static edu.wpi.first.units.Units.Second;
 import static edu.wpi.first.units.Units.Seconds;
 import static edu.wpi.first.units.Units.Volts;
 import org.littletonrobotics.junction.Logger;
-import org.littletonrobotics.junction.networktables.LoggedNetworkBoolean;
 
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
@@ -178,7 +177,7 @@ public class Intake extends SubsystemBase {
 
     public Command intakeOut(IntakeSide side) {
         return intakeIn(side.opposite()).andThen(run(() -> {
-            // driveRoller(side, rollerSpeed);
+            driveRoller(side, rollerSpeed);
             deploy(side, true);
             outSide = Optional.of(side);
         }).until(() -> {
@@ -226,6 +225,10 @@ public class Intake extends SubsystemBase {
 
     public Command runIntakeCommand() {
         return Commands.run(this::runIntake).finallyDo(this::stopIntake);
+    }
+
+    public Command stopStartintakeCommand() {
+        return Commands.run(this::stopIntake).finallyDo(this::runIntake);
     }
 
     public Command wowowowowoIntake() {

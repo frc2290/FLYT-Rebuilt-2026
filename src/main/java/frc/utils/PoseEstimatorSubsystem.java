@@ -237,6 +237,8 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
         //     Logger.recordOutput("Vision/SelectedPose", new Pose2d());
         //     Logger.recordOutput("Vision/SelectedStdDevScore", Double.NaN);
         // }
+
+        Logger.recordOutput("Vision/TargetPose", targetPose);
     }
 
     /** Processes a single camera frame and returns a measurement candidate (or null). */
