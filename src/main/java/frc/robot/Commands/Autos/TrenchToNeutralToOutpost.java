@@ -14,7 +14,6 @@ import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.ParallelCommandGroup;
 import edu.wpi.first.wpilibj2.command.WaitCommand;
 import frc.robot.Commands.SwerveAutoStep;
-import frc.robot.subsystems.StateMachines.StateMachine;
 import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.IntakeConstants.IntakeSide;
 import frc.utils.PoseEstimatorSubsystem;
@@ -25,13 +24,11 @@ import frc.utils.PoseEstimatorSubsystem;
 public class TrenchToNeutralToOutpost extends FlytSequentialAuto {
     private boolean right = true;
     private PoseEstimatorSubsystem pose;
-    private StateMachine stateMachine;
     private Intake intake;
 
     /** Creates a new TrenchToNeutralAuto. */
-    public TrenchToNeutralToOutpost(PoseEstimatorSubsystem pose, StateMachine stateMachine, Intake intake) {
+    public TrenchToNeutralToOutpost(PoseEstimatorSubsystem pose, Intake intake) {
         this.pose = pose;
-        this.stateMachine = stateMachine;
         this.intake = intake;
     }
 

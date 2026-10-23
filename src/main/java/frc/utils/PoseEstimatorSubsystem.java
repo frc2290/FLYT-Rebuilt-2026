@@ -57,11 +57,10 @@ import org.littletonrobotics.junction.Logger;
 public class PoseEstimatorSubsystem extends SubsystemBase {
 
     private static final class VisionMeasurement {
-        private final String cameraName;
         private final Pose2d pose;
         private final double timestampSeconds;
         private final Matrix<N3, N1> stdDevs;
-        private final double stdDevScore;
+        // private final double stdDevScore;
 
         private VisionMeasurement(
                 String cameraName,
@@ -69,11 +68,10 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
                 double timestampSeconds,
                 Matrix<N3, N1> stdDevs,
                 double stdDevScore) {
-            this.cameraName = cameraName;
             this.pose = pose;
             this.timestampSeconds = timestampSeconds;
             this.stdDevs = stdDevs;
-            this.stdDevScore = stdDevScore;
+            // this.stdDevScore = stdDevScore;
         }
     }
 
@@ -277,15 +275,15 @@ public class PoseEstimatorSubsystem extends SubsystemBase {
         return new VisionMeasurement(cameraName, finalPose, update.timestampSeconds, stdDevs, score);
     }
 
-    private VisionMeasurement chooseBetter(VisionMeasurement currentBest, VisionMeasurement candidate) {
-        if (candidate == null) {
-            return currentBest;
-        }
-        if (currentBest == null) {
-            return candidate;
-        }
-        return candidate.stdDevScore < currentBest.stdDevScore ? candidate : currentBest;
-    }
+    // private VisionMeasurement chooseBetter(VisionMeasurement currentBest, VisionMeasurement candidate) {
+    //     if (candidate == null) {
+    //         return currentBest;
+    //     }
+    //     if (currentBest == null) {
+    //         return candidate;
+    //     }
+    //     return candidate.stdDevScore < currentBest.stdDevScore ? candidate : currentBest;
+    // }
 
     private static double stdDevScore(Matrix<N3, N1> stdDevs) {
         double x = stdDevs.get(0, 0);

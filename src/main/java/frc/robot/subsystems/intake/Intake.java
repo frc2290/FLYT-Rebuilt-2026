@@ -8,6 +8,7 @@ import org.littletonrobotics.junction.Logger;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -22,6 +23,10 @@ import static frc.robot.subsystems.intake.IntakeConstants.*;
 import java.util.Optional;
 
 public class Intake extends SubsystemBase {
+    // Dashboard booleans to disable an intake side in a match
+    private static final String leftDisabledKey = "Intake/LeftDisabled";
+    private static final String rightDisabledKey = "Intake/RightDisabled";
+
     public enum ControlMode {
         VELOCITY,
         VOLTAGE
@@ -41,11 +46,8 @@ public class Intake extends SubsystemBase {
     private double rightCommandedVoltage = 0.0;
 
     private Optional<IntakeSide> outSide = Optional.empty();
-
-    // Dashboard booleans to disable an intake side in a match
-    // TODO IMPLEMENT
-    //private final LoggedNetworkBoolean leftDisabledDash = new LoggedNetworkBoolean("Left Intake Disabled", false);
-    //private final LoggedNetworkBoolean rightDisabledDash = new LoggedNetworkBoolean("Right Intake Disabled", false);
+    private boolean leftDisabled = false;
+    private boolean rightDisabled = false;
 
     public Intake(IntakeIO ioLeft, IntakeIO ioRight) {
         this.ioLeft = ioLeft;
@@ -74,12 +76,19 @@ public class Intake extends SubsystemBase {
                         null,
                         this,
                         "IntakeRight"));
+        
+        SmartDashboard.putBoolean(leftDisabledKey, leftDisabled);
+        SmartDashboard.putBoolean(rightDisabledKey, rightDisabled);
     }
 
     @Override
     public void periodic() {
         ioLeft.updateInputs(inputsLeft);
         ioRight.updateInputs(inputsRight);
+
+        leftDisabled = SmartDashboard.getBoolean(leftDisabledKey, false);
+        rightDisabled = SmartDashboard.getBoolean(rightDisabledKey, false);
+
         Logger.processInputs("Intake/Left", inputsLeft);
         Logger.processInputs("Intake/Right", inputsRight);
         Logger.recordOutput("Intake/LeftIn", isIn(IntakeSide.LEFT));
@@ -124,6 +133,11 @@ public class Intake extends SubsystemBase {
 
     public double getLinearPosition(IntakeSide side) {
         return (getPosition(side) - IntakeConstants.inPosition) / (IntakeConstants.outPosition - IntakeConstants.inPosition) * feetToMeters(1.0);
+    }
+
+    public boolean isDisabled(IntakeSide side) {
+        // more ternary :>
+        return side == IntakeSide.LEFT ? leftDisabled : rightDisabled;
     }
 
     // when it is FULLY undeployed
@@ -177,11 +191,12 @@ public class Intake extends SubsystemBase {
 
     public Command intakeOut(IntakeSide side) {
         return intakeIn(side.opposite()).andThen(run(() -> {
+            if (isDisabled(side)) return;
             driveRoller(side, rollerSpeed);
             deploy(side, true);
             outSide = Optional.of(side);
         }).until(() -> {
-            return isOut(side);
+            return isDisabled(side) || isOut(side);
         }));
     }
 

@@ -14,8 +14,6 @@ import com.pathplanner.lib.path.GoalEndState;
 import com.pathplanner.lib.path.PathConstraints;
 import com.pathplanner.lib.path.PathPlannerPath;
 import com.pathplanner.lib.path.Waypoint;
-import com.pathplanner.lib.pathfinding.LocalADStar;
-import com.pathplanner.lib.pathfinding.Pathfinder;
 import com.pathplanner.lib.pathfinding.Pathfinding;
 
 import edu.wpi.first.math.geometry.Pose2d;
@@ -27,9 +25,7 @@ import edu.wpi.first.wpilibj2.command.SequentialCommandGroup;
 import frc.robot.Commands.SwerveAutoStep;
 import frc.robot.subsystems.StateMachines.DriveStateMachine;
 import frc.utils.FieldConstants;
-import frc.utils.LocalADStarAK;
 import frc.utils.PoseEstimatorSubsystem;
-import frc.utils.FieldConstants.Depot;
 import frc.utils.FieldConstants.LinesHorizontal;
 import frc.utils.FieldConstants.LinesVertical;
 

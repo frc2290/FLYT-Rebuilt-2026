@@ -30,7 +30,7 @@ import java.nio.file.Path;
  * perspective of the blue alliance station
  */
 public class FieldConstants {
-    public static final AprilTagLayout layout = AprilTagLayout.OFFICIAL_ANDYMARK;
+    public static final AprilTagLayout layout = AprilTagLayout.OFFICIAL_WELDED;
     //public static final AprilTagFields field = AprilTagFields.k2026RebuiltAndymark;
     // public static final FieldType fieldType = FieldType.WELDED;
 

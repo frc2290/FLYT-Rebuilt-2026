@@ -20,13 +20,13 @@ import frc.robot.Commands.Autos.AutoBuilder.AutoStart;
 import frc.robot.Commands.Autos.FlytSequentialAuto;
 import frc.robot.Commands.Autos.HubToOutpost;
 import frc.robot.Commands.Autos.SitAndShoot;
+import frc.robot.Commands.Autos.SitAndShootSide;
 import frc.robot.Commands.Autos.TrenchToNeutralAuto;
 import frc.robot.Commands.Autos.TrenchToNeutralCrow;
 import frc.robot.Commands.Autos.TrenchToNeutralToOutpost;
 import frc.robot.subsystems.StateMachines.DriveStateMachine;
 import frc.robot.subsystems.StateMachines.DriveStateMachine.DriveState;
 import frc.robot.subsystems.StateMachines.StateMachine;
-import frc.robot.subsystems.StateMachines.StateMachine.FieldZone;
 import frc.robot.subsystems.StateMachines.StateMachine.SpecialZone;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.dyerotor.DyeRotor;
@@ -49,6 +49,10 @@ import frc.utils.PoseEstimatorSubsystem;
 public class RobotContainer {
     // The robot's subsystems
     private final Drive m_drive;
+    // i think i remember the poseestimator has to be in here for
+    // some reason, but i don't remember why. i've supressed the
+    // unused warning because it annoys me.
+    @SuppressWarnings("unused")
     private final PoseEstimatorSubsystem m_poseEstimator;
     private final StateMachine m_stateMachine;
     private final DriveStateMachine m_driveStateMachine;
@@ -118,11 +122,12 @@ public class RobotContainer {
         auto_right.addOption("Left", false);
         auto_forward.addDefaultOption("Backward", false);
         auto_forward.addOption("Forward", true);
-        auto_choice.addDefaultOption("Trench 2x", new TrenchToNeutralAuto(_poseEstimator, _stateMachine, _intake));
-        auto_choice.addOption("Trench Crow", new TrenchToNeutralCrow(_poseEstimator, _stateMachine, _intake));
+        auto_choice.addDefaultOption("Trench 2x", new TrenchToNeutralAuto(_poseEstimator, _intake));
+        auto_choice.addOption("Trench Crow", new TrenchToNeutralCrow(_poseEstimator, _intake));
         auto_choice.addOption("Hub to Outpost", new HubToOutpost(_poseEstimator, _intake));
-        auto_choice.addOption("Trench to Outpost/Depot", new TrenchToNeutralToOutpost(_poseEstimator, _stateMachine, _intake));
-        auto_choice.addOption("Sit And Shoot", new SitAndShoot(_stateMachine, _poseEstimator, _driveStateMachine));
+        auto_choice.addOption("Trench to Outpost/Depot", new TrenchToNeutralToOutpost(_poseEstimator, _intake));
+        auto_choice.addOption("Sit And Shoot", new SitAndShoot(_poseEstimator, _driveStateMachine));
+        auto_choice.addOption("Sit And Shoot Side", new SitAndShootSide(_poseEstimator, _driveStateMachine));
 
         if (Robot.isSimulation()) {
             FuelSim instance = FuelSim.getInstance();
@@ -134,12 +139,13 @@ public class RobotContainer {
 
     private void configureButtonBindings() {
         // TRIGGERS
-        Trigger isAuto = new Trigger(() -> m_stateMachine.isAuto());
-        Trigger notAuto = isAuto.negate();
-        Trigger isOnBump = new Trigger(() -> m_stateMachine.getSpecialZone() == SpecialZone.BUMP);
+        // unused triggers are commented out so java doesn't complain
+        // Trigger isAuto = new Trigger(() -> m_stateMachine.isAuto());
+        // Trigger notAuto = isAuto.negate();
+        // Trigger isOnBump = new Trigger(() -> m_stateMachine.getSpecialZone() == SpecialZone.BUMP);
         Trigger isUnderTrench = new Trigger(() -> m_stateMachine.getSpecialZone() == SpecialZone.TRENCH);
-        Trigger isInNeutral = new Trigger(() -> m_stateMachine.getFieldZone() == FieldZone.NEUTRAL);
-        Trigger isLeft = new Trigger(() -> m_stateMachine.getLeftSide());
+        // Trigger isInNeutral = new Trigger(() -> m_stateMachine.getFieldZone() == FieldZone.NEUTRAL);
+        // Trigger isLeft = new Trigger(() -> m_stateMachine.getLeftSide());
         Trigger hubActive = new Trigger(() -> m_stateMachine.isHubActive());
         Trigger hubAboutToActive = new Trigger(() -> m_stateMachine.isHubAboutToBecomeActive());
         Trigger isHoodDown = new Trigger(() -> m_turret.getHoodAngle() < 5);

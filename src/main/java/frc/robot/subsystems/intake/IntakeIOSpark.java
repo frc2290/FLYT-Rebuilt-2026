@@ -30,7 +30,6 @@ public class IntakeIOSpark implements IntakeIO {
 
     private final RelativeEncoder driveEncoder;
     private final AbsoluteEncoder deployEncoder;
-    private final SparkClosedLoopController driveController;
     private final SparkClosedLoopController deployController;
 
     private IntakeSide side;
@@ -54,7 +53,6 @@ public class IntakeIOSpark implements IntakeIO {
 
         driveEncoder = driveSpark.getEncoder();
         deployEncoder = deploySpark.getAbsoluteEncoder();
-        driveController = driveSpark.getClosedLoopController();
         deployController = deploySpark.getClosedLoopController();
 
         var driveConfig = new SparkFlexConfig();

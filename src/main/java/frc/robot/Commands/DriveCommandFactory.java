@@ -29,7 +29,6 @@ import frc.robot.Constants.OIConstants;
 import frc.robot.subsystems.drive.Drive;
 import frc.robot.subsystems.drive.DriveConstants;
 import frc.robot.subsystems.intake.Intake;
-import frc.robot.subsystems.intake.IntakeConstants;
 import frc.robot.subsystems.intake.IntakeConstants.IntakeSide;
 import frc.utils.FieldConstants.LinesHorizontal;
 import frc.utils.FieldConstants.LinesVertical;

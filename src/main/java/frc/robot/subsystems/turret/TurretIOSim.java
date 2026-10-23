@@ -23,11 +23,11 @@ public class TurretIOSim implements TurretIO {
     private final DCMotor turretTurnGearbox = DCMotor.getNeoVortex(1);
     private final DCMotorSim turretShootSim;
     private final DCMotor turretShootGearbox = DCMotor.getNeoVortex(1);
-    private final DCMotorSim turretHoodSim;
-    private final DCMotor turretHoodGearbox = DCMotor.getNeoVortex(1);
+    // private final DCMotorSim turretHoodSim;
+    // private final DCMotor turretHoodGearbox = DCMotor.getNeoVortex(1);
     private final PIDController turretTurnController = new PIDController(turretTurnSimP, 0, 0);
-    private final PIDController turretShootController = new PIDController(turretShootSimP, 0, 0);
-    private final PIDController turretHoodController = new PIDController(turretHoodSimP, 0, 0);
+    // private final PIDController turretShootController = new PIDController(turretShootSimP, 0, 0);
+    // private final PIDController turretHoodController = new PIDController(turretHoodSimP, 0, 0);
 
     private double turretTurnAppliedVolts = 0.0;
     private double turnVoltageCommand = 0.0;
@@ -52,9 +52,9 @@ public class TurretIOSim implements TurretIO {
         turretShootSim = new DCMotorSim(
                 LinearSystemId.createDCMotorSystem(turretShootGearbox, 0.025, turretShootReduction),
                 turretShootGearbox);
-        turretHoodSim = new DCMotorSim(
-                LinearSystemId.createDCMotorSystem(turretHoodGearbox, 0.025, turretHoodReduction),
-                turretHoodGearbox);
+        // turretHoodSim = new DCMotorSim(
+        //         LinearSystemId.createDCMotorSystem(turretHoodGearbox, 0.025, turretHoodReduction),
+        //         turretHoodGearbox);
 
         turretTurnController.enableContinuousInput(0, 360);
     }

@@ -21,7 +21,6 @@ import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.subsystems.dyerotor.DyeRotor;
-import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.turret.Turret;
 import frc.utils.FieldConstants;
 import frc.utils.ShootOnTheFly;
@@ -64,7 +63,6 @@ public class StateMachine extends SubsystemBase {
 
     private Supplier<Pose2d> poseSupplier;
     private Supplier<ChassisSpeeds> speedSupplier;
-    private Intake m_intake;
     private Turret m_turret;
     private DyeRotor m_dyeRotor;
 
@@ -72,10 +70,9 @@ public class StateMachine extends SubsystemBase {
 
     private Debouncer turretReadyDebounce = new Debouncer(0.25, DebounceType.kRising);
 
-    public StateMachine(Supplier<Pose2d> poseSupplier, Supplier<ChassisSpeeds> speedSupplier, Intake intake, Turret turret, DyeRotor dyeRotor) {
+    public StateMachine(Supplier<Pose2d> poseSupplier, Supplier<ChassisSpeeds> speedSupplier, Turret turret, DyeRotor dyeRotor) {
         this.poseSupplier = poseSupplier;
         this.speedSupplier = speedSupplier;
-        m_intake = intake;
         m_turret = turret;
         m_dyeRotor = dyeRotor;
 
@@ -294,6 +291,7 @@ public class StateMachine extends SubsystemBase {
                         }
                         if (shouldShoot) {
                             m_turret.setStopShoot(false);
+                            // TODO: figure out how to make this actually work
                             if (/*turretReadyDebounce.calculate(*/m_turret.turretReadyToShoot()/*)*/ || veryShoot) {
                                 m_dyeRotor.runDyeRotor(true);
                             }
