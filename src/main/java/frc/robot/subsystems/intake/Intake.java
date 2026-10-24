@@ -292,7 +292,7 @@ public class Intake extends SubsystemBase {
             driveRoller(side, rollerSpeed/2);
             getIo(side).setDeployPosition(outPosition * 0.5);
         }).finallyDo(() -> {
-            driveRoller(side, 0);
+            driveRoller(side, rollerSpeed);
             getIo(side).setDeployPosition(outPosition);
         });
     }
