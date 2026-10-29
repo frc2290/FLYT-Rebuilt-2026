@@ -69,8 +69,8 @@ public class IntakeConstants {
     public static final double positionBuffer = 10.0;
     // Intake roller surface speed command in m/s.
     public static final double rollerSpeed = 1;//3;
-    public static final double leftZeroOffsetAdj = 9.249;
+    public static final double leftZeroOffsetAdj = 9.249 + 20.0;
     public static final double leftZeroOffset = 0.3;
-    public static final double rightZeroOffsetAdj = 19.438 - 15.8;
+    public static final double rightZeroOffsetAdj = 19.438;
     public static final double rightZeroOffset = 0.3;
 }
