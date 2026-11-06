@@ -8,8 +8,6 @@ import static edu.wpi.first.math.util.Units.inchesToMeters;
 
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
-import com.lumynlabs.domain.led.Animation;
-
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -166,14 +164,15 @@ public class RobotContainer {
         // If hub is active, set the LEDs to be solid green. If hub not active, set LEDs to solid blue
         hubActive.and(hubAboutToActive.negate())
                     .and(isUnderTrench.negate())
-                        .onTrue(_ledsCx.setAllCommand(Animation.Fill, Color.kLime))
-                        .onFalse(_ledsCx.setAllCommand(Animation.Fill, LEDControllerCx.flytBlue));
+                        .onTrue(_ledsCx.setSolidCommand(Color.kLime))
+                        .onFalse(_ledsCx.setSolidCommand(LEDControllerCx.flytBlue));
         // If hub is 5 seconds from being active, flash LEDs blue
-        hubAboutToActive.and(hubActive.negate()).onTrue(_ledsCx.setAllCommand(Animation.Blink, LEDControllerCx.flytBlue));
+        hubAboutToActive.and(hubActive.negate()).onTrue(_ledsCx.setStrobeCommand(LEDControllerCx.flytBlue));
         // If going under the trench and hood is not down, flash LEDs red
-        isUnderTrench.and(isHoodDown.negate()).onTrue(_ledsCx.setAllCommand(Animation.Blink, Color.kRed));
+        isUnderTrench.and(isHoodDown.negate()).onTrue(_ledsCx.setStrobeCommand(Color.kRed));
         // If going under the trench and hood is down, flash LEDs green (turned off so it just goes back to what it was)
-        isUnderTrench.and(isHoodDown).onTrue(_ledsCx.setAllCommand(Animation.Fill, LEDControllerCx.flytBlue));
+        isUnderTrench.and(isHoodDown).onTrue(_ledsCx.setSolidCommand(LEDControllerCx.flytBlue));
+        // isUnderTrench.onTrue(_ledsCx.jollyModeCommand());
 
         // END TRIGGERS
 
@@ -219,6 +218,8 @@ public class RobotContainer {
             .andThen(m_stateMachine.setShooterOverrideCommand(false)));
 
         //m_operatorController.b().whileTrue(m_intake.wowowowowoIntake());
+
+        m_operatorController.povLeft().toggleOnTrue(_ledsCx.jollyModeCommand());
 
         // END OPERATOR BUTTONS
     }
