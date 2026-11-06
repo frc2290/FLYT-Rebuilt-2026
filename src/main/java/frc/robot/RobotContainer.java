@@ -8,6 +8,8 @@ import static edu.wpi.first.math.util.Units.inchesToMeters;
 
 import org.littletonrobotics.junction.networktables.LoggedDashboardChooser;
 
+import com.lumynlabs.domain.led.Animation;
+
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
 import edu.wpi.first.wpilibj.util.Color;
 import edu.wpi.first.wpilibj2.command.Command;
@@ -34,9 +36,7 @@ import frc.robot.subsystems.intake.Intake;
 import frc.robot.subsystems.intake.IntakeConstants.IntakeSide;
 import frc.robot.subsystems.turret.Turret;
 import frc.utils.FuelSim;
-import frc.utils.LEDEffects;
-import frc.utils.LEDEffects.LEDEffect;
-import frc.utils.LEDUtility;
+import frc.utils.LEDControllerCx;
 import frc.utils.PoseEstimatorSubsystem;
 
 
@@ -59,8 +59,7 @@ public class RobotContainer {
     private final Intake m_intake;
     private final DyeRotor m_dyeRotor;
     private final Turret m_turret;
-    private final LEDUtility _leds;
-
+    private final LEDControllerCx _ledsCx;
 
     // The driver's controller
     CommandXboxController m_driverController;
@@ -86,7 +85,7 @@ public class RobotContainer {
             DyeRotor _dyeRotor,
             Turret _turret,
             CommandXboxController _driverController,
-            LEDUtility _leds) {
+            LEDControllerCx _ledsCx) {
 
         m_drive = _drive;
         m_poseEstimator = _poseEstimator;
@@ -96,7 +95,7 @@ public class RobotContainer {
         m_dyeRotor = _dyeRotor;
         m_turret = _turret;
         m_driverController = _driverController;
-        this._leds = _leds;
+        this._ledsCx = _ledsCx;
 
         // Configure the button bindings
         configureButtonBindings();
@@ -167,14 +166,14 @@ public class RobotContainer {
         // If hub is active, set the LEDs to be solid green. If hub not active, set LEDs to solid blue
         hubActive.and(hubAboutToActive.negate())
                     .and(isUnderTrench.negate())
-                        .onTrue(_leds.setAllCommand(LEDEffect.SOLID, Color.kGreen))
-                        .onFalse(_leds.setAllCommand(LEDEffect.SOLID, LEDEffects.flytBlue));
+                        .onTrue(_ledsCx.setAllCommand(Animation.Fill, Color.kLime))
+                        .onFalse(_ledsCx.setAllCommand(Animation.Fill, LEDControllerCx.flytBlue));
         // If hub is 5 seconds from being active, flash LEDs blue
-        hubAboutToActive.and(hubActive.negate()).onTrue(_leds.setAllCommand(LEDEffect.FLASH, LEDEffects.flytBlue));
+        hubAboutToActive.and(hubActive.negate()).onTrue(_ledsCx.setAllCommand(Animation.Blink, LEDControllerCx.flytBlue));
         // If going under the trench and hood is not down, flash LEDs red
-        isUnderTrench.and(isHoodDown.negate()).onTrue(_leds.setAllCommand(LEDEffect.FLASH, Color.kRed));
+        isUnderTrench.and(isHoodDown.negate()).onTrue(_ledsCx.setAllCommand(Animation.Blink, Color.kRed));
         // If going under the trench and hood is down, flash LEDs green (turned off so it just goes back to what it was)
-        isUnderTrench.and(isHoodDown).onTrue(_leds.setAllCommand(LEDEffect.SOLID, LEDEffects.flytBlue));
+        isUnderTrench.and(isHoodDown).onTrue(_ledsCx.setAllCommand(Animation.Fill, LEDControllerCx.flytBlue));
 
         // END TRIGGERS
 

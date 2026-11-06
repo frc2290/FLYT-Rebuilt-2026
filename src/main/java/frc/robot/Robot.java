@@ -52,11 +52,9 @@ import frc.robot.subsystems.turret.TurretIO;
 import frc.robot.subsystems.turret.TurretIOSim;
 import frc.robot.subsystems.turret.TurretIOSpark;
 import frc.utils.FuelSim;
-import frc.utils.LEDEffects;
-import frc.utils.LEDUtility;
+import frc.utils.LEDControllerCx;
 import frc.utils.LoggedTracer;
 import frc.utils.PoseEstimatorSubsystem;
-import frc.utils.LEDEffects.LEDEffect;
 
 /**
  * The VM is configured to automatically run this class, and to call the
@@ -98,7 +96,7 @@ public class Robot extends LoggedRobot {
     private final StateMachine m_stateMachine;
     private final DriveStateMachine m_driveStateMachine;
 
-    private final LEDUtility _leds = new LEDUtility(9);
+    private final LEDControllerCx _ledsCx = new LEDControllerCx();
 
     LoggedDashboardChooser<Command> sys_id_commands = new LoggedDashboardChooser<>("SysID");
 
@@ -184,12 +182,6 @@ public class Robot extends LoggedRobot {
 
         m_stateMachine = new StateMachine(m_poseEstimator::getCurrentPose, m_poseEstimator::getChassisSpeeds, m_turret, m_dyeRotor);
         m_driveStateMachine = new DriveStateMachine(m_robotDrive, m_poseEstimator, m_intake, m_driver);
-
-        _leds.addStrip("Front", 0, 65); // 66
-        _leds.addStrip("Right", 66, 136); //71
-        _leds.addStrip("Back", 137, 166); // 30
-        _leds.addStrip("Left", 167, 237); //71
-        _leds.setDefault();
     }
 
     /**
@@ -211,7 +203,7 @@ public class Robot extends LoggedRobot {
                 m_dyeRotor,
                 m_turret,
                 m_driver,
-                _leds);
+                _ledsCx);
 
         DataLogManager.start();
         DriverStation.startDataLog(DataLogManager.getLog());
@@ -274,7 +266,7 @@ public class Robot extends LoggedRobot {
     @Override
     public void disabledInit() {
         m_driveStateMachine.setDriveCommand(DriveState.CANCELLED);
-        _leds.setAll(LEDEffect.CHASING, LEDEffects.flytBlue);
+        _ledsCx.setDefault();
     }
 
     @Override
