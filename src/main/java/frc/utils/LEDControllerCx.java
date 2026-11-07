@@ -17,7 +17,7 @@ import com.lumynlabs.domain.led.Animation;
 import com.lumynlabs.domain.led.DirectLED;
 
 public class LEDControllerCx extends SubsystemBase {
-    public static final Color flytBlue = new Color("#0081B3");
+    public static final Color flytBlue = new Color("#0076A8");
     private static final int numLeds = 66 + 71 + 30 + 71;
     
     private ConnectorXAnimate cXAnimate = new ConnectorXAnimate();
